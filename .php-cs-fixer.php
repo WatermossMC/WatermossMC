@@ -44,10 +44,6 @@ return (new PhpCsFixer\Config)
 		],
 		'header_comment' => [
 			'header' => <<<HEADER
-This file is part of the WatermossMC
-(c) 2025 WatermossMC <gameplaytebakgambard>
-
-@License Apache 2.0
 HEADER,
 		],
 		'@PSR12' => true,

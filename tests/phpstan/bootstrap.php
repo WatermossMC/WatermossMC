@@ -21,13 +21,6 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the WatermossMC
- * (c) 2025 WatermossMC <gameplaytebakgambard>
- *
- * @License Apache 2.0
- */
-
 if (!defined('LEVELDB_ZLIB_RAW_COMPRESSION')) {
 	//leveldb might not be loaded
 	define('LEVELDB_ZLIB_RAW_COMPRESSION', 4);

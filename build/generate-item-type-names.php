@@ -21,13 +21,6 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the WatermossMC
- * (c) 2025 WatermossMC <gameplaytebakgambard>
- *
- * @License Apache 2.0
- */
-
 namespace watermossmc\build\generate_item_serializer_ids;
 
 use watermossmc\data\bedrock\item\BlockItemIdMap;

@@ -21,13 +21,6 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the WatermossMC
- * (c) 2025 WatermossMC <gameplaytebakgambard>
- *
- * @License Apache 2.0
- */
-
 namespace watermossmc\tools\generate_block_palette_spec;
 
 use watermossmc\nbt\NbtException;
