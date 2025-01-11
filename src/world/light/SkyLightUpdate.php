@@ -20,7 +20,7 @@ namespace watermossmc\world\light;
 
 use watermossmc\world\format\Chunk;
 use watermossmc\world\format\HeightArray;
-use watermossmc\world\format\LightArray;
+use pocketmine\worldormat\LightArray;
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\utils\SubChunkExplorerStatus;

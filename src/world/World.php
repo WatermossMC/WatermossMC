@@ -83,7 +83,7 @@ use watermossmc\world\format\io\ChunkData;
 use watermossmc\world\format\io\exception\CorruptedChunkException;
 use watermossmc\world\format\io\GlobalBlockStateHandlers;
 use watermossmc\world\format\io\WritableWorldProvider;
-use watermossmc\world\format\LightArray;
+use pocketmine\worldormat\LightArray;
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\generator\GeneratorManager;
 use watermossmc\world\generator\GeneratorRegisterTask;

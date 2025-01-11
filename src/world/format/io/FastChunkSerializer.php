@@ -21,7 +21,7 @@ namespace watermossmc\world\format\io;
 use watermossmc\utils\Binary;
 use watermossmc\utils\BinaryStream;
 use watermossmc\world\format\Chunk;
-use watermossmc\world\format\PalettedBlockArray;
+use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 use function array_values;

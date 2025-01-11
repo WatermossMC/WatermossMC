@@ -20,7 +20,7 @@ namespace watermossmc\world\format\io\region;
 
 use watermossmc\block\Block;
 use watermossmc\nbt\tag\CompoundTag;
-use watermossmc\world\format\PalettedBlockArray;
+use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 class Anvil extends RegionWorldProvider

@@ -24,7 +24,7 @@ use watermossmc\data\bedrock\block\BlockStateSerializer;
 use watermossmc\data\bedrock\block\upgrade\BlockDataUpgrader;
 use watermossmc\world\format\io\exception\CorruptedWorldException;
 use watermossmc\world\format\io\exception\UnsupportedWorldFormatException;
-use watermossmc\world\format\PalettedBlockArray;
+use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\WorldException;
 
 use function count;

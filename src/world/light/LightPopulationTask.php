@@ -22,7 +22,7 @@ use watermossmc\block\RuntimeBlockStateRegistry;
 use watermossmc\scheduler\AsyncTask;
 use watermossmc\world\format\Chunk;
 use watermossmc\world\format\io\FastChunkSerializer;
-use watermossmc\world\format\LightArray;
+use pocketmine\worldormat\LightArray;
 use watermossmc\world\SimpleChunkManager;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\World;
