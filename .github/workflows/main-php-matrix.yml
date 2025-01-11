@@ -1,8 +1,5 @@
 name: CI (all supported PHP versions)
 
-permissions:
-  contents: write
-
 on:
   workflow_call:
     inputs:
@@ -20,6 +17,10 @@ on:
         description: 'Runner image to use'
         default: 'ubuntu-20.04'
         type: string
+
+permissions:
+  actions: write
+  contents: write
 
 jobs:
   phpstan:
