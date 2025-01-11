@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\world;
 
+use pocketmine\world\format\LightArray;
 use watermossmc\block\Air;
 use watermossmc\block\Block;
 use watermossmc\block\BlockTypeIds;
@@ -83,7 +84,6 @@ use watermossmc\world\format\io\ChunkData;
 use watermossmc\world\format\io\exception\CorruptedChunkException;
 use watermossmc\world\format\io\GlobalBlockStateHandlers;
 use watermossmc\world\format\io\WritableWorldProvider;
-use pocketmine\worldormat\LightArray;
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\generator\GeneratorManager;
 use watermossmc\world\generator\GeneratorRegisterTask;

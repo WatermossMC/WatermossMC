@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\network\mcpe\serializer;
 
+use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\block\tile\Spawnable;
 use watermossmc\data\bedrock\BiomeIds;
 use watermossmc\data\bedrock\LegacyBiomeIdToStringIdMap;
@@ -29,7 +30,6 @@ use watermossmc\network\mcpe\protocol\types\DimensionIds;
 use watermossmc\utils\Binary;
 use watermossmc\utils\BinaryStream;
 use watermossmc\world\format\Chunk;
-use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 use function count;

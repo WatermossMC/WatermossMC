@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io\leveldb;
 
+use pocketmine\world\format\PalettedBlockArray;
 use Symfony\Component\Filesystem\Path;
 use watermossmc\block\Block;
 use watermossmc\data\bedrock\BiomeIds;
@@ -44,7 +45,6 @@ use watermossmc\world\format\io\GlobalBlockStateHandlers;
 use watermossmc\world\format\io\LoadedChunkData;
 use watermossmc\world\format\io\WorldData;
 use watermossmc\world\format\io\WritableWorldProvider;
-use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\WorldCreationOptions;
 

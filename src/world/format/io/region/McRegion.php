@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io\region;
 
+use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\block\Block;
 use watermossmc\data\bedrock\BiomeIds;
 use watermossmc\nbt\BigEndianNbtSerializer;
@@ -32,7 +33,6 @@ use watermossmc\world\format\io\ChunkData;
 use watermossmc\world\format\io\ChunkUtils;
 use watermossmc\world\format\io\exception\CorruptedChunkException;
 use watermossmc\world\format\io\LoadedChunkData;
-use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 use function strlen;

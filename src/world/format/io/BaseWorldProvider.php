@@ -18,13 +18,13 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io;
 
+use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\data\bedrock\block\BlockStateDeserializeException;
 use watermossmc\data\bedrock\block\BlockStateDeserializer;
 use watermossmc\data\bedrock\block\BlockStateSerializer;
 use watermossmc\data\bedrock\block\upgrade\BlockDataUpgrader;
 use watermossmc\world\format\io\exception\CorruptedWorldException;
 use watermossmc\world\format\io\exception\UnsupportedWorldFormatException;
-use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\WorldException;
 
 use function count;

@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io;
 
-use pocketmine\worldormat\PalettedBlockArray;
+use pocketmine\world\format\PalettedBlockArray;
 
 use function chr;
 use function ord;

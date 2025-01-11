@@ -18,9 +18,9 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io\region;
 
+use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\block\Block;
 use watermossmc\nbt\tag\CompoundTag;
-use pocketmine\worldormat\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 class Anvil extends RegionWorldProvider

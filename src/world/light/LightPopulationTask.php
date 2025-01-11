@@ -18,11 +18,11 @@ declare(strict_types=1);
 
 namespace watermossmc\world\light;
 
+use pocketmine\world\format\LightArray;
 use watermossmc\block\RuntimeBlockStateRegistry;
 use watermossmc\scheduler\AsyncTask;
 use watermossmc\world\format\Chunk;
 use watermossmc\world\format\io\FastChunkSerializer;
-use pocketmine\worldormat\LightArray;
 use watermossmc\world\SimpleChunkManager;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\World;

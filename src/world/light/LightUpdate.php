@@ -18,8 +18,8 @@ declare(strict_types=1);
 
 namespace watermossmc\world\light;
 
+use pocketmine\world\format\LightArray;
 use watermossmc\math\Facing;
-use pocketmine\worldormat\LightArray;
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\utils\SubChunkExplorerStatus;
