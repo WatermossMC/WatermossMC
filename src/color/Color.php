@@ -16,7 +16,7 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\color;
+namespace watermossmc\color;
 
 use function count;
 use function intdiv;
