@@ -20,8 +20,8 @@ namespace watermossmc\network\raklib\server;
 
 use watermossmc\network\raklib\protocol\EncapsulatedPacket;
 
-interface ServerInterface{
-
+interface ServerInterface
+{
 	public function sendEncapsulated(int $sessionId, EncapsulatedPacket $packet, bool $immediate = false) : void;
 
 	public function sendRaw(string $address, int $port, string $payload) : void;
