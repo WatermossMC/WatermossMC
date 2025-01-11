@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c7162bcf616eb92d4cbf51bb13eda98f",
+    "content-hash": "e29b0acd6896d0d6d18083f426686890",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -253,6 +253,29 @@
                 "source": "https://github.com/pmmp/BedrockItemUpgradeSchema/tree/1.14.0"
             },
             "time": "2024-12-04T12:22:49+00:00"
+        },
+        {
+            "name": "pocketmine/locale-data",
+            "version": "2.22.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pmmp/Language.git",
+                "reference": "fa4e377c437391cfcfdedd08eea3a848eabd1b49"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pmmp/Language/zipball/fa4e377c437391cfcfdedd08eea3a848eabd1b49",
+                "reference": "fa4e377c437391cfcfdedd08eea3a848eabd1b49",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "description": "Language resources used by PocketMine-MP",
+            "support": {
+                "issues": "https://github.com/pmmp/Language/issues",
+                "source": "https://github.com/pmmp/Language/tree/2.22.1"
+            },
+            "time": "2024-12-06T14:44:17+00:00"
         },
         {
             "name": "ramsey/collection",
