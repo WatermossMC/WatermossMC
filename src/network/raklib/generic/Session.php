@@ -1,57 +1,47 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibgeneric;
+namespace watermossmc\network\raklib\generic;
 
-use watermossmc
-etworkaklibprotocol\ACK;
-use watermossmc
-etworkaklibprotocol\AcknowledgePacket;
-use watermossmc
-etworkaklibprotocol\ConnectedPacket;
-use watermossmc
-etworkaklibprotocol\ConnectedPing;
-use watermossmc
-etworkaklibprotocol\ConnectedPong;
-use watermossmc
-etworkaklibprotocol\Datagram;
-use watermossmc
-etworkaklibprotocol\DisconnectionNotification;
-use watermossmc
-etworkaklibprotocol\EncapsulatedPacket;
-use watermossmc
-etworkaklibprotocol\MessageIdentifiers;
-use watermossmc
-etworkaklibprotocol\NACK;
-use watermossmc
-etworkaklibprotocol\Packet;
-use watermossmc
-etworkaklibprotocol\PacketReliability;
-use watermossmc
-etworkaklibprotocol\PacketSerializer;
-use watermossmc
-etworkaklibutils\InternetAddress;
+use watermossmc\network\raklib\protocol\ACK;
+use watermossmc\network\raklib\protocol\AcknowledgePacket;
+use watermossmc\network\raklib\protocol\ConnectedPacket;
+use watermossmc\network\raklib\protocol\ConnectedPing;
+use watermossmc\network\raklib\protocol\ConnectedPong;
+use watermossmc\network\raklib\protocol\Datagram;
+use watermossmc\network\raklib\protocol\DisconnectionNotification;
+use watermossmc\network\raklib\protocol\EncapsulatedPacket;
+use watermossmc\network\raklib\protocol\MessageIdentifiers;
+use watermossmc\network\raklib\protocol\NACK;
+use watermossmc\network\raklib\protocol\Packet;
+use watermossmc\network\raklib\protocol\PacketReliability;
+use watermossmc\network\raklib\protocol\PacketSerializer;
+use watermossmc\network\raklib\utils\InternetAddress;
+
 use function hrtime;
 use function intdiv;
 use function microtime;
 use function ord;
+
 use const PHP_INT_MAX;
 
-abstract class Session{
+abstract class Session
+{
 	public const STATE_CONNECTING = 0;
 	public const STATE_CONNECTED = 1;
 	public const STATE_DISCONNECT_PENDING = 2;
@@ -92,8 +82,8 @@ abstract class Session{
 		int $mtuSize,
 		int $recvMaxSplitParts = PHP_INT_MAX,
 		int $recvMaxConcurrentSplits = PHP_INT_MAX
-	){
-		if($mtuSize < self::MIN_MTU_SIZE){
+	) {
+		if ($mtuSize < self::MIN_MTU_SIZE) {
 			throw new \InvalidArgumentException("MTU size must be at least " . self::MIN_MTU_SIZE . ", got $mtuSize");
 		}
 		$this->logger = new \PrefixedLogger($logger, "Session: " . $address->toString());
@@ -104,10 +94,10 @@ abstract class Session{
 
 		$this->recvLayer = new ReceiveReliabilityLayer(
 			$this->logger,
-			function(EncapsulatedPacket $pk) : void{
+			function (EncapsulatedPacket $pk) : void {
 				$this->handleEncapsulatedPacketRoute($pk);
 			},
-			function(AcknowledgePacket $pk) : void{
+			function (AcknowledgePacket $pk) : void {
 				$this->sendPacket($pk);
 			},
 			$recvMaxSplitParts,
@@ -115,10 +105,10 @@ abstract class Session{
 		);
 		$this->sendLayer = new SendReliabilityLayer(
 			$mtuSize,
-			function(Datagram $datagram) : void{
+			function (Datagram $datagram) : void {
 				$this->sendPacket($datagram);
 			},
-			function(int $identifierACK) : void{
+			function (int $identifierACK) : void {
 				$this->onPacketAck($identifierACK);
 			}
 		);
@@ -166,57 +156,65 @@ abstract class Session{
 	 * Returns a monotonically increasing timestamp. It does not need to match UNIX time.
 	 * This is used to calculate ping.
 	 */
-	protected function getRakNetTimeMS() : int{
+	protected function getRakNetTimeMS() : int
+	{
 		return intdiv(hrtime(true), 1_000_000);
 	}
 
-	public function getLogger() : \Logger{
+	public function getLogger() : \Logger
+	{
 		return $this->logger;
 	}
 
-	public function getAddress() : InternetAddress{
+	public function getAddress() : InternetAddress
+	{
 		return $this->address;
 	}
 
-	public function getID() : int{
+	public function getID() : int
+	{
 		return $this->id;
 	}
 
-	public function getState() : int{
+	public function getState() : int
+	{
 		return $this->state;
 	}
 
-	public function isTemporary() : bool{
+	public function isTemporary() : bool
+	{
 		return $this->state === self::STATE_CONNECTING;
 	}
 
-	public function isConnected() : bool{
+	public function isConnected() : bool
+	{
 		return
-			$this->state !== self::STATE_DISCONNECT_PENDING and
-			$this->state !== self::STATE_DISCONNECT_NOTIFIED and
+			$this->state !== self::STATE_DISCONNECT_PENDING &&
+			$this->state !== self::STATE_DISCONNECT_NOTIFIED &&
 			$this->state !== self::STATE_DISCONNECTED;
 	}
 
-	public function update(float $time) : void{
-		if(!$this->isActive and ($this->lastUpdate + 10) < $time){
+	public function update(float $time) : void
+	{
+		if (!$this->isActive && ($this->lastUpdate + 10) < $time) {
 			$this->forciblyDisconnect(DisconnectReason::PEER_TIMEOUT);
 
 			return;
 		}
 
-		if($this->state === self::STATE_DISCONNECT_PENDING || $this->state === self::STATE_DISCONNECT_NOTIFIED){
+		if ($this->state === self::STATE_DISCONNECT_PENDING || $this->state === self::STATE_DISCONNECT_NOTIFIED) {
 			//by this point we already told the event listener that the session is closing, so we don't need to do it again
-			if(!$this->sendLayer->needsUpdate() and !$this->recvLayer->needsUpdate()){
-				if($this->state === self::STATE_DISCONNECT_PENDING){
+			if (!$this->sendLayer->needsUpdate() && !$this->recvLayer->needsUpdate()) {
+				if ($this->state === self::STATE_DISCONNECT_PENDING) {
 					$this->queueConnectedPacket(new DisconnectionNotification(), PacketReliability::RELIABLE_ORDERED, 0, true);
 					$this->state = self::STATE_DISCONNECT_NOTIFIED;
 					$this->logger->debug("All pending traffic flushed, sent disconnect notification");
-				}else{
+				} else {
 					$this->state = self::STATE_DISCONNECTED;
 					$this->logger->debug("Client cleanly disconnected, marking session for destruction");
 					return;
 				}
-			}elseif($this->disconnectionTime + 10 < $time){
+			} elseif ($this->disconnectionTime + 10 < $time) {
 				$this->state = self::STATE_DISCONNECTED;
 				$this->logger->debug("Timeout during graceful disconnect, forcibly closing session");
 				return;
@@ -228,13 +226,14 @@ abstract class Session{
 		$this->recvLayer->update();
 		$this->sendLayer->update();
 
-		if($this->lastPingTime + 5 < $time){
+		if ($this->lastPingTime + 5 < $time) {
 			$this->sendPing();
 			$this->lastPingTime = $time;
 		}
 	}
 
-	protected function queueConnectedPacket(ConnectedPacket $packet, int $reliability, int $orderChannel, bool $immediate = false) : void{
+	protected function queueConnectedPacket(ConnectedPacket $packet, int $reliability, int $orderChannel, bool $immediate = false) : void
+	{
 		$out = new PacketSerializer();  //TODO: reuse streams to reduce allocations
 		$packet->encode($out);
 
@@ -246,37 +245,40 @@ abstract class Session{
 		$this->sendLayer->addEncapsulatedToQueue($encapsulated, $immediate);
 	}
 
-	public function addEncapsulatedToQueue(EncapsulatedPacket $packet, bool $immediate) : void{
+	public function addEncapsulatedToQueue(EncapsulatedPacket $packet, bool $immediate) : void
+	{
 		$this->sendLayer->addEncapsulatedToQueue($packet, $immediate);
 	}
 
-	protected function sendPing(int $reliability = PacketReliability::UNRELIABLE) : void{
+	protected function sendPing(int $reliability = PacketReliability::UNRELIABLE) : void
+	{
 		$this->queueConnectedPacket(ConnectedPing::create($this->getRakNetTimeMS()), $reliability, 0, true);
 	}
 
-	private function handleEncapsulatedPacketRoute(EncapsulatedPacket $packet) : void{
+	private function handleEncapsulatedPacketRoute(EncapsulatedPacket $packet) : void
+	{
 		$id = ord($packet->buffer[0]);
-		if($id < MessageIdentifiers::ID_USER_PACKET_ENUM){ //internal data packet
-			if($this->state === self::STATE_CONNECTING){
+		if ($id < MessageIdentifiers::ID_USER_PACKET_ENUM) { //internal data packet
+			if ($this->state === self::STATE_CONNECTING) {
 				$this->handleRakNetConnectionPacket($packet->buffer);
-			}elseif($id === MessageIdentifiers::ID_DISCONNECTION_NOTIFICATION){
+			} elseif ($id === MessageIdentifiers::ID_DISCONNECTION_NOTIFICATION) {
 				$this->handleRemoteDisconnect();
-			}elseif($id === MessageIdentifiers::ID_CONNECTED_PING){
+			} elseif ($id === MessageIdentifiers::ID_CONNECTED_PING) {
 				$dataPacket = new ConnectedPing();
 				$dataPacket->decode(new PacketSerializer($packet->buffer));
 				$this->queueConnectedPacket(ConnectedPong::create(
 					$dataPacket->sendPingTime,
 					$this->getRakNetTimeMS()
 				), PacketReliability::UNRELIABLE, 0);
-			}elseif($id === MessageIdentifiers::ID_CONNECTED_PONG){
+			} elseif ($id === MessageIdentifiers::ID_CONNECTED_PONG) {
 				$dataPacket = new ConnectedPong();
 				$dataPacket->decode(new PacketSerializer($packet->buffer));
 
 				$this->handlePong($dataPacket->sendPingTime, $dataPacket->sendPongTime);
 			}
-		}elseif($this->state === self::STATE_CONNECTED){
+		} elseif ($this->state === self::STATE_CONNECTED) {
 			$this->onPacketReceive($packet->buffer);
-		}else{
+		} else {
 			//$this->logger->notice("Received packet before connection: " . bin2hex($packet->buffer));
 		}
 	}
@@ -284,11 +286,12 @@ abstract class Session{
 	/**
 	 * @param int $sendPongTime TODO: clock differential stuff
 	 */
-	private function handlePong(int $sendPingTime, int $sendPongTime) : void{
+	private function handlePong(int $sendPingTime, int $sendPongTime) : void
+	{
 		$currentTime = $this->getRakNetTimeMS();
-		if($currentTime < $sendPingTime){
+		if ($currentTime < $sendPingTime) {
 			$this->logger->debug("Received invalid pong: timestamp is in the future by " . ($sendPingTime - $currentTime) . " ms");
-		}else{
+		} else {
 			$this->lastPingMeasure = $currentTime - $sendPingTime;
 			$this->onPingMeasure($this->lastPingMeasure);
 		}
@@ -297,15 +300,16 @@ abstract class Session{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	public function handlePacket(Packet $packet) : void{
+	public function handlePacket(Packet $packet) : void
+	{
 		$this->isActive = true;
 		$this->lastUpdate = microtime(true);
 
-		if($packet instanceof Datagram){ //In reality, ALL of these packets are datagrams.
+		if ($packet instanceof Datagram) { //In reality, ALL of these packets are datagrams.
 			$this->recvLayer->onDatagram($packet);
-		}elseif($packet instanceof ACK){
+		} elseif ($packet instanceof ACK) {
 			$this->sendLayer->onACK($packet);
-		}elseif($packet instanceof NACK){
+		} elseif ($packet instanceof NACK) {
 			$this->sendLayer->onNACK($packet);
 		}
 	}
@@ -318,8 +322,9 @@ abstract class Session{
 	 *
 	 * @see DisconnectReason
 	 */
-	public function initiateDisconnect(int $reason) : void{
-		if($this->isConnected()){
+	public function initiateDisconnect(int $reason) : void
+	{
+		if ($this->isConnected()) {
 			$this->state = self::STATE_DISCONNECT_PENDING;
 			$this->disconnectionTime = microtime(true);
 			$this->onDisconnect($reason);
@@ -335,18 +340,20 @@ abstract class Session{
 	 *
 	 * @see DisconnectReason
 	 */
-	public function forciblyDisconnect(int $reason) : void{
+	public function forciblyDisconnect(int $reason) : void
+	{
 		$this->state = self::STATE_DISCONNECTED;
 		$this->onDisconnect($reason);
 		$this->logger->debug("Forcibly disconnecting session due to " . DisconnectReason::toString($reason));
 	}
 
-	private function handleRemoteDisconnect() : void{
+	private function handleRemoteDisconnect() : void
+	{
 		//the client will expect an ACK for this; make sure it gets sent, because after forcible termination
 		//there won't be any session ticks to update it
 		$this->recvLayer->update();
 
-		if($this->isConnected()){
+		if ($this->isConnected()) {
 			//the client might have disconnected after the server sent a disconnect notification, but before the client
 			//received it - in this case, we don't want to notify the event handler twice
 			$this->onDisconnect(DisconnectReason::CLIENT_DISCONNECT);
@@ -358,7 +365,8 @@ abstract class Session{
 	/**
 	 * Returns whether the session is ready to be destroyed (either properly cleaned up or forcibly terminated)
 	 */
-	public function isFullyDisconnected() : bool{
+	public function isFullyDisconnected() : bool
+	{
 		return $this->state === self::STATE_DISCONNECTED;
 	}
 }

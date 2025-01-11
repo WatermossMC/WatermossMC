@@ -1,23 +1,25 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibgeneric;
+namespace watermossmc\network\raklib\generic;
 
-final class DisconnectReason{
+final class DisconnectReason
+{
 	public const CLIENT_DISCONNECT = 0;
 	public const SERVER_DISCONNECT = 1;
 	public const PEER_TIMEOUT = 2;
@@ -28,8 +30,9 @@ final class DisconnectReason{
 	public const SPLIT_PACKET_INVALID_PART_INDEX = 7;
 	public const SPLIT_PACKET_INCONSISTENT_HEADER = 8;
 
-	public static function toString(int $reason) : string{
-		return match($reason){
+	public static function toString(int $reason) : string
+	{
+		return match($reason) {
 			self::CLIENT_DISCONNECT => "client disconnect",
 			self::SERVER_DISCONNECT => "server disconnect",
 			self::PEER_TIMEOUT => "timeout",

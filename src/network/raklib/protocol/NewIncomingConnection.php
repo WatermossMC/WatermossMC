@@ -1,29 +1,30 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibprotocol;
+namespace watermossmc\network\raklib\protocol;
 
-use watermossmc
-etworkaklibRakLib;
-use watermossmc
-etworkaklibutils\InternetAddress;
+use watermossmc\network\naklib\RakLib;
+use watermossmc\network\raklib\utils\InternetAddress;
+
 use function strlen;
 
-class NewIncomingConnection extends ConnectedPacket{
+class NewIncomingConnection extends ConnectedPacket
+{
 	public static $ID = MessageIdentifiers::ID_NEW_INCOMING_CONNECTION;
 
 	public InternetAddress $address;
@@ -32,25 +33,27 @@ class NewIncomingConnection extends ConnectedPacket{
 	public int $sendPingTime;
 	public int $sendPongTime;
 
-	protected function encodePayload(PacketSerializer $out) : void{
+	protected function encodePayload(PacketSerializer $out) : void
+	{
 		$out->putAddress($this->address);
-		foreach($this->systemAddresses as $address){
+		foreach ($this->systemAddresses as $address) {
 			$out->putAddress($address);
 		}
 		$out->putLong($this->sendPingTime);
 		$out->putLong($this->sendPongTime);
 	}
 
-	protected function decodePayload(PacketSerializer $in) : void{
+	protected function decodePayload(PacketSerializer $in) : void
+	{
 		$this->address = $in->getAddress();
 
 		//TODO: HACK!
 		$stopOffset = strlen($in->getBuffer()) - 16; //buffer length - sizeof(sendPingTime) - sizeof(sendPongTime)
 		$dummy = new InternetAddress("0.0.0.0", 0, 4);
-		for($i = 0; $i < RakLib::$SYSTEM_ADDRESS_COUNT; ++$i){
-			if($in->getOffset() >= $stopOffset){
+		for ($i = 0; $i < RakLib::$SYSTEM_ADDRESS_COUNT; ++$i) {
+			if ($in->getOffset() >= $stopOffset) {
 				$this->systemAddresses[$i] = clone $dummy;
-			}else{
+			} else {
 				$this->systemAddresses[$i] = $in->getAddress();
 			}
 		}

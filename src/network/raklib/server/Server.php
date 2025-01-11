@@ -1,47 +1,37 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibserver;
+namespace watermossmc\network\raklibserver;
 
+use watermossmc\network\raklib\generic\DisconnectReason;
+use watermossmc\network\raklib\generic\PacketHandlingException;
+use watermossmc\network\raklib\generic\Session;
+use watermossmc\network\raklib\generic\SocketException;
+use watermossmc\network\raklib\protocol\ACK;
+use watermossmc\network\raklib\protocol\Datagram;
+use watermossmc\network\raklib\protocol\EncapsulatedPacket;
+use watermossmc\network\raklib\protocol\NACK;
+use watermossmc\network\raklib\protocol\Packet;
+use watermossmc\network\raklib\protocol\PacketSerializer;
+use watermossmc\network\raklib\utils\ExceptionTraceCleaner;
+use watermossmc\network\raklib\utils\InternetAddress;
 use watermossmc\utils\BinaryDataException;
-use watermossmc
-etworkaklibgeneric\DisconnectReason;
-use watermossmc
-etworkaklibgeneric\PacketHandlingException;
-use watermossmc
-etworkaklibgeneric\Session;
-use watermossmc
-etworkaklibgeneric\SocketException;
-use watermossmc
-etworkaklibprotocol\ACK;
-use watermossmc
-etworkaklibprotocol\Datagram;
-use watermossmc
-etworkaklibprotocol\EncapsulatedPacket;
-use watermossmc
-etworkaklibprotocol\NACK;
-use watermossmc
-etworkaklibprotocol\Packet;
-use watermossmc
-etworkaklibprotocol\PacketSerializer;
-use watermossmc
-etworkaklibutils\ExceptionTraceCleaner;
-use watermossmc
-etworkaklibutils\InternetAddress;
+
 use function asort;
 use function assert;
 use function bin2hex;
@@ -53,11 +43,12 @@ use function preg_match;
 use function strlen;
 use function time;
 use function time_sleep_until;
+
 use const PHP_INT_MAX;
 use const SOCKET_ECONNRESET;
 
-class Server implements ServerInterface{
-
+class Server implements ServerInterface
+{
 	private const RAKLIB_TPS = 100;
 	private const RAKLIB_TIME_PER_TICK = 1 / self::RAKLIB_TPS;
 
@@ -106,8 +97,8 @@ class Server implements ServerInterface{
 		private ExceptionTraceCleaner $traceCleaner,
 		private int $recvMaxSplitParts = ServerSession::DEFAULT_MAX_SPLIT_PART_COUNT,
 		private int $recvMaxConcurrentSplits = ServerSession::DEFAULT_MAX_CONCURRENT_SPLIT_COUNT
-	){
-		if($maxMtuSize < Session::MIN_MTU_SIZE){
+	) {
+		if ($maxMtuSize < Session::MIN_MTU_SIZE) {
 			throw new \InvalidArgumentException("MTU size must be at least " . Session::MIN_MTU_SIZE . ", got $maxMtuSize");
 		}
 		$this->socket->setBlocking(false);
@@ -115,41 +106,45 @@ class Server implements ServerInterface{
 		$this->unconnectedMessageHandler = new UnconnectedMessageHandler($this, $protocolAcceptor);
 	}
 
-	public function getPort() : int{
+	public function getPort() : int
+	{
 		return $this->socket->getBindAddress()->getPort();
 	}
 
-	public function getMaxMtuSize() : int{
+	public function getMaxMtuSize() : int
+	{
 		return $this->maxMtuSize;
 	}
 
-	public function getLogger() : \Logger{
+	public function getLogger() : \Logger
+	{
 		return $this->logger;
 	}
 
-	public function tickProcessor() : void{
+	public function tickProcessor() : void
+	{
 		$start = microtime(true);
 
 		/*
 		 * The below code is designed to allow co-op between sending and receiving to avoid slowing down either one
 		 * when high traffic is coming either way. Yielding will occur after 100 messages.
 		 */
-		do{
+		do {
 			$stream = !$this->shutdown;
-			for($i = 0; $i < 100 && $stream && !$this->shutdown; ++$i){ //if we received a shutdown event, we don't care about any more messages from the event source
+			for ($i = 0; $i < 100 && $stream && !$this->shutdown; ++$i) { //if we received a shutdown event, we don't care about any more messages from the event source
 				$stream = $this->eventSource->process($this);
 			}
 
 			$socket = true;
-			for($i = 0; $i < 100 && $socket; ++$i){
+			for ($i = 0; $i < 100 && $socket; ++$i) {
 				$socket = $this->receivePacket();
 			}
-		}while($stream || $socket);
+		} while ($stream || $socket);
 
 		$this->tick();
 
 		$time = microtime(true) - $start;
-		if($time < self::RAKLIB_TIME_PER_TICK){
+		if ($time < self::RAKLIB_TIME_PER_TICK) {
 			@time_sleep_until(microtime(true) + self::RAKLIB_TIME_PER_TICK - $time);
 		}
 	}
@@ -157,20 +152,21 @@ class Server implements ServerInterface{
 	/**
 	 * Disconnects all sessions and blocks until everything has been shut down properly.
 	 */
-	public function waitShutdown() : void{
+	public function waitShutdown() : void
+	{
 		$this->shutdown = true;
 
-		while($this->eventSource->process($this)){
+		while ($this->eventSource->process($this)) {
 			//Ensure that any late messages are processed before we start initiating server disconnects, so that if the
 			//server implementation used a custom disconnect mechanism (e.g. a server transfer), we don't break it in
 			//race conditions.
 		}
 
-		foreach($this->sessions as $session){
+		foreach ($this->sessions as $session) {
 			$session->initiateDisconnect(DisconnectReason::SERVER_SHUTDOWN);
 		}
 
-		while(count($this->sessions) > 0){
+		while (count($this->sessions) > 0) {
 			$this->tickProcessor();
 		}
 
@@ -178,31 +174,32 @@ class Server implements ServerInterface{
 		$this->logger->debug("Graceful shutdown complete");
 	}
 
-	private function tick() : void{
+	private function tick() : void
+	{
 		$time = microtime(true);
-		foreach($this->sessions as $session){
+		foreach ($this->sessions as $session) {
 			$session->update($time);
-			if($session->isFullyDisconnected()){
+			if ($session->isFullyDisconnected()) {
 				$this->removeSessionInternal($session);
 			}
 		}
 
 		$this->ipSec = [];
 
-		if(!$this->shutdown and ($this->ticks % self::RAKLIB_TPS) === 0){
-			if($this->sendBytes > 0 or $this->receiveBytes > 0){
+		if (!$this->shutdown && ($this->ticks % self::RAKLIB_TPS) === 0) {
+			if ($this->sendBytes > 0 || $this->receiveBytes > 0) {
 				$this->eventListener->onBandwidthStatsUpdate($this->sendBytes, $this->receiveBytes);
 				$this->sendBytes = 0;
 				$this->receiveBytes = 0;
 			}
 
-			if(count($this->block) > 0){
+			if (count($this->block) > 0) {
 				asort($this->block);
 				$now = time();
-				foreach($this->block as $address => $timeout){
-					if($timeout <= $now){
+				foreach ($this->block as $address => $timeout) {
+					if ($timeout <= $now) {
 						unset($this->block[$address]);
-					}else{
+					} else {
 						break;
 					}
 				}
@@ -213,19 +210,20 @@ class Server implements ServerInterface{
 	}
 
 	/** @phpstan-impure */
-	private function receivePacket() : bool{
-		try{
+	private function receivePacket() : bool
+	{
+		try {
 			$buffer = $this->socket->readPacket($addressIp, $addressPort);
-		}catch(SocketException $e){
+		} catch (SocketException $e) {
 			$error = $e->getCode();
-			if($error === SOCKET_ECONNRESET){ //client disconnected improperly, maybe crash or lost connection
+			if ($error === SOCKET_ECONNRESET) { //client disconnected improperly, maybe crash or lost connection
 				return true;
 			}
 
 			$this->logger->debug($e->getMessage());
 			return false;
 		}
-		if($buffer === null){
+		if ($buffer === null) {
 			return false; //no data
 		}
 		assert($addressIp !== null, "Can't be null if we got a buffer");
@@ -234,45 +232,45 @@ class Server implements ServerInterface{
 		$len = strlen($buffer);
 
 		$this->receiveBytes += $len;
-		if(isset($this->block[$addressIp])){
+		if (isset($this->block[$addressIp])) {
 			return true;
 		}
 
-		if(isset($this->ipSec[$addressIp])){
-			if(++$this->ipSec[$addressIp] >= $this->packetLimit){
+		if (isset($this->ipSec[$addressIp])) {
+			if (++$this->ipSec[$addressIp] >= $this->packetLimit) {
 				$this->blockAddress($addressIp);
 				return true;
 			}
-		}else{
+		} else {
 			$this->ipSec[$addressIp] = 1;
 		}
 
-		if($len < 1){
+		if ($len < 1) {
 			return true;
 		}
 
 		$address = new InternetAddress($addressIp, $addressPort, $this->socket->getBindAddress()->getVersion());
-		try{
+		try {
 			$session = $this->getSessionByAddress($address);
-			if($session !== null){
+			if ($session !== null) {
 				$header = ord($buffer[0]);
-				if(($header & Datagram::BITFLAG_VALID) !== 0){
-					if(($header & Datagram::BITFLAG_ACK) !== 0){
+				if (($header & Datagram::BITFLAG_VALID) !== 0) {
+					if (($header & Datagram::BITFLAG_ACK) !== 0) {
 						$packet = new ACK();
-					}elseif(($header & Datagram::BITFLAG_NAK) !== 0){
+					} elseif (($header & Datagram::BITFLAG_NAK) !== 0) {
 						$packet = new NACK();
-					}else{
+					} else {
 						$packet = new Datagram();
 					}
 					$packet->decode(new PacketSerializer($buffer));
-					try{
+					try {
 						$session->handlePacket($packet);
-					}catch(PacketHandlingException $e){
+					} catch (PacketHandlingException $e) {
 						$session->getLogger()->error("Error receiving packet: " . $e->getMessage());
 						$session->forciblyDisconnect($e->getDisconnectReason());
 					}
 					return true;
-				}elseif($session->isConnected()){
+				} elseif ($session->isConnected()) {
 					//allows unconnected packets if the session is stuck in DISCONNECTING state, useful if the client
 					//didn't disconnect properly for some reason (e.g. crash)
 					$this->logger->debug("Ignored unconnected packet from $address due to session already opened (0x" . bin2hex($buffer[0]) . ")");
@@ -280,10 +278,10 @@ class Server implements ServerInterface{
 				}
 			}
 
-			if(!$this->shutdown){
-				if(!($handled = $this->unconnectedMessageHandler->handleRaw($buffer, $address))){
-					foreach($this->rawPacketFilters as $pattern){
-						if(preg_match($pattern, $buffer) > 0){
+			if (!$this->shutdown) {
+				if (!($handled = $this->unconnectedMessageHandler->handleRaw($buffer, $address))) {
+					foreach ($this->rawPacketFilters as $pattern) {
+						if (preg_match($pattern, $buffer) > 0) {
 							$handled = true;
 							$this->eventListener->onRawPacketReceive($address->getIp(), $address->getPort(), $buffer);
 							break;
@@ -291,22 +289,22 @@ class Server implements ServerInterface{
 					}
 				}
 
-				if(!$handled){
+				if (!$handled) {
 					$this->logger->debug("Ignored packet from $address due to no session opened (0x" . bin2hex($buffer[0]) . ")");
 				}
 			}
-		}catch(BinaryDataException $e){
-			$logFn = function() use ($address, $e, $buffer) : void{
+		} catch (BinaryDataException $e) {
+			$logFn = function () use ($address, $e, $buffer) : void {
 				$this->logger->debug("Packet from $address (" . strlen($buffer) . " bytes): 0x" . bin2hex($buffer));
 				$this->logger->debug(get_class($e) . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-				foreach($this->traceCleaner->getTrace(0, $e->getTrace()) as $line){
+				foreach ($this->traceCleaner->getTrace(0, $e->getTrace()) as $line) {
 					$this->logger->debug($line);
 				}
 				$this->logger->error("Bad packet from $address: " . $e->getMessage());
 			};
-			if($this->logger instanceof \BufferedLogger){
+			if ($this->logger instanceof \BufferedLogger) {
 				$this->logger->buffer($logFn);
-			}else{
+			} else {
 				$logFn();
 			}
 			$this->blockAddress($address->getIp(), 5);
@@ -315,94 +313,108 @@ class Server implements ServerInterface{
 		return true;
 	}
 
-	public function sendPacket(Packet $packet, InternetAddress $address) : void{
+	public function sendPacket(Packet $packet, InternetAddress $address) : void
+	{
 		$out = new PacketSerializer(); //TODO: reusable streams to reduce allocations
 		$packet->encode($out);
-		try{
+		try {
 			$this->sendBytes += $this->socket->writePacket($out->getBuffer(), $address->getIp(), $address->getPort());
-		}catch(SocketException $e){
+		} catch (SocketException $e) {
 			$this->logger->debug($e->getMessage());
 		}
 	}
 
-	public function getEventListener() : ServerEventListener{
+	public function getEventListener() : ServerEventListener
+	{
 		return $this->eventListener;
 	}
 
-	public function sendEncapsulated(int $sessionId, EncapsulatedPacket $packet, bool $immediate = false) : void{
+	public function sendEncapsulated(int $sessionId, EncapsulatedPacket $packet, bool $immediate = false) : void
+	{
 		$session = $this->sessions[$sessionId] ?? null;
-		if($session !== null and $session->isConnected()){
+		if ($session !== null && $session->isConnected()) {
 			$session->addEncapsulatedToQueue($packet, $immediate);
 		}
 	}
 
-	public function sendRaw(string $address, int $port, string $payload) : void{
-		try{
+	public function sendRaw(string $address, int $port, string $payload) : void
+	{
+		try {
 			$this->socket->writePacket($payload, $address, $port);
-		}catch(SocketException $e){
+		} catch (SocketException $e) {
 			$this->logger->debug($e->getMessage());
 		}
 	}
 
-	public function closeSession(int $sessionId) : void{
-		if(isset($this->sessions[$sessionId])){
+	public function closeSession(int $sessionId) : void
+	{
+		if (isset($this->sessions[$sessionId])) {
 			$this->sessions[$sessionId]->initiateDisconnect(DisconnectReason::SERVER_DISCONNECT);
 		}
 	}
 
-	public function setName(string $name) : void{
+	public function setName(string $name) : void
+	{
 		$this->name = $name;
 	}
 
-	public function setPortCheck(bool $value) : void{
+	public function setPortCheck(bool $value) : void
+	{
 		$this->portChecking = $value;
 	}
 
-	public function setPacketsPerTickLimit(int $limit) : void{
+	public function setPacketsPerTickLimit(int $limit) : void
+	{
 		$this->packetLimit = $limit;
 	}
 
-	public function blockAddress(string $address, int $timeout = 300) : void{
+	public function blockAddress(string $address, int $timeout = 300) : void
+	{
 		$final = time() + $timeout;
-		if(!isset($this->block[$address]) or $timeout === -1){
-			if($timeout === -1){
+		if (!isset($this->block[$address]) || $timeout === -1) {
+			if ($timeout === -1) {
 				$final = PHP_INT_MAX;
-			}else{
+			} else {
 				$this->logger->notice("Blocked $address for $timeout seconds");
 			}
 			$this->block[$address] = $final;
-		}elseif($this->block[$address] < $final){
+		} elseif ($this->block[$address] < $final) {
 			$this->block[$address] = $final;
 		}
 	}
 
-	public function unblockAddress(string $address) : void{
+	public function unblockAddress(string $address) : void
+	{
 		unset($this->block[$address]);
 		$this->logger->debug("Unblocked $address");
 	}
 
-	public function addRawPacketFilter(string $regex) : void{
+	public function addRawPacketFilter(string $regex) : void
+	{
 		$this->rawPacketFilters[] = $regex;
 	}
 
-	public function getSessionByAddress(InternetAddress $address) : ?ServerSession{
+	public function getSessionByAddress(InternetAddress $address) : ?ServerSession
+	{
 		return $this->sessionsByAddress[$address->toString()] ?? null;
 	}
 
-	public function sessionExists(InternetAddress $address) : bool{
+	public function sessionExists(InternetAddress $address) : bool
+	{
 		return isset($this->sessionsByAddress[$address->toString()]);
 	}
 
-	public function createSession(InternetAddress $address, int $clientId, int $mtuSize) : ServerSession{
+	public function createSession(InternetAddress $address, int $clientId, int $mtuSize) : ServerSession
+	{
 		$existingSession = $this->sessionsByAddress[$address->toString()] ?? null;
-		if($existingSession !== null){
+		if ($existingSession !== null) {
 			$existingSession->forciblyDisconnect(DisconnectReason::CLIENT_RECONNECT);
 			$this->removeSessionInternal($existingSession);
 		}
 
 		$this->checkSessions();
 
-		while(isset($this->sessions[$this->nextSessionId])){
+		while (isset($this->sessions[$this->nextSessionId])) {
 			$this->nextSessionId++;
 			$this->nextSessionId &= 0x7fffffff; //we don't expect more than 2 billion simultaneous connections, and this fits in 4 bytes
 		}
@@ -415,21 +427,24 @@ class Server implements ServerInterface{
 		return $session;
 	}
 
-	private function removeSessionInternal(ServerSession $session) : void{
+	private function removeSessionInternal(ServerSession $session) : void
+	{
 		unset($this->sessionsByAddress[$session->getAddress()->toString()], $this->sessions[$session->getInternalId()]);
 	}
 
-	public function openSession(ServerSession $session) : void{
+	public function openSession(ServerSession $session) : void
+	{
 		$address = $session->getAddress();
 		$this->eventListener->onClientConnect($session->getInternalId(), $address->getIp(), $address->getPort(), $session->getID());
 	}
 
-	private function checkSessions() : void{
-		if(count($this->sessions) > 4096){
-			foreach($this->sessions as $sessionId => $session){
-				if($session->isTemporary()){
+	private function checkSessions() : void
+	{
+		if (count($this->sessions) > 4096) {
+			foreach ($this->sessions as $sessionId => $session) {
+				if ($session->isTemporary()) {
 					$this->removeSessionInternal($session);
-					if(count($this->sessions) <= 4096){
+					if (count($this->sessions) <= 4096) {
 						break;
 					}
 				}
@@ -437,11 +452,13 @@ class Server implements ServerInterface{
 		}
 	}
 
-	public function getName() : string{
+	public function getName() : string
+	{
 		return $this->name;
 	}
 
-	public function getID() : int{
+	public function getID() : int
+	{
 		return $this->serverId;
 	}
 }

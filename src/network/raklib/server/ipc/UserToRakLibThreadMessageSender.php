@@ -1,41 +1,41 @@
 <?php
 
 /*
- * RakLib network library
  *
+ * This file part of WatermossMC.
  *
- * This project is not affiliated with Jenkins Software LLC nor RakNet.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibserver\ipc;
+namespace watermossmc\network\raklib\server\ipc;
 
+use watermossmc\network\raklib\protocol\EncapsulatedPacket;
+use watermossmc\network\raklib\protocol\PacketReliability;
+use watermossmc\network\raklib\server\ipc\UserToRakLibThreadMessageProtocol as ITCProtocol;
+use watermossmc\network\raklib\server\ServerInterface;
 use watermossmc\utils\Binary;
-use watermossmc
-etworkaklibprotocol\EncapsulatedPacket;
-use watermossmc
-etworkaklibprotocol\PacketReliability;
-use watermossmc
-etworkaklibserver\ipc\UserToRakLibThreadMessageProtocol as ITCProtocol;
-use watermossmc
-etworkaklibserver\ServerInterface;
+
 use function chr;
 use function strlen;
 
-class UserToRakLibThreadMessageSender implements ServerInterface{
+class UserToRakLibThreadMessageSender implements ServerInterface
+{
 	public function __construct(
 		private InterThreadChannelWriter $channel
-	){}
+	) {
+	}
 
-	public function sendEncapsulated(int $sessionId, EncapsulatedPacket $packet, bool $immediate = false) : void{
+	public function sendEncapsulated(int $sessionId, EncapsulatedPacket $packet, bool $immediate = false) : void
+	{
 		$flags =
 			($immediate ? ITCProtocol::ENCAPSULATED_FLAG_IMMEDIATE : 0) |
 			($packet->identifierACK !== null ? ITCProtocol::ENCAPSULATED_FLAG_NEED_ACK : 0);
@@ -50,39 +50,47 @@ class UserToRakLibThreadMessageSender implements ServerInterface{
 		$this->channel->write($buffer);
 	}
 
-	public function sendRaw(string $address, int $port, string $payload) : void{
+	public function sendRaw(string $address, int $port, string $payload) : void
+	{
 		$buffer = chr(ITCProtocol::PACKET_RAW) . chr(strlen($address)) . $address . Binary::writeShort($port) . $payload;
 		$this->channel->write($buffer);
 	}
 
-	public function closeSession(int $sessionId) : void{
+	public function closeSession(int $sessionId) : void
+	{
 		$buffer = chr(ITCProtocol::PACKET_CLOSE_SESSION) . Binary::writeInt($sessionId);
 		$this->channel->write($buffer);
 	}
 
-	public function setName(string $name) : void{
+	public function setName(string $name) : void
+	{
 		$this->channel->write(chr(ITCProtocol::PACKET_SET_NAME) . $name);
 	}
 
-	public function setPortCheck(bool $value) : void{
+	public function setPortCheck(bool $value) : void
+	{
 		$this->channel->write(chr($value ? ITCProtocol::PACKET_ENABLE_PORT_CHECK : ITCProtocol::PACKET_DISABLE_PORT_CHECK));
 	}
 
-	public function setPacketsPerTickLimit(int $limit) : void{
+	public function setPacketsPerTickLimit(int $limit) : void
+	{
 		$this->channel->write(chr(ITCProtocol::PACKET_SET_PACKETS_PER_TICK_LIMIT) . Binary::writeLong($limit));
 	}
 
-	public function blockAddress(string $address, int $timeout) : void{
+	public function blockAddress(string $address, int $timeout) : void
+	{
 		$buffer = chr(ITCProtocol::PACKET_BLOCK_ADDRESS) . chr(strlen($address)) . $address . Binary::writeInt($timeout);
 		$this->channel->write($buffer);
 	}
 
-	public function unblockAddress(string $address) : void{
+	public function unblockAddress(string $address) : void
+	{
 		$buffer = chr(ITCProtocol::PACKET_UNBLOCK_ADDRESS) . chr(strlen($address)) . $address;
 		$this->channel->write($buffer);
 	}
 
-	public function addRawPacketFilter(string $regex) : void{
+	public function addRawPacketFilter(string $regex) : void
+	{
 		$this->channel->write(chr(ITCProtocol::PACKET_RAW_FILTER) . $regex);
 	}
 }

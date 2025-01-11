@@ -1,40 +1,44 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibprotocol;
+namespace watermossmc\network\raklib\protocol;
 
-use watermossmc
-etworkaklibRakLib;
+use watermossmc\network\raklib\RakLib;
+
 use function str_repeat;
 use function strlen;
 
-class OpenConnectionRequest1 extends OfflineMessage{
+class OpenConnectionRequest1 extends OfflineMessage
+{
 	public static $ID = MessageIdentifiers::ID_OPEN_CONNECTION_REQUEST_1;
 
 	public int $protocol = RakLib::DEFAULT_PROTOCOL_VERSION;
 	public int $mtuSize;
 
-	protected function encodePayload(PacketSerializer $out) : void{
+	protected function encodePayload(PacketSerializer $out) : void
+	{
 		$this->writeMagic($out);
 		$out->putByte($this->protocol);
 		$out->put(str_repeat("\x00", $this->mtuSize - strlen($out->getBuffer())));
 	}
 
-	protected function decodePayload(PacketSerializer $in) : void{
+	protected function decodePayload(PacketSerializer $in) : void
+	{
 		$this->readMagic($in);
 		$this->protocol = $in->getByte();
 		$this->mtuSize = strlen($in->getBuffer());

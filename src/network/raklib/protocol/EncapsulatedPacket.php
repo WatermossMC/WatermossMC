@@ -1,30 +1,33 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibprotocol;
+namespace watermossmc\network\raklib\protocol;
 
 use watermossmc\utils\Binary;
 use watermossmc\utils\BinaryDataException;
 use watermossmc\utils\BinaryStream;
+
 use function ceil;
 use function chr;
 use function strlen;
 
-class EncapsulatedPacket{
+class EncapsulatedPacket
+{
 	private const RELIABILITY_SHIFT = 5;
 	private const RELIABILITY_FLAGS = 0b111 << self::RELIABILITY_SHIFT;
 
@@ -44,7 +47,8 @@ class EncapsulatedPacket{
 	/**
 	 * @throws BinaryDataException
 	 */
-	public static function fromBinary(BinaryStream $stream) : EncapsulatedPacket{
+	public static function fromBinary(BinaryStream $stream) : EncapsulatedPacket
+	{
 		$packet = new EncapsulatedPacket();
 
 		$flags = $stream->getByte();
@@ -52,24 +56,24 @@ class EncapsulatedPacket{
 		$hasSplit = ($flags & self::SPLIT_FLAG) !== 0;
 
 		$length = (int) ceil($stream->getShort() / 8);
-		if($length === 0){
+		if ($length === 0) {
 			throw new BinaryDataException("Encapsulated payload length cannot be zero");
 		}
 
-		if(PacketReliability::isReliable($reliability)){
+		if (PacketReliability::isReliable($reliability)) {
 			$packet->messageIndex = $stream->getLTriad();
 		}
 
-		if(PacketReliability::isSequenced($reliability)){
+		if (PacketReliability::isSequenced($reliability)) {
 			$packet->sequenceIndex = $stream->getLTriad();
 		}
 
-		if(PacketReliability::isSequencedOrOrdered($reliability)){
+		if (PacketReliability::isSequencedOrOrdered($reliability)) {
 			$packet->orderIndex = $stream->getLTriad();
 			$packet->orderChannel = $stream->getByte();
 		}
 
-		if($hasSplit){
+		if ($hasSplit) {
 			$splitCount = $stream->getInt();
 			$splitID = $stream->getShort();
 			$splitIndex = $stream->getInt();
@@ -80,7 +84,8 @@ class EncapsulatedPacket{
 		return $packet;
 	}
 
-	public function toBinary() : string{
+	public function toBinary() : string
+	{
 		return
 			chr(($this->reliability << self::RELIABILITY_SHIFT) | ($this->splitInfo !== null ? self::SPLIT_FLAG : 0)) .
 			Binary::writeShort(strlen($this->buffer) << 3) .
@@ -94,7 +99,8 @@ class EncapsulatedPacket{
 	/**
 	 * @phpstan-return int<3, 23>
 	 */
-	public function getHeaderLength() : int{
+	public function getHeaderLength() : int
+	{
 		return
 			1 + //reliability
 			2 + //length
@@ -104,11 +110,13 @@ class EncapsulatedPacket{
 			($this->splitInfo !== null ? self::SPLIT_INFO_LENGTH : 0);
 	}
 
-	public function getTotalLength() : int{
+	public function getTotalLength() : int
+	{
 		return $this->getHeaderLength() + strlen($this->buffer);
 	}
 
-	public function __toString() : string{
+	public function __toString() : string
+	{
 		return $this->toBinary();
 	}
 }

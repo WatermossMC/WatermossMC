@@ -1,43 +1,37 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibserver;
+namespace watermossmc\network\raklib\server;
 
-use watermossmc
-etworkaklibgeneric\Session;
-use watermossmc
-etworkaklibprotocol\ConnectionRequest;
-use watermossmc
-etworkaklibprotocol\ConnectionRequestAccepted;
-use watermossmc
-etworkaklibprotocol\MessageIdentifiers;
-use watermossmc
-etworkaklibprotocol\NewIncomingConnection;
-use watermossmc
-etworkaklibprotocol\Packet;
-use watermossmc
-etworkaklibprotocol\PacketReliability;
-use watermossmc
-etworkaklibprotocol\PacketSerializer;
-use watermossmc
-etworkaklibutils\InternetAddress;
+use watermossmc\network\raklib\generic\Session;
+use watermossmc\network\raklib\protocol\ConnectionRequest;
+use watermossmc\network\raklib\protocol\ConnectionRequestAccepted;
+use watermossmc\network\raklib\protocol\MessageIdentifiers;
+use watermossmc\network\raklib\protocol\NewIncomingConnection;
+use watermossmc\network\raklib\protocol\Packet;
+use watermossmc\network\raklib\protocol\PacketReliability;
+use watermossmc\network\raklib\protocol\PacketSerializer;
+use watermossmc\network\raklib\utils\InternetAddress;
+
 use function ord;
 
-class ServerSession extends Session{
+class ServerSession extends Session
+{
 	public const DEFAULT_MAX_SPLIT_PART_COUNT = 128;
 	public const DEFAULT_MAX_CONCURRENT_SPLIT_COUNT = 4;
 
@@ -53,7 +47,7 @@ class ServerSession extends Session{
 		int $internalId,
 		int $recvMaxSplitParts = self::DEFAULT_MAX_SPLIT_PART_COUNT,
 		int $recvMaxConcurrentSplits = self::DEFAULT_MAX_CONCURRENT_SPLIT_COUNT
-	){
+	) {
 		$this->server = $server;
 		$this->internalId = $internalId;
 		parent::__construct($logger, $address, $clientId, $mtuSize, $recvMaxSplitParts, $recvMaxConcurrentSplits);
@@ -62,25 +56,30 @@ class ServerSession extends Session{
 	/**
 	 * Returns an ID used to identify this session across threads.
 	 */
-	public function getInternalId() : int{
+	public function getInternalId() : int
+	{
 		return $this->internalId;
 	}
 
-	final protected function sendPacket(Packet $packet) : void{
+	final protected function sendPacket(Packet $packet) : void
+	{
 		$this->server->sendPacket($packet, $this->address);
 	}
 
-	protected function onPacketAck(int $identifierACK) : void{
+	protected function onPacketAck(int $identifierACK) : void
+	{
 		$this->server->getEventListener()->onPacketAck($this->internalId, $identifierACK);
 	}
 
-	protected function onDisconnect(int $reason) : void{
+	protected function onDisconnect(int $reason) : void
+	{
 		$this->server->getEventListener()->onClientDisconnect($this->internalId, $reason);
 	}
 
-	final protected function handleRakNetConnectionPacket(string $packet) : void{
+	final protected function handleRakNetConnectionPacket(string $packet) : void
+	{
 		$id = ord($packet[0]);
-		if($id === MessageIdentifiers::ID_CONNECTION_REQUEST){
+		if ($id === MessageIdentifiers::ID_CONNECTION_REQUEST) {
 			$dataPacket = new ConnectionRequest();
 			$dataPacket->decode(new PacketSerializer($packet));
 			$this->queueConnectedPacket(ConnectionRequestAccepted::create(
@@ -89,11 +88,11 @@ class ServerSession extends Session{
 				$dataPacket->sendPingTime,
 				$this->getRakNetTimeMS()
 			), PacketReliability::UNRELIABLE, 0, true);
-		}elseif($id === MessageIdentifiers::ID_NEW_INCOMING_CONNECTION){
+		} elseif ($id === MessageIdentifiers::ID_NEW_INCOMING_CONNECTION) {
 			$dataPacket = new NewIncomingConnection();
 			$dataPacket->decode(new PacketSerializer($packet));
 
-			if($dataPacket->address->getPort() === $this->server->getPort() or !$this->server->portChecking){
+			if ($dataPacket->address->getPort() === $this->server->getPort() || !$this->server->portChecking) {
 				$this->state = self::STATE_CONNECTED; //FINALLY!
 				$this->server->openSession($this);
 
@@ -103,11 +102,13 @@ class ServerSession extends Session{
 		}
 	}
 
-	protected function onPacketReceive(string $packet) : void{
+	protected function onPacketReceive(string $packet) : void
+	{
 		$this->server->getEventListener()->onPacketReceive($this->internalId, $packet);
 	}
 
-	protected function onPingMeasure(int $pingMS) : void{
+	protected function onPingMeasure(int $pingMS) : void
+	{
 		$this->server->getEventListener()->onPingMeasure($this->internalId, $pingMS);
 	}
 }

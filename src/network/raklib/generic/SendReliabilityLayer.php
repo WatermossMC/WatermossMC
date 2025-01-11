@@ -1,34 +1,30 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibgeneric;
+namespace watermossmc\network\raklib\generic;
 
-use watermossmc
-etworkaklibprotocol\ACK;
-use watermossmc
-etworkaklibprotocol\Datagram;
-use watermossmc
-etworkaklibprotocol\EncapsulatedPacket;
-use watermossmc
-etworkaklibprotocol\NACK;
-use watermossmc
-etworkaklibprotocol\PacketReliability;
-use watermossmc
-etworkaklibprotocol\SplitPacketInfo;
+use watermossmc\network\raklib\protocol\ACK;
+use watermossmc\network\raklib\protocol\Datagram;
+use watermossmc\network\raklib\protocol\EncapsulatedPacket;
+use watermossmc\network\raklib\protocol\NACK;
+use watermossmc\network\raklib\protocol\PacketReliability;
+use watermossmc\network\raklib\protocol\SplitPacketInfo;
+
 use function array_fill;
 use function array_push;
 use function assert;
@@ -37,7 +33,8 @@ use function microtime;
 use function str_split;
 use function strlen;
 
-final class SendReliabilityLayer{
+final class SendReliabilityLayer
+{
 	private const DATAGRAM_MTU_OVERHEAD = 36 + Datagram::HEADER_SIZE; //IP header (20 bytes) + UDP header (8 bytes) + RakNet weird (8 bytes) = 36
 	private const MIN_POSSIBLE_PACKET_SIZE_LIMIT = Session::MIN_MTU_SIZE - self::DATAGRAM_MTU_OVERHEAD;
 	/**
@@ -93,7 +90,7 @@ final class SendReliabilityLayer{
 		private \Closure $sendDatagramCallback,
 		private \Closure $onACK,
 		private int $reliableWindowSize = 512,
-	){
+	) {
 		$this->sendOrderedIndex = array_fill(0, PacketReliability::MAX_ORDER_CHANNELS, 0);
 		$this->sendSequencedIndex = array_fill(0, PacketReliability::MAX_ORDER_CHANNELS, 0);
 
@@ -106,36 +103,39 @@ final class SendReliabilityLayer{
 	/**
 	 * @param EncapsulatedPacket[] $packets
 	 */
-	private function sendDatagram(array $packets) : void{
+	private function sendDatagram(array $packets) : void
+	{
 		$datagram = new Datagram();
 		$datagram->seqNumber = $this->sendSeqNumber++;
 		$datagram->packets = $packets;
 		($this->sendDatagramCallback)($datagram);
 
 		$resendable = [];
-		foreach($datagram->packets as $pk){
-			if(PacketReliability::isReliable($pk->reliability)){
+		foreach ($datagram->packets as $pk) {
+			if (PacketReliability::isReliable($pk->reliability)) {
 				$resendable[] = $pk;
 			}
 		}
-		if(count($resendable) !== 0){
+		if (count($resendable) !== 0) {
 			$this->reliableCache[$datagram->seqNumber] = new ReliableCacheEntry($resendable);
 		}
 	}
 
-	public function sendQueue() : void{
-		if(count($this->sendQueue) > 0){
+	public function sendQueue() : void
+	{
+		if (count($this->sendQueue) > 0) {
 			$this->sendDatagram($this->sendQueue);
 			$this->sendQueue = [];
 		}
 	}
 
-	private function addToQueue(EncapsulatedPacket $pk, bool $immediate) : void{
-		if(PacketReliability::isReliable($pk->reliability)){
-			if($pk->messageIndex === null || $pk->messageIndex < $this->reliableWindowStart){
+	private function addToQueue(EncapsulatedPacket $pk, bool $immediate) : void
+	{
+		if (PacketReliability::isReliable($pk->reliability)) {
+			if ($pk->messageIndex === null || $pk->messageIndex < $this->reliableWindowStart) {
 				throw new \InvalidArgumentException("Cannot send a reliable packet with message index less than the window start ($pk->messageIndex < $this->reliableWindowStart)");
 			}
-			if($pk->messageIndex >= $this->reliableWindowEnd){
+			if ($pk->messageIndex >= $this->reliableWindowEnd) {
 				//If we send this now, the client's reliable window may overflow, causing the packet to need redelivery
 				$this->reliableBacklog[$pk->messageIndex] = $pk;
 				return;
@@ -144,59 +144,60 @@ final class SendReliabilityLayer{
 			$this->reliableWindow[$pk->messageIndex] = false;
 		}
 
-		if($pk->identifierACK !== null and $pk->messageIndex !== null){
+		if ($pk->identifierACK !== null && $pk->messageIndex !== null) {
 			$this->needACK[$pk->identifierACK][$pk->messageIndex] = $pk->messageIndex;
 		}
 
 		$length = 0;
-		foreach($this->sendQueue as $queued){
+		foreach ($this->sendQueue as $queued) {
 			$length += $queued->getTotalLength();
 		}
 
-		if($length + $pk->getTotalLength() > $this->maxDatagramPayloadSize){
+		if ($length + $pk->getTotalLength() > $this->maxDatagramPayloadSize) {
 			$this->sendQueue();
 		}
 
-		if($pk->identifierACK !== null){
+		if ($pk->identifierACK !== null) {
 			$this->sendQueue[] = clone $pk;
 			$pk->identifierACK = null;
-		}else{
+		} else {
 			$this->sendQueue[] = $pk;
 		}
 
-		if($immediate){
+		if ($immediate) {
 			// Forces pending sends to go out now, rather than waiting to the next update interval
 			$this->sendQueue();
 		}
 	}
 
-	public function addEncapsulatedToQueue(EncapsulatedPacket $packet, bool $immediate = false) : void{
-		if($packet->identifierACK !== null){
+	public function addEncapsulatedToQueue(EncapsulatedPacket $packet, bool $immediate = false) : void
+	{
+		if ($packet->identifierACK !== null) {
 			$this->needACK[$packet->identifierACK] = [];
 		}
 
-		if(PacketReliability::isOrdered($packet->reliability)){
+		if (PacketReliability::isOrdered($packet->reliability)) {
 			$packet->orderIndex = $this->sendOrderedIndex[$packet->orderChannel]++;
-		}elseif(PacketReliability::isSequenced($packet->reliability)){
+		} elseif (PacketReliability::isSequenced($packet->reliability)) {
 			$packet->orderIndex = $this->sendOrderedIndex[$packet->orderChannel]; //sequenced packets don't increment the ordered channel index
 			$packet->sequenceIndex = $this->sendSequencedIndex[$packet->orderChannel]++;
 		}
 
 		$maxBufferSize = $this->maxDatagramPayloadSize - $packet->getHeaderLength();
 
-		if(strlen($packet->buffer) > $maxBufferSize){
+		if (strlen($packet->buffer) > $maxBufferSize) {
 			$buffers = str_split($packet->buffer, $maxBufferSize - EncapsulatedPacket::SPLIT_INFO_LENGTH);
 			$bufferCount = count($buffers);
 
 			$splitID = ++$this->splitID % 65536;
-			foreach($buffers as $count => $buffer){
+			foreach ($buffers as $count => $buffer) {
 				$pk = new EncapsulatedPacket();
 				$pk->splitInfo = new SplitPacketInfo($splitID, $count, $bufferCount);
 				$pk->reliability = $packet->reliability;
 				$pk->buffer = $buffer;
 				$pk->identifierACK = $packet->identifierACK;
 
-				if(PacketReliability::isReliable($pk->reliability)){
+				if (PacketReliability::isReliable($pk->reliability)) {
 					$pk->messageIndex = $this->messageIndex++;
 				}
 
@@ -206,36 +207,38 @@ final class SendReliabilityLayer{
 
 				$this->addToQueue($pk, true);
 			}
-		}else{
-			if(PacketReliability::isReliable($packet->reliability)){
+		} else {
+			if (PacketReliability::isReliable($packet->reliability)) {
 				$packet->messageIndex = $this->messageIndex++;
 			}
 			$this->addToQueue($packet, $immediate);
 		}
 	}
 
-	private function updateReliableWindow() : void{
-		while(
+	private function updateReliableWindow() : void
+	{
+		while (
 			isset($this->reliableWindow[$this->reliableWindowStart]) && //this messageIndex has been used
 			$this->reliableWindow[$this->reliableWindowStart] === true //we received an ack for this messageIndex
-		){
+		) {
 			unset($this->reliableWindow[$this->reliableWindowStart]);
 			$this->reliableWindowStart++;
 			$this->reliableWindowEnd++;
 		}
 	}
 
-	public function onACK(ACK $packet) : void{
-		foreach($packet->packets as $seq){
-			if(isset($this->reliableCache[$seq])){
-				foreach($this->reliableCache[$seq]->getPackets() as $pk){
+	public function onACK(ACK $packet) : void
+	{
+		foreach ($packet->packets as $seq) {
+			if (isset($this->reliableCache[$seq])) {
+				foreach ($this->reliableCache[$seq]->getPackets() as $pk) {
 					assert($pk->messageIndex !== null && $pk->messageIndex >= $this->reliableWindowStart && $pk->messageIndex < $this->reliableWindowEnd);
 					$this->reliableWindow[$pk->messageIndex] = true;
 					$this->updateReliableWindow();
 
-					if($pk->identifierACK !== null){
+					if ($pk->identifierACK !== null) {
 						unset($this->needACK[$pk->identifierACK][$pk->messageIndex]);
-						if(count($this->needACK[$pk->identifierACK]) === 0){
+						if (count($this->needACK[$pk->identifierACK]) === 0) {
 							unset($this->needACK[$pk->identifierACK]);
 							($this->onACK)($pk->identifierACK);
 						}
@@ -246,10 +249,11 @@ final class SendReliabilityLayer{
 		}
 	}
 
-	public function onNACK(NACK $packet) : void{
-		foreach($packet->packets as $seq){
-			if(isset($this->reliableCache[$seq])){
-				foreach($this->reliableCache[$seq]->getPackets() as $pk){
+	public function onNACK(NACK $packet) : void
+	{
+		foreach ($packet->packets as $seq) {
+			if (isset($this->reliableCache[$seq])) {
+				foreach ($this->reliableCache[$seq]->getPackets() as $pk) {
 					$this->resendQueue[] = $pk;
 				}
 				unset($this->reliableCache[$seq]);
@@ -257,39 +261,41 @@ final class SendReliabilityLayer{
 		}
 	}
 
-	public function needsUpdate() : bool{
+	public function needsUpdate() : bool
+	{
 		return (
-			count($this->sendQueue) !== 0 or
-			count($this->reliableBacklog) !== 0 or
-			count($this->resendQueue) !== 0 or
+			count($this->sendQueue) !== 0 ||
+			count($this->reliableBacklog) !== 0 ||
+			count($this->resendQueue) !== 0 ||
 			count($this->reliableCache) !== 0
 		);
 	}
 
-	public function update() : void{
+	public function update() : void
+	{
 		$retransmitOlderThan = microtime(true) - self::UNACKED_RETRANSMIT_DELAY;
-		foreach($this->reliableCache as $seq => $pk){
-			if($pk->getTimestamp() < $retransmitOlderThan){
+		foreach ($this->reliableCache as $seq => $pk) {
+			if ($pk->getTimestamp() < $retransmitOlderThan) {
 				//behave as if a NACK was received
 				array_push($this->resendQueue, ...$pk->getPackets());
 				unset($this->reliableCache[$seq]);
-			}else{
+			} else {
 				break;
 			}
 		}
 
-		if(count($this->resendQueue) > 0){
-			foreach($this->resendQueue as $pk){
+		if (count($this->resendQueue) > 0) {
+			foreach ($this->resendQueue as $pk) {
 				//resends should always be within the reliable window
 				$this->addToQueue($pk, false);
 			}
 			$this->resendQueue = [];
 		}
 
-		if(count($this->reliableBacklog) > 0){
-			foreach($this->reliableBacklog as $k => $pk){
+		if (count($this->reliableBacklog) > 0) {
+			foreach ($this->reliableBacklog as $k => $pk) {
 				assert($pk->messageIndex !== null && $pk->messageIndex >= $this->reliableWindowStart);
-				if($pk->messageIndex >= $this->reliableWindowEnd){
+				if ($pk->messageIndex >= $this->reliableWindowEnd) {
 					//we can't send this packet yet, the client's reliable window will drop it
 					break;
 				}

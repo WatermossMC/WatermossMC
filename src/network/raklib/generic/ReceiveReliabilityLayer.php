@@ -1,40 +1,38 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibgeneric;
+namespace watermossmc\network\raklib\generic;
 
-use watermossmc
-etworkaklibprotocol\ACK;
-use watermossmc
-etworkaklibprotocol\AcknowledgePacket;
-use watermossmc
-etworkaklibprotocol\Datagram;
-use watermossmc
-etworkaklibprotocol\EncapsulatedPacket;
-use watermossmc
-etworkaklibprotocol\NACK;
-use watermossmc
-etworkaklibprotocol\PacketReliability;
+use watermossmc\network\raklib\protocol\ACK;
+use watermossmc\network\raklib\protocol\AcknowledgePacket;
+use watermossmc\network\raklib\protocol\Datagram;
+use watermossmc\network\raklib\protocol\EncapsulatedPacket;
+use watermossmc\network\raklib\protocol\NACK;
+use watermossmc\network\raklib\protocol\PacketReliability;
+
 use function array_fill;
 use function assert;
 use function count;
 
-final class ReceiveReliabilityLayer{
+use const PHP_INT_MAX;
 
+final class ReceiveReliabilityLayer
+{
 	public static int $WINDOW_SIZE = 2048;
 
 	private int $windowStart;
@@ -72,7 +70,7 @@ final class ReceiveReliabilityLayer{
 		private \Closure $sendPacket,
 		private int $maxSplitPacketPartCount = PHP_INT_MAX,
 		private int $maxConcurrentSplitPackets = PHP_INT_MAX
-	){
+	) {
 		$this->windowStart = 0;
 		$this->windowEnd = self::$WINDOW_SIZE;
 
@@ -85,7 +83,8 @@ final class ReceiveReliabilityLayer{
 		$this->receiveOrderedPackets = array_fill(0, PacketReliability::MAX_ORDER_CHANNELS, []);
 	}
 
-	private function handleEncapsulatedPacketRoute(EncapsulatedPacket $pk) : void{
+	private function handleEncapsulatedPacketRoute(EncapsulatedPacket $pk) : void
+	{
 		($this->onRecv)($pk);
 	}
 
@@ -100,34 +99,35 @@ final class ReceiveReliabilityLayer{
 	 * @return null|EncapsulatedPacket Reassembled packet if we have all the parts, null otherwise.
 	 * @throws PacketHandlingException if there was a problem with processing the split packet.
 	 */
-	private function handleSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket{
-		if($packet->splitInfo === null){
+	private function handleSplit(EncapsulatedPacket $packet) : ?EncapsulatedPacket
+	{
+		if ($packet->splitInfo === null) {
 			return $packet;
 		}
 		$totalParts = $packet->splitInfo->getTotalPartCount();
 		$partIndex = $packet->splitInfo->getPartIndex();
-		if($totalParts >= $this->maxSplitPacketPartCount || $totalParts < 0){
+		if ($totalParts >= $this->maxSplitPacketPartCount || $totalParts < 0) {
 			throw new PacketHandlingException("Invalid split packet part count ($totalParts)", DisconnectReason::SPLIT_PACKET_TOO_LARGE);
 		}
-		if($partIndex >= $totalParts || $partIndex < 0){
+		if ($partIndex >= $totalParts || $partIndex < 0) {
 			throw new PacketHandlingException("Invalid split packet part index (part index $partIndex, part count $totalParts)", DisconnectReason::SPLIT_PACKET_INVALID_PART_INDEX);
 		}
 
 		$splitId = $packet->splitInfo->getId();
-		if(!isset($this->splitPackets[$splitId])){
-			if(count($this->splitPackets) >= $this->maxConcurrentSplitPackets){
+		if (!isset($this->splitPackets[$splitId])) {
+			if (count($this->splitPackets) >= $this->maxConcurrentSplitPackets) {
 				throw new PacketHandlingException("Exceeded concurrent split packet reassembly limit of $this->maxConcurrentSplitPackets", DisconnectReason::SPLIT_PACKET_TOO_MANY_CONCURRENT);
 			}
 			$this->splitPackets[$splitId] = array_fill(0, $totalParts, null);
-		}elseif(count($this->splitPackets[$splitId]) !== $totalParts){
+		} elseif (count($this->splitPackets[$splitId]) !== $totalParts) {
 			throw new PacketHandlingException("Wrong split count $totalParts for split packet $splitId, expected " . count($this->splitPackets[$splitId]), DisconnectReason::SPLIT_PACKET_INCONSISTENT_HEADER);
 		}
 
 		$this->splitPackets[$splitId][$partIndex] = $packet;
 
 		$parts = [];
-		foreach($this->splitPackets[$splitId] as $splitIndex => $part){
-			if($part === null){
+		foreach ($this->splitPackets[$splitId] as $splitIndex => $part) {
+			if ($part === null) {
 				return null;
 			}
 			$parts[$splitIndex] = $part;
@@ -143,7 +143,7 @@ final class ReceiveReliabilityLayer{
 		$pk->orderIndex = $packet->orderIndex;
 		$pk->orderChannel = $packet->orderChannel;
 
-		for($i = 0; $i < $totalParts; ++$i){
+		for ($i = 0; $i < $totalParts; ++$i) {
 			$pk->buffer .= $parts[$i]->buffer;
 		}
 
@@ -155,43 +155,44 @@ final class ReceiveReliabilityLayer{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	private function handleEncapsulatedPacket(EncapsulatedPacket $packet) : void{
-		if($packet->messageIndex !== null){
+	private function handleEncapsulatedPacket(EncapsulatedPacket $packet) : void
+	{
+		if ($packet->messageIndex !== null) {
 			//check for duplicates or out of range
-			if($packet->messageIndex < $this->reliableWindowStart or $packet->messageIndex > $this->reliableWindowEnd or isset($this->reliableWindow[$packet->messageIndex])){
+			if ($packet->messageIndex < $this->reliableWindowStart || $packet->messageIndex > $this->reliableWindowEnd || isset($this->reliableWindow[$packet->messageIndex])) {
 				return;
 			}
 
 			$this->reliableWindow[$packet->messageIndex] = true;
 
-			if($packet->messageIndex === $this->reliableWindowStart){
-				for(; isset($this->reliableWindow[$this->reliableWindowStart]); ++$this->reliableWindowStart){
+			if ($packet->messageIndex === $this->reliableWindowStart) {
+				for (; isset($this->reliableWindow[$this->reliableWindowStart]); ++$this->reliableWindowStart) {
 					unset($this->reliableWindow[$this->reliableWindowStart]);
 					++$this->reliableWindowEnd;
 				}
 			}
 		}
 
-		if(($packet = $this->handleSplit($packet)) === null){
+		if (($packet = $this->handleSplit($packet)) === null) {
 			return;
 		}
 
-		if(PacketReliability::isSequencedOrOrdered($packet->reliability) and ($packet->orderChannel < 0 or $packet->orderChannel >= PacketReliability::MAX_ORDER_CHANNELS)){
+		if (PacketReliability::isSequencedOrOrdered($packet->reliability) && ($packet->orderChannel < 0 || $packet->orderChannel >= PacketReliability::MAX_ORDER_CHANNELS)) {
 			//TODO: this should result in peer banning
 			$this->logger->debug("Invalid packet, bad order channel ($packet->orderChannel)");
 			return;
 		}
 
-		if(PacketReliability::isSequenced($packet->reliability)){
-			if($packet->sequenceIndex < $this->receiveSequencedHighestIndex[$packet->orderChannel] or $packet->orderIndex < $this->receiveOrderedIndex[$packet->orderChannel]){
+		if (PacketReliability::isSequenced($packet->reliability)) {
+			if ($packet->sequenceIndex < $this->receiveSequencedHighestIndex[$packet->orderChannel] || $packet->orderIndex < $this->receiveOrderedIndex[$packet->orderChannel]) {
 				//too old sequenced packet, discard it
 				return;
 			}
 
 			$this->receiveSequencedHighestIndex[$packet->orderChannel] = $packet->sequenceIndex + 1;
 			$this->handleEncapsulatedPacketRoute($packet);
-		}elseif(PacketReliability::isOrdered($packet->reliability)){
-			if($packet->orderIndex === $this->receiveOrderedIndex[$packet->orderChannel]){
+		} elseif (PacketReliability::isOrdered($packet->reliability)) {
+			if ($packet->orderIndex === $this->receiveOrderedIndex[$packet->orderChannel]) {
 				//this is the packet we expected to get next
 				//Any ordered packet resets the sequence index to zero, so that sequenced packets older than this ordered
 				//one get discarded. Sequenced packets also include (but don't increment) the order index, so a sequenced
@@ -201,22 +202,22 @@ final class ReceiveReliabilityLayer{
 
 				$this->handleEncapsulatedPacketRoute($packet);
 				$i = $this->receiveOrderedIndex[$packet->orderChannel];
-				for(; isset($this->receiveOrderedPackets[$packet->orderChannel][$i]); ++$i){
+				for (; isset($this->receiveOrderedPackets[$packet->orderChannel][$i]); ++$i) {
 					$this->handleEncapsulatedPacketRoute($this->receiveOrderedPackets[$packet->orderChannel][$i]);
 					unset($this->receiveOrderedPackets[$packet->orderChannel][$i]);
 				}
 
 				$this->receiveOrderedIndex[$packet->orderChannel] = $i;
-			}elseif($packet->orderIndex > $this->receiveOrderedIndex[$packet->orderChannel]){
-				if(count($this->receiveOrderedPackets[$packet->orderChannel]) >= self::$WINDOW_SIZE){
+			} elseif ($packet->orderIndex > $this->receiveOrderedIndex[$packet->orderChannel]) {
+				if (count($this->receiveOrderedPackets[$packet->orderChannel]) >= self::$WINDOW_SIZE) {
 					//queue overflow for this channel - we should probably disconnect the peer at this point
 					return;
 				}
 				$this->receiveOrderedPackets[$packet->orderChannel][$packet->orderIndex] = $packet;
-			}else{
+			} else {
 				//duplicate/already received packet
 			}
-		}else{
+		} else {
 			//not ordered or sequenced
 			$this->handleEncapsulatedPacketRoute($packet);
 		}
@@ -225,47 +226,49 @@ final class ReceiveReliabilityLayer{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	public function onDatagram(Datagram $packet) : void{
-		if($packet->seqNumber < $this->windowStart or $packet->seqNumber > $this->windowEnd or isset($this->ACKQueue[$packet->seqNumber])){
+	public function onDatagram(Datagram $packet) : void
+	{
+		if ($packet->seqNumber < $this->windowStart || $packet->seqNumber > $this->windowEnd || isset($this->ACKQueue[$packet->seqNumber])) {
 			$this->logger->debug("Received duplicate or out-of-window packet (sequence number $packet->seqNumber, window " . $this->windowStart . "-" . $this->windowEnd . ")");
 			return;
 		}
 
 		unset($this->NACKQueue[$packet->seqNumber]);
 		$this->ACKQueue[$packet->seqNumber] = $packet->seqNumber;
-		if($this->highestSeqNumber < $packet->seqNumber){
+		if ($this->highestSeqNumber < $packet->seqNumber) {
 			$this->highestSeqNumber = $packet->seqNumber;
 		}
 
-		if($packet->seqNumber === $this->windowStart){
+		if ($packet->seqNumber === $this->windowStart) {
 			//got a contiguous packet, shift the receive window
 			//this packet might complete a sequence of out-of-order packets, so we incrementally check the indexes
 			//to see how far to shift the window, and stop as soon as we either find a gap or have an empty window
-			for(; isset($this->ACKQueue[$this->windowStart]); ++$this->windowStart){
+			for (; isset($this->ACKQueue[$this->windowStart]); ++$this->windowStart) {
 				++$this->windowEnd;
 			}
-		}elseif($packet->seqNumber > $this->windowStart){
+		} elseif ($packet->seqNumber > $this->windowStart) {
 			//we got a gap - a later packet arrived before earlier ones did
 			//we add the earlier ones to the NACK queue
 			//if the missing packets arrive before the end of tick, they'll be removed from the NACK queue
-			for($i = $this->windowStart; $i < $packet->seqNumber; ++$i){
-				if(!isset($this->ACKQueue[$i])){
+			for ($i = $this->windowStart; $i < $packet->seqNumber; ++$i) {
+				if (!isset($this->ACKQueue[$i])) {
 					$this->NACKQueue[$i] = $i;
 				}
 			}
-		}else{
+		} else {
 			assert(false, "received packet before window start");
 		}
 
-		foreach($packet->packets as $pk){
+		foreach ($packet->packets as $pk) {
 			$this->handleEncapsulatedPacket($pk);
 		}
 	}
 
-	public function update() : void{
+	public function update() : void
+	{
 		$diff = $this->highestSeqNumber - $this->windowStart + 1;
 		assert($diff >= 0);
-		if($diff > 0){
+		if ($diff > 0) {
 			//Move the receive window to account for packets we either received or are about to NACK
 			//we ignore any sequence numbers that we sent NACKs for, because we expect the client to resend them
 			//when it gets a NACK for it
@@ -274,14 +277,14 @@ final class ReceiveReliabilityLayer{
 			$this->windowEnd += $diff;
 		}
 
-		if(count($this->ACKQueue) > 0){
+		if (count($this->ACKQueue) > 0) {
 			$pk = new ACK();
 			$pk->packets = $this->ACKQueue;
 			($this->sendPacket)($pk);
 			$this->ACKQueue = [];
 		}
 
-		if(count($this->NACKQueue) > 0){
+		if (count($this->NACKQueue) > 0) {
 			$pk = new NACK();
 			$pk->packets = $this->NACKQueue;
 			($this->sendPacket)($pk);
@@ -289,7 +292,8 @@ final class ReceiveReliabilityLayer{
 		}
 	}
 
-	public function needsUpdate() : bool{
-		return count($this->ACKQueue) !== 0 or count($this->NACKQueue) !== 0;
+	public function needsUpdate() : bool
+	{
+		return count($this->ACKQueue) !== 0 || count($this->NACKQueue) !== 0;
 	}
 }

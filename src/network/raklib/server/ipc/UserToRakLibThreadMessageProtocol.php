@@ -1,30 +1,31 @@
 <?php
 
 /*
- * RakLib network library
  *
+ * This file part of WatermossMC.
  *
- * This project is not affiliated with Jenkins Software LLC nor RakNet.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibserver\ipc;
+namespace watermossmc\network\raklib\server\ipc;
 
 /**
  * @internal
  * This interface contains descriptions of ITC packets used to transmit data into RakLib from the main thread.
  */
-final class UserToRakLibThreadMessageProtocol{
-
-	private function __construct(){
+final class UserToRakLibThreadMessageProtocol
+{
+	private function __construct()
+	{
 		//NOOP
 	}
 

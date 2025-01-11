@@ -1,40 +1,42 @@
 <?php
 
 /*
- * RakLib network library
  *
+ * This file part of WatermossMC.
  *
- * This project is not affiliated with Jenkins Software LLC nor RakNet.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibserver\ipc;
+namespace watermossmc\network\raklib\server\ipc;
 
+use watermossmc\network\raklib\server\ipc\RakLibToUserThreadMessageProtocol as ITCProtocol;
+use watermossmc\network\raklib\server\ServerEventListener;
 use watermossmc\utils\Binary;
-use watermossmc
-etworkaklibserver\ipc\RakLibToUserThreadMessageProtocol as ITCProtocol;
-use watermossmc
-etworkaklibserver\ServerEventListener;
+
 use function chr;
 use function inet_pton;
 use function strlen;
 
-final class RakLibToUserThreadMessageSender implements ServerEventListener{
+final class RakLibToUserThreadMessageSender implements ServerEventListener
+{
 	public function __construct(
 		private InterThreadChannelWriter $channel
-	){}
+	) {
+	}
 
-	public function onClientConnect(int $sessionId, string $address, int $port, int $clientId) : void{
+	public function onClientConnect(int $sessionId, string $address, int $port, int $clientId) : void
+	{
 		$rawAddr = inet_pton($address);
-		if($rawAddr === false){
+		if ($rawAddr === false) {
 			throw new \InvalidArgumentException("Invalid IP address");
 		}
 		$this->channel->write(
@@ -46,7 +48,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onClientDisconnect(int $sessionId, int $reason) : void{
+	public function onClientDisconnect(int $sessionId, int $reason) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_CLOSE_SESSION) .
 			Binary::writeInt($sessionId) .
@@ -54,7 +57,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onPacketReceive(int $sessionId, string $packet) : void{
+	public function onPacketReceive(int $sessionId, string $packet) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_ENCAPSULATED) .
 			Binary::writeInt($sessionId) .
@@ -62,7 +66,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onRawPacketReceive(string $address, int $port, string $payload) : void{
+	public function onRawPacketReceive(string $address, int $port, string $payload) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_RAW) .
 			chr(strlen($address)) . $address .
@@ -71,7 +76,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onPacketAck(int $sessionId, int $identifierACK) : void{
+	public function onPacketAck(int $sessionId, int $identifierACK) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_ACK_NOTIFICATION) .
 			Binary::writeInt($sessionId) .
@@ -79,7 +85,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onBandwidthStatsUpdate(int $bytesSentDiff, int $bytesReceivedDiff) : void{
+	public function onBandwidthStatsUpdate(int $bytesSentDiff, int $bytesReceivedDiff) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_REPORT_BANDWIDTH_STATS) .
 			Binary::writeLong($bytesSentDiff) .
@@ -87,7 +94,8 @@ final class RakLibToUserThreadMessageSender implements ServerEventListener{
 		);
 	}
 
-	public function onPingMeasure(int $sessionId, int $pingMS) : void{
+	public function onPingMeasure(int $sessionId, int $pingMS) : void
+	{
 		$this->channel->write(
 			chr(ITCProtocol::PACKET_REPORT_PING) .
 			Binary::writeInt($sessionId) .

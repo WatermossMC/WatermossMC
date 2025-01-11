@@ -2,21 +2,16 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ * This file part of WatermossMC.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
  *
- * @author PocketMine Team
- * @link http://www.watermossmc.net/
- *
- *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
@@ -25,31 +20,25 @@ namespace watermossmc\network\mcpe\raklib;
 
 use pmmp\thread\Thread as NativeThread;
 use pmmp\thread\ThreadSafeArray;
+use watermossmc\network\raklib\generic\SocketException;
+use watermossmc\network\raklib\server\ipc\RakLibToUserThreadMessageSender;
+use watermossmc\network\raklib\server\ipc\UserToRakLibThreadMessageReceiver;
+use watermossmc\network\raklib\server\Server;
+use watermossmc\network\raklib\server\ServerSocket;
+use watermossmc\network\raklib\server\SimpleProtocolAcceptor;
+use watermossmc\network\raklib\utils\ExceptionTraceCleaner;
+use watermossmc\network\raklib\utils\InternetAddress;
 use watermossmc\snooze\SleeperHandlerEntry;
 use watermossmc\thread\log\ThreadSafeLogger;
 use watermossmc\thread\NonThreadSafeValue;
 use watermossmc\thread\Thread;
 use watermossmc\thread\ThreadCrashException;
-use watermossmc
-etworkaklibgeneric\SocketException;
-use watermossmc
-etworkaklibserver\ipc\RakLibToUserThreadMessageSender;
-use watermossmc
-etworkaklibserver\ipc\UserToRakLibThreadMessageReceiver;
-use watermossmc
-etworkaklibserver\Server;
-use watermossmc
-etworkaklibserver\ServerSocket;
-use watermossmc
-etworkaklibserver\SimpleProtocolAcceptor;
-use watermossmc
-etworkaklibutils\ExceptionTraceCleaner;
-use watermossmc
-etworkaklibutils\InternetAddress;
+
 use function gc_enable;
 use function ini_set;
 
-class RakLibServer extends Thread{
+class RakLibServer extends Thread
+{
 	protected bool $ready = false;
 	protected string $mainPath;
 	/** @phpstan-var NonThreadSafeValue<InternetAddress> */
@@ -68,20 +57,21 @@ class RakLibServer extends Thread{
 		protected int $maxMtuSize,
 		protected int $protocolVersion,
 		protected SleeperHandlerEntry $sleeperEntry
-	){
+	) {
 		$this->mainPath = \watermossmc\PATH;
 		$this->address = new NonThreadSafeValue($address);
 	}
 
-	public function startAndWait(int $options = NativeThread::INHERIT_NONE) : void{
+	public function startAndWait(int $options = NativeThread::INHERIT_NONE) : void
+	{
 		$this->start($options);
-		$this->synchronized(function() : void{
-			while(!$this->ready && $this->getCrashInfo() === null){
+		$this->synchronized(function () : void {
+			while (!$this->ready && $this->getCrashInfo() === null) {
 				$this->wait();
 			}
 			$crashInfo = $this->getCrashInfo();
-			if($crashInfo !== null){
-				if($crashInfo->getType() === SocketException::class){
+			if ($crashInfo !== null) {
+				if ($crashInfo->getType() === SocketException::class) {
 					throw new SocketException($crashInfo->getMessage());
 				}
 				throw new ThreadCrashException("RakLib failed to start", $crashInfo);
@@ -89,7 +79,8 @@ class RakLibServer extends Thread{
 		});
 	}
 
-	protected function onRun() : void{
+	protected function onRun() : void
+	{
 		gc_enable();
 		ini_set("display_errors", '1');
 		ini_set("display_startup_errors", '1');
@@ -107,17 +98,18 @@ class RakLibServer extends Thread{
 			new ExceptionTraceCleaner($this->mainPath),
 			recvMaxSplitParts: 512
 		);
-		$this->synchronized(function() : void{
+		$this->synchronized(function () : void {
 			$this->ready = true;
 			$this->notify();
 		});
-		while(!$this->isKilled){
+		while (!$this->isKilled) {
 			$manager->tickProcessor();
 		}
 		$manager->waitShutdown();
 	}
 
-	public function getThreadName() : string{
+	public function getThreadName() : string
+	{
 		return "RakLib";
 	}
 }

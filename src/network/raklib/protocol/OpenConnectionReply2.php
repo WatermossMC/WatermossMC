@@ -1,26 +1,27 @@
 <?php
 
 /*
- * This file is part of RakLib.
- * Copyright (C) 2014-2022 PocketMine Team <https://github.com/pmmp/RakLib>
  *
- * RakLib is not affiliated with Jenkins Software LLC nor RakNet.
+ * This file part of WatermossMC.
  *
- * RakLib is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  __        __    _                                    __  __  ____
+ *  \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *   \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *    \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *     \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * @author WatermossMC Team
+ * @license Apache 2.0
  */
 
 declare(strict_types=1);
 
-namespace watermossmc
-etworkaklibprotocol;
+namespace watermossmc\network\raklib\protocol;
 
-use watermossmc
-etworkaklibutils\InternetAddress;
+use watermossmc\network\raklib\utils\InternetAddress;
 
-class OpenConnectionReply2 extends OfflineMessage{
+class OpenConnectionReply2 extends OfflineMessage
+{
 	public static $ID = MessageIdentifiers::ID_OPEN_CONNECTION_REPLY_2;
 
 	public int $serverID;
@@ -28,8 +29,9 @@ class OpenConnectionReply2 extends OfflineMessage{
 	public int $mtuSize;
 	public bool $serverSecurity = false;
 
-	public static function create(int $serverId, InternetAddress $clientAddress, int $mtuSize, bool $serverSecurity) : self{
-		$result = new self;
+	public static function create(int $serverId, InternetAddress $clientAddress, int $mtuSize, bool $serverSecurity) : self
+	{
+		$result = new self();
 		$result->serverID = $serverId;
 		$result->clientAddress = $clientAddress;
 		$result->mtuSize = $mtuSize;
@@ -37,7 +39,8 @@ class OpenConnectionReply2 extends OfflineMessage{
 		return $result;
 	}
 
-	protected function encodePayload(PacketSerializer $out) : void{
+	protected function encodePayload(PacketSerializer $out) : void
+	{
 		$this->writeMagic($out);
 		$out->putLong($this->serverID);
 		$out->putAddress($this->clientAddress);
@@ -45,7 +48,8 @@ class OpenConnectionReply2 extends OfflineMessage{
 		$out->putByte($this->serverSecurity ? 1 : 0);
 	}
 
-	protected function decodePayload(PacketSerializer $in) : void{
+	protected function decodePayload(PacketSerializer $in) : void
+	{
 		$this->readMagic($in);
 		$this->serverID = $in->getLong();
 		$this->clientAddress = $in->getAddress();
