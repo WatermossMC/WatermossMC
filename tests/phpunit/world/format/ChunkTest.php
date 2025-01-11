@@ -19,23 +19,30 @@ declare(strict_types=1);
 namespace watermossmc\world\format;
 
 use PHPUnit\Framework\TestCase;
+use pocketmine\world\format\PalettedBlockArray;
+use watermossmc\data\bedrock\BiomeIds;
 
-class ChunkTest extends TestCase
+class SubChunkTest extends TestCase
 {
-	public function testClone() : void
-	{
-		$chunk = new Chunk([], false);
-		$chunk->setBlockStateId(0, 0, 0, 1);
-		$chunk->setBiomeId(0, 0, 0, 1);
-		$chunk->setHeightMap(0, 0, 1);
+    public function testClone() : void
+    {
+        $palettedBlockArray = new PalettedBlockArray();
+        $palettedBlockArray->setAll(BiomeIds::OCEAN);
 
-		$chunk2 = clone $chunk;
-		$chunk2->setBlockStateId(0, 0, 0, 2);
-		$chunk2->setBiomeId(0, 0, 0, 2);
-		$chunk2->setHeightMap(0, 0, 2);
+        $sub1 = new SubChunk(0, [], $palettedBlockArray);
 
-		self::assertNotSame($chunk->getBlockStateId(0, 0, 0), $chunk2->getBlockStateId(0, 0, 0));
-		self::assertNotSame($chunk->getBiomeId(0, 0, 0), $chunk2->getBiomeId(0, 0, 0));
-		self::assertNotSame($chunk->getHeightMap(0, 0), $chunk2->getHeightMap(0, 0));
-	}
+        $sub1->setBlockStateId(0, 0, 0, 1);
+        $sub1->getBlockLightArray()->set(0, 0, 0, 1);
+        $sub1->getBlockSkyLightArray()->set(0, 0, 0, 1);
+
+        $sub2 = clone $sub1;
+
+        $sub2->setBlockStateId(0, 0, 0, 2);
+        $sub2->getBlockLightArray()->set(0, 0, 0, 2);
+        $sub2->getBlockSkyLightArray()->set(0, 0, 0, 2);
+
+        self::assertNotSame($sub1->getBlockStateId(0, 0, 0), $sub2->getBlockStateId(0, 0, 0));
+        self::assertNotSame($sub1->getBlockLightArray()->get(0, 0, 0), $sub2->getBlockLightArray()->get(0, 0, 0));
+        self::assertNotSame($sub1->getBlockSkyLightArray()->get(0, 0, 0), $sub2->getBlockSkyLightArray()->get(0, 0, 0));
+    }
 }
