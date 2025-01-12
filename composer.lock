@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b164e998f5fcdf32935a2f4c6c779ee",
+    "content-hash": "b8b9c5e1f3a63af422f7d1e83147d100",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -253,6 +253,56 @@
                 "source": "https://github.com/pmmp/BedrockItemUpgradeSchema/tree/1.14.0"
             },
             "time": "2024-12-04T12:22:49+00:00"
+        },
+        {
+            "name": "pocketmine/callback-validator",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pmmp/CallbackValidator.git",
+                "reference": "64787469766bcaa7e5885242e85c23c25e8c55a2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pmmp/CallbackValidator/zipball/64787469766bcaa7e5885242e85c23c25e8c55a2",
+                "reference": "64787469766bcaa7e5885242e85c23c25e8c55a2",
+                "shasum": ""
+            },
+            "require": {
+                "ext-reflection": "*",
+                "php": "^7.1 || ^8.0"
+            },
+            "replace": {
+                "daverandom/callback-validator": "*"
+            },
+            "require-dev": {
+                "phpstan/extension-installer": "^1.0",
+                "phpstan/phpstan": "0.12.59",
+                "phpstan/phpstan-strict-rules": "^0.12.4",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DaveRandom\\CallbackValidator\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Chris Wright",
+                    "email": "cw@daverandom.com"
+                }
+            ],
+            "description": "Fork of daverandom/callback-validator - Tools for validating callback signatures",
+            "support": {
+                "issues": "https://github.com/pmmp/CallbackValidator/issues",
+                "source": "https://github.com/pmmp/CallbackValidator/tree/1.0.3"
+            },
+            "time": "2020-12-11T01:45:37+00:00"
         },
         {
             "name": "pocketmine/locale-data",
