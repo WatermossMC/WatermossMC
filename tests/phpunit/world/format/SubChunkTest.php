@@ -19,7 +19,6 @@ declare(strict_types=1);
 namespace watermossmc\world\format;
 
 use PHPUnit\Framework\TestCase;
-use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\data\bedrock\BiomeIds;
 
 class SubChunkTest extends TestCase

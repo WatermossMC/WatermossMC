@@ -18,10 +18,10 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format\io;
 
-use pocketmine\world\format\PalettedBlockArray;
 use watermossmc\utils\Binary;
 use watermossmc\utils\BinaryStream;
 use watermossmc\world\format\Chunk;
+use watermossmc\world\format\PalettedBlockArray;
 use watermossmc\world\format\SubChunk;
 
 use function array_values;
