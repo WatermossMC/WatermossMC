@@ -30,8 +30,8 @@ define('watermossmc\_CORE_CONSTANTS_INCLUDED', true);
 
 define('watermossmc\PATH', dirname(__DIR__) . '/');
 define('watermossmc\RESOURCE_PATH', dirname(__DIR__) . '/resources/');
-define('watermossmc\BEDROCK_DATA_PATH', dirname(__DIR__) . '/vendor/watermossmc/bedrock-data/');
-define('watermossmc\LOCALE_DATA_PATH', dirname(__DIR__) . '/vendor/watermossmc/locale-data/');
-define('watermossmc\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH', dirname(__DIR__) . '/vendor/watermossmc/bedrock-block-upgrade-schema/');
-define('watermossmc\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH', dirname(__DIR__) . '/vendor/watermossmc/bedrock-item-upgrade-schema/');
+define('watermossmc\BEDROCK_DATA_PATH', dirname(__DIR__) . '/vendor/pocketmine/bedrock-data/');
+define('watermossmc\LOCALE_DATA_PATH', dirname(__DIR__) . '/vendor/pocketmine/locale-data/');
+define('watermossmc\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH', dirname(__DIR__) . '/vendor/pocketmine/bedrock-block-upgrade-schema/');
+define('watermossmc\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH', dirname(__DIR__) . '/vendor/pocketmine/bedrock-item-upgrade-schema/');
 define('watermossmc\COMPOSER_AUTOLOADER_PATH', dirname(__DIR__) . '/vendor/autoload.php');

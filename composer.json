@@ -1,5 +1,5 @@
 {
-   "name": "watermossmc/watermossmc-mp",
+   "name": "pocketmine/watermossmc-mp",
    "description": "A server software for Minecraft: Bedrock Edition written in PHP",
    "type": "project",
    "homepage": "https://pmmp.io",
@@ -33,10 +33,10 @@
       "composer-runtime-api": "^2.0",
       "adhocore/json-comment": "~1.2.0",
       "netresearch/jsonmapper": "~v5.0.0",
-      "watermossmc/bedrock-block-upgrade-schema": "~5.0.0+bedrock-1.21.40",
-      "watermossmc/bedrock-data": "~2.15.0+bedrock-1.21.50",
-      "watermossmc/bedrock-item-upgrade-schema": "~1.14.0+bedrock-1.21.50",
-      "watermossmc/locale-data": "~2.22.1",
+      "pocketmine/bedrock-block-upgrade-schema": "~5.0.0+bedrock-1.21.40",
+      "pocketmine/bedrock-data": "~2.15.0+bedrock-1.21.50",
+      "pocketmine/bedrock-item-upgrade-schema": "~1.14.0+bedrock-1.21.50",
+      "pocketmine/locale-data": "~2.22.1",
       "ramsey/uuid": "~4.7.0",
       "symfony/filesystem": "~6.4.0"
    },
@@ -75,8 +75,8 @@
       "update-codegen": [
          "@php build/generate-bedrockdata-path-consts.php",
          "@php build/generate-biome-ids.php",
-         "@php build/generate-block-serializer-consts.php vendor/watermossmc/bedrock-data/canonical_block_states.nbt",
-         "@php build/generate-item-type-names.php vendor/watermossmc/bedrock-data/required_item_list.json",
+         "@php build/generate-block-serializer-consts.php vendor/pocketmine/bedrock-data/canonical_block_states.nbt",
+         "@php build/generate-item-type-names.php vendor/pocketmine/bedrock-data/required_item_list.json",
          "@php build/generate-known-translation-apis.php",
          "@php build/generate-watermossmc-yml-property-consts.php",
          "@php build/generate-registry-annotations.php src"
