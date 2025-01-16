@@ -80,6 +80,16 @@ class LightArray
 	}
 
 	/**
+	 * Sets all light levels in the array to the specified level.
+	 *
+	 * @param int $level The light level to set for all coordinates.
+	 */
+	public function setAll(int $level) : void
+	{
+		$this->lightArray->setAll($level);
+	}
+
+	/**
 	 * Wrapper for the `getData` method.
 	 *
 	 * @return string The data associated with the LightArray.
