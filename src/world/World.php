@@ -83,7 +83,7 @@ use watermossmc\world\format\io\ChunkData;
 use watermossmc\world\format\io\exception\CorruptedChunkException;
 use watermossmc\world\format\io\GlobalBlockStateHandlers;
 use watermossmc\world\format\io\WritableWorldProvider;
-use watermossmc\world\format\LightArray;
+
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\generator\GeneratorManager;
 use watermossmc\world\generator\GeneratorRegisterTask;
@@ -1389,8 +1389,8 @@ class World implements ChunkManager
 				function (array $blockLight, array $skyLight, array $heightMap) use ($chunkX, $chunkZ) : void {
 					/**
 					 * TODO: phpstan can't infer these types yet :(
-					 * @phpstan-var array<int, LightArray> $blockLight
-					 * @phpstan-var array<int, LightArray> $skyLight
+					 * @phpstan-var array<int, \pocketmine\worldormat\LightArray> $blockLight
+					 * @phpstan-var array<int, \pocketmine\worldormat\LightArray> $skyLight
 					 * @phpstan-var array<int, int>        $heightMap
 					 */
 					if ($this->unloaded || ($chunk = $this->getChunk($chunkX, $chunkZ)) === null || $chunk->isLightPopulated() === true) {
@@ -1399,11 +1399,11 @@ class World implements ChunkManager
 					//TODO: calculated light information might not be valid if the terrain changed during light calculation
 
 					$chunk->setHeightMapArray($heightMap);
-					foreach ($blockLight as $y => $lightArray) {
-						$chunk->getSubChunk($y)->setBlockLightArray($lightArray);
+					foreach ($blockLight as $y => $\pocketmine\worldormat\LightArray) {
+						$chunk->getSubChunk($y)->setBlock\pocketmine\worldormat\LightArray($\pocketmine\worldormat\LightArray);
 					}
-					foreach ($skyLight as $y => $lightArray) {
-						$chunk->getSubChunk($y)->setBlockSkyLightArray($lightArray);
+					foreach ($skyLight as $y => $\pocketmine\worldormat\LightArray) {
+						$chunk->getSubChunk($y)->setBlockSky\pocketmine\worldormat\LightArray($\pocketmine\worldormat\LightArray);
 					}
 					$chunk->setLightPopulated(true);
 					$this->markTickingChunkForRecheck($chunkX, $chunkZ);
@@ -1812,7 +1812,7 @@ class World implements ChunkManager
 			return $y >= self::Y_MAX ? 15 : 0;
 		}
 		if (($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null && $chunk->isLightPopulated() === true) {
-			return $chunk->getSubChunk($y >> Chunk::COORD_BIT_SIZE)->getBlockSkyLightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
+			return $chunk->getSubChunk($y >> Chunk::COORD_BIT_SIZE)->getBlockSky\pocketmine\worldormat\LightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 		}
 		return 0; //TODO: this should probably throw instead (light not calculated yet)
 	}
@@ -1839,7 +1839,7 @@ class World implements ChunkManager
 			return 0;
 		}
 		if (($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null && $chunk->isLightPopulated() === true) {
-			return $chunk->getSubChunk($y >> Chunk::COORD_BIT_SIZE)->getBlockLightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
+			return $chunk->getSubChunk($y >> Chunk::COORD_BIT_SIZE)->getBlock\pocketmine\worldormat\LightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 		}
 		return 0; //TODO: this should probably throw instead (light not calculated yet)
 	}

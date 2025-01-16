@@ -31,17 +31,17 @@ class SubChunkTest extends TestCase
 		$sub1 = new SubChunk(0, [], new PalettedBlockArray(BiomeIds::OCEAN));
 
 		$sub1->setBlockStateId(0, 0, 0, 1);
-		$sub1->getBlockLightArray()->set(0, 0, 0, 1);
-		$sub1->getBlockSkyLightArray()->set(0, 0, 0, 1);
+		$sub1->getBlock\pocketmine\worldormat\LightArray()->set(0, 0, 0, 1);
+		$sub1->getBlockSky\pocketmine\worldormat\LightArray()->set(0, 0, 0, 1);
 
 		$sub2 = clone $sub1;
 
 		$sub2->setBlockStateId(0, 0, 0, 2);
-		$sub2->getBlockLightArray()->set(0, 0, 0, 2);
-		$sub2->getBlockSkyLightArray()->set(0, 0, 0, 2);
+		$sub2->getBlock\pocketmine\worldormat\LightArray()->set(0, 0, 0, 2);
+		$sub2->getBlockSky\pocketmine\worldormat\LightArray()->set(0, 0, 0, 2);
 
 		self::assertNotSame($sub1->getBlockStateId(0, 0, 0), $sub2->getBlockStateId(0, 0, 0));
-		self::assertNotSame($sub1->getBlockLightArray()->get(0, 0, 0), $sub2->getBlockLightArray()->get(0, 0, 0));
-		self::assertNotSame($sub1->getBlockSkyLightArray()->get(0, 0, 0), $sub2->getBlockSkyLightArray()->get(0, 0, 0));
+		self::assertNotSame($sub1->getBlock\pocketmine\worldormat\LightArray()->get(0, 0, 0), $sub2->getBlock\pocketmine\worldormat\LightArray()->get(0, 0, 0));
+		self::assertNotSame($sub1->getBlockSky\pocketmine\worldormat\LightArray()->get(0, 0, 0), $sub2->getBlockSky\pocketmine\worldormat\LightArray()->get(0, 0, 0));
 	}
 }

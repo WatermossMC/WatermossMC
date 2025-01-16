@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 namespace watermossmc\world\light;
 
-use watermossmc\world\format\LightArray;
+
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\utils\SubChunkExplorerStatus;
@@ -41,9 +41,9 @@ class BlockLightUpdate extends LightUpdate
 		parent::__construct($subChunkExplorer, $lightFilters);
 	}
 
-	protected function getCurrentLightArray() : LightArray
+	protected function getCurrent\pocketmine\worldormat\LightArray() : \pocketmine\worldormat\LightArray
 	{
-		return $this->subChunkExplorer->currentSubChunk->getBlockLightArray();
+		return $this->subChunkExplorer->currentSubChunk->getBlock\pocketmine\worldormat\LightArray();
 	}
 
 	public function recalculateNode(int $x, int $y, int $z) : void
@@ -63,7 +63,7 @@ class BlockLightUpdate extends LightUpdate
 
 		$lightSources = 0;
 		foreach ($chunk->getSubChunks() as $subChunkY => $subChunk) {
-			$subChunk->setBlockLightArray(LightArray::fill(0));
+			$subChunk->setBlock\pocketmine\worldormat\LightArray(\pocketmine\worldormat\LightArray::fill(0));
 
 			foreach ($subChunk->getBlockLayers() as $layer) {
 				foreach ($layer->getPalette() as $state) {

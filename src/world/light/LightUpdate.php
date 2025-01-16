@@ -19,7 +19,7 @@ declare(strict_types=1);
 namespace watermossmc\world\light;
 
 use watermossmc\math\Facing;
-use watermossmc\world\format\LightArray;
+
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\utils\SubChunkExplorerStatus;
@@ -49,7 +49,7 @@ abstract class LightUpdate
 	) {
 	}
 
-	abstract protected function getCurrentLightArray() : LightArray;
+	abstract protected function getCurrent\pocketmine\worldormat\LightArray() : \pocketmine\worldormat\LightArray;
 
 	abstract public function recalculateNode(int $x, int $y, int $z) : void;
 
@@ -62,7 +62,7 @@ abstract class LightUpdate
 	protected function getEffectiveLight(int $x, int $y, int $z) : int
 	{
 		if ($this->subChunkExplorer->moveTo($x, $y, $z) !== SubChunkExplorerStatus::INVALID) {
-			return $this->getCurrentLightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
+			return $this->getCurrent\pocketmine\worldormat\LightArray()->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 		}
 		return 0;
 	}
@@ -88,11 +88,11 @@ abstract class LightUpdate
 		$context = new LightPropagationContext();
 		foreach ($this->updateNodes as $blockHash => [$x, $y, $z, $newLevel]) {
 			if ($this->subChunkExplorer->moveTo($x, $y, $z) !== SubChunkExplorerStatus::INVALID) {
-				$lightArray = $this->getCurrentLightArray();
-				$oldLevel = $lightArray->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
+				$\pocketmine\worldormat\LightArray = $this->getCurrent\pocketmine\worldormat\LightArray();
+				$oldLevel = $\pocketmine\worldormat\LightArray->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 
 				if ($oldLevel !== $newLevel) {
-					$lightArray->set($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK, $newLevel);
+					$\pocketmine\worldormat\LightArray->set($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK, $newLevel);
 					if ($oldLevel < $newLevel) { //light increased
 						$context->spreadVisited[$blockHash] = true;
 						$context->spreadQueue->enqueue([$x, $y, $z]);
@@ -111,7 +111,7 @@ abstract class LightUpdate
 		$context = $this->prepareNodes();
 
 		$touched = 0;
-		$lightArray = null;
+		$\pocketmine\worldormat\LightArray = null;
 		$subChunkExplorer = $this->subChunkExplorer;
 		$subChunkExplorer->invalidate();
 		while (!$context->removalQueue->isEmpty()) {
@@ -128,10 +128,10 @@ abstract class LightUpdate
 					continue;
 				}
 				if ($moveStatus === SubChunkExplorerStatus::MOVED) {
-					$lightArray = $this->getCurrentLightArray();
+					$\pocketmine\worldormat\LightArray = $this->getCurrent\pocketmine\worldormat\LightArray();
 				}
-				assert($lightArray !== null);
-				$this->computeRemoveLight($cx, $cy, $cz, $oldAdjacentLight, $context, $lightArray);
+				assert($\pocketmine\worldormat\LightArray !== null);
+				$this->computeRemoveLight($cx, $cy, $cz, $oldAdjacentLight, $context, $\pocketmine\worldormat\LightArray);
 			}
 		}
 
@@ -150,11 +150,11 @@ abstract class LightUpdate
 			}
 			if ($moveStatus === SubChunkExplorerStatus::MOVED) {
 				$subChunk = $subChunkExplorer->currentSubChunk;
-				$lightArray = $this->getCurrentLightArray();
+				$\pocketmine\worldormat\LightArray = $this->getCurrent\pocketmine\worldormat\LightArray();
 			}
-			assert($lightArray !== null);
+			assert($\pocketmine\worldormat\LightArray !== null);
 
-			$newAdjacentLight = $lightArray->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
+			$newAdjacentLight = $\pocketmine\worldormat\LightArray->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 			if ($newAdjacentLight <= 0) {
 				continue;
 			}
@@ -174,25 +174,25 @@ abstract class LightUpdate
 				}
 				if ($moveStatus === SubChunkExplorerStatus::MOVED) {
 					$subChunk = $subChunkExplorer->currentSubChunk;
-					$lightArray = $this->getCurrentLightArray();
+					$\pocketmine\worldormat\LightArray = $this->getCurrent\pocketmine\worldormat\LightArray();
 				}
 				assert($subChunk !== null);
-				$this->computeSpreadLight($cx, $cy, $cz, $newAdjacentLight, $context, $lightArray, $subChunk, $side);
+				$this->computeSpreadLight($cx, $cy, $cz, $newAdjacentLight, $context, $\pocketmine\worldormat\LightArray, $subChunk, $side);
 			}
 		}
 
 		return $touched;
 	}
 
-	protected function computeRemoveLight(int $x, int $y, int $z, int $oldAdjacentLevel, LightPropagationContext $context, LightArray $lightArray) : void
+	protected function computeRemoveLight(int $x, int $y, int $z, int $oldAdjacentLevel, LightPropagationContext $context, \pocketmine\worldormat\LightArray $\pocketmine\worldormat\LightArray) : void
 	{
 		$lx = $x & SubChunk::COORD_MASK;
 		$ly = $y & SubChunk::COORD_MASK;
 		$lz = $z & SubChunk::COORD_MASK;
-		$current = $lightArray->get($lx, $ly, $lz);
+		$current = $\pocketmine\worldormat\LightArray->get($lx, $ly, $lz);
 
 		if ($current !== 0 && $current < $oldAdjacentLevel) {
-			$lightArray->set($lx, $ly, $lz, 0);
+			$\pocketmine\worldormat\LightArray->set($lx, $ly, $lz, 0);
 
 			if (!isset($context->removalVisited[$index = World::blockHash($x, $y, $z)])) {
 				$context->removalVisited[$index] = true;
@@ -208,16 +208,16 @@ abstract class LightUpdate
 		}
 	}
 
-	protected function computeSpreadLight(int $x, int $y, int $z, int $newAdjacentLevel, LightPropagationContext $context, LightArray $lightArray, SubChunk $subChunk, int $side) : void
+	protected function computeSpreadLight(int $x, int $y, int $z, int $newAdjacentLevel, LightPropagationContext $context, \pocketmine\worldormat\LightArray $\pocketmine\worldormat\LightArray, SubChunk $subChunk, int $side) : void
 	{
 		$lx = $x & SubChunk::COORD_MASK;
 		$ly = $y & SubChunk::COORD_MASK;
 		$lz = $z & SubChunk::COORD_MASK;
-		$current = $lightArray->get($lx, $ly, $lz);
+		$current = $\pocketmine\worldormat\LightArray->get($lx, $ly, $lz);
 		$potentialLight = $newAdjacentLevel - ($this->lightFilters[$subChunk->getBlockStateId($lx, $ly, $lz)] ?? self::BASE_LIGHT_FILTER);
 
 		if ($current < $potentialLight) {
-			$lightArray->set($lx, $ly, $lz, $potentialLight);
+			$\pocketmine\worldormat\LightArray->set($lx, $ly, $lz, $potentialLight);
 
 			if (!isset($context->spreadVisited[$index = World::blockHash($x, $y, $z)]) && $potentialLight > 1) {
 				//Track where this node was lit from, to avoid checking the source again when we propagate from here

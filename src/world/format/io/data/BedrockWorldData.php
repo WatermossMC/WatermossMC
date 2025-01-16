@@ -51,7 +51,7 @@ class BedrockWorldData extends BaseNbtWorldData
 	public const CURRENT_CLIENT_VERSION_TARGET = [
 		1, //major
 		21, //minor
-		40, //patch
+		50, //patch
 		1, //revision
 		0 //is beta
 	];

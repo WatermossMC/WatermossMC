@@ -44,7 +44,7 @@ use watermossmc\world\format\io\GlobalBlockStateHandlers;
 use watermossmc\world\format\io\LoadedChunkData;
 use watermossmc\world\format\io\WorldData;
 use watermossmc\world\format\io\WritableWorldProvider;
-use watermossmc\world\format\PalettedBlockArray;
+
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\WorldCreationOptions;
 

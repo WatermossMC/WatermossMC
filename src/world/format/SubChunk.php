@@ -37,8 +37,8 @@ class SubChunk
 		private int $emptyBlockId,
 		private array $blockLayers,
 		private PalettedBlockArray $biomes,
-		private ?LightArray $skyLight = null,
-		private ?LightArray $blockLight = null
+		private ?\pocketmine\worldormat\LightArray $skyLight = null,
+		private ?\pocketmine\worldormat\LightArray $blockLight = null
 	) {
 	}
 
@@ -115,22 +115,22 @@ class SubChunk
 		return $this->biomes;
 	}
 
-	public function getBlockSkyLightArray() : LightArray
+	public function getBlockSky\pocketmine\worldormat\LightArray() : \pocketmine\worldormat\LightArray
 	{
-		return $this->skyLight ??= LightArray::fill(0);
+		return $this->skyLight ??= \pocketmine\worldormat\LightArray::fill(0);
 	}
 
-	public function setBlockSkyLightArray(LightArray $data) : void
+	public function setBlockSky\pocketmine\worldormat\LightArray(\pocketmine\worldormat\LightArray $data) : void
 	{
 		$this->skyLight = $data;
 	}
 
-	public function getBlockLightArray() : LightArray
+	public function getBlock\pocketmine\worldormat\LightArray() : \pocketmine\worldormat\LightArray
 	{
-		return $this->blockLight ??= LightArray::fill(0);
+		return $this->blockLight ??= \pocketmine\worldormat\LightArray::fill(0);
 	}
 
-	public function setBlockLightArray(LightArray $data) : void
+	public function setBlock\pocketmine\worldormat\LightArray(\pocketmine\worldormat\LightArray $data) : void
 	{
 		$this->blockLight = $data;
 	}

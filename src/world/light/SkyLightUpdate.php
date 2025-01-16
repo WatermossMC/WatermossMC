@@ -20,7 +20,7 @@ namespace watermossmc\world\light;
 
 use watermossmc\world\format\Chunk;
 use watermossmc\world\format\HeightArray;
-use watermossmc\world\format\LightArray;
+
 use watermossmc\world\format\SubChunk;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\utils\SubChunkExplorerStatus;
@@ -44,9 +44,9 @@ class SkyLightUpdate extends LightUpdate
 		parent::__construct($subChunkExplorer, $lightFilters);
 	}
 
-	protected function getCurrentLightArray() : LightArray
+	protected function getCurrent\pocketmine\worldormat\LightArray() : \pocketmine\worldormat\LightArray
 	{
-		return $this->subChunkExplorer->currentSubChunk->getBlockSkyLightArray();
+		return $this->subChunkExplorer->currentSubChunk->getBlockSky\pocketmine\worldormat\LightArray();
 	}
 
 	protected function getEffectiveLight(int $x, int $y, int $z) : int
@@ -113,10 +113,10 @@ class SkyLightUpdate extends LightUpdate
 		$highestHeightMapPlusOne = max($chunk->getHeightMapArray()) + 1;
 		$lowestClearSubChunk = ($highestHeightMapPlusOne >> SubChunk::COORD_BIT_SIZE) + (($highestHeightMapPlusOne & SubChunk::COORD_MASK) !== 0 ? 1 : 0);
 		for ($y = Chunk::MIN_SUBCHUNK_INDEX; $y < $lowestClearSubChunk && $y <= Chunk::MAX_SUBCHUNK_INDEX; $y++) {
-			$chunk->getSubChunk($y)->setBlockSkyLightArray(LightArray::fill(0));
+			$chunk->getSubChunk($y)->setBlockSky\pocketmine\worldormat\LightArray(\pocketmine\worldormat\LightArray::fill(0));
 		}
 		for ($y = $lowestClearSubChunk; $y <= Chunk::MAX_SUBCHUNK_INDEX; $y++) {
-			$chunk->getSubChunk($y)->setBlockSkyLightArray(LightArray::fill(15));
+			$chunk->getSubChunk($y)->setBlockSky\pocketmine\worldormat\LightArray(\pocketmine\worldormat\LightArray::fill(15));
 		}
 
 		$lightSources = 0;
@@ -163,7 +163,7 @@ class SkyLightUpdate extends LightUpdate
 					}
 					for ($y = $nodeColumnEnd + 1, $yMax = $lowestClearSubChunk * SubChunk::EDGE_LENGTH; $y < $yMax; $y++) {
 						if ($this->subChunkExplorer->moveTo($x + $baseX, $y, $z + $baseZ) !== SubChunkExplorerStatus::INVALID) {
-							$this->getCurrentLightArray()->set($x, $y & SubChunk::COORD_MASK, $z, 15);
+							$this->getCurrent\pocketmine\worldormat\LightArray()->set($x, $y & SubChunk::COORD_MASK, $z, 15);
 						}
 					}
 				}

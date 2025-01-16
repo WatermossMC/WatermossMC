@@ -31,7 +31,7 @@ use watermossmc\world\format\io\ChunkData;
 use watermossmc\world\format\io\ChunkUtils;
 use watermossmc\world\format\io\exception\CorruptedChunkException;
 use watermossmc\world\format\io\LoadedChunkData;
-use watermossmc\world\format\PalettedBlockArray;
+
 use watermossmc\world\format\SubChunk;
 
 use function strlen;

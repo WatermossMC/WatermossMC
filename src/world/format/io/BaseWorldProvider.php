@@ -24,7 +24,7 @@ use watermossmc\data\bedrock\block\BlockStateSerializer;
 use watermossmc\data\bedrock\block\upgrade\BlockDataUpgrader;
 use watermossmc\world\format\io\exception\CorruptedWorldException;
 use watermossmc\world\format\io\exception\UnsupportedWorldFormatException;
-use watermossmc\world\format\PalettedBlockArray;
+
 use watermossmc\world\WorldException;
 
 use function count;
@@ -103,17 +103,17 @@ abstract class BaseWorldProvider implements WorldProvider
 
 	protected function palettizeLegacySubChunkXZY(string $idArray, string $metaArray, \Logger $logger) : PalettedBlockArray
 	{
-		return $this->translatePalette(SubChunkConverter::convertSubChunkXZY($idArray, $metaArray), $logger);
+		return $this->translatePalette(\pocketmine\worldormat\io\SubChunkConverter::convertSubChunkXZY($idArray, $metaArray), $logger);
 	}
 
 	protected function palettizeLegacySubChunkYZX(string $idArray, string $metaArray, \Logger $logger) : PalettedBlockArray
 	{
-		return $this->translatePalette(SubChunkConverter::convertSubChunkYZX($idArray, $metaArray), $logger);
+		return $this->translatePalette(\pocketmine\worldormat\io\SubChunkConverter::convertSubChunkYZX($idArray, $metaArray), $logger);
 	}
 
 	protected function palettizeLegacySubChunkFromColumn(string $idArray, string $metaArray, int $yOffset, \Logger $logger) : PalettedBlockArray
 	{
-		return $this->translatePalette(SubChunkConverter::convertSubChunkFromLegacyColumn($idArray, $metaArray, $yOffset), $logger);
+		return $this->translatePalette(\pocketmine\worldormat\io\SubChunkConverter::convertSubChunkFromLegacyColumn($idArray, $metaArray, $yOffset), $logger);
 	}
 
 	public function getPath() : string

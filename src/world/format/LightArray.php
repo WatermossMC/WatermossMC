@@ -18,25 +18,25 @@ declare(strict_types=1);
 
 namespace watermossmc\world\format;
 
-use pocketmine\world\format\LightArray as OriginalLightArray;
+use pocketmine\world\format\\pocketmine\worldormat\LightArray as Original\pocketmine\worldormat\LightArray;
 
 /**
- * Wrapper class for the LightArray class from the pocketmine\world\format namespace.
+ * Wrapper class for the \pocketmine\worldormat\LightArray class from the pocketmine\world\format namespace.
  */
-class LightArray
+class \pocketmine\worldormat\LightArray
 {
-	/** @var OriginalLightArray */
-	private $lightArray;
+	/** @var Original\pocketmine\worldormat\LightArray */
+	private $\pocketmine\worldormat\LightArray;
 
 	/**
-	 * LightArray constructor.
+	 * \pocketmine\worldormat\LightArray constructor.
 	 *
-	 * @param string $payload The payload to initialize the LightArray.
+	 * @param string $payload The payload to initialize the \pocketmine\worldormat\LightArray.
 	 */
 	public function __construct(string $payload)
 	{
-		// Create an instance of the original LightArray class
-		$this->lightArray = new OriginalLightArray($payload);
+		// Create an instance of the original \pocketmine\worldormat\LightArray class
+		$this->\pocketmine\worldormat\LightArray = new Original\pocketmine\worldormat\LightArray($payload);
 	}
 
 	/**
@@ -44,12 +44,12 @@ class LightArray
 	 *
 	 * @param int $level The light level to fill the array with.
 	 *
-	 * @return LightArray A new instance of the LightArray.
+	 * @return \pocketmine\worldormat\LightArray A new instance of the \pocketmine\worldormat\LightArray.
 	 */
-	public static function fill(int $level) : LightArray
+	public static function fill(int $level) : \pocketmine\worldormat\LightArray
 	{
-		$lightArray = OriginalLightArray::fill($level);
-		return new LightArray($lightArray);
+		$\pocketmine\worldormat\LightArray = Original\pocketmine\worldormat\LightArray::fill($level);
+		return new \pocketmine\worldormat\LightArray($\pocketmine\worldormat\LightArray);
 	}
 
 	/**
@@ -63,7 +63,7 @@ class LightArray
 	 */
 	public function get(int $x, int $y, int $z) : int
 	{
-		return $this->lightArray->get($x, $y, $z);
+		return $this->\pocketmine\worldormat\LightArray->get($x, $y, $z);
 	}
 
 	/**
@@ -76,7 +76,7 @@ class LightArray
 	 */
 	public function set(int $x, int $y, int $z, int $level) : void
 	{
-		$this->lightArray->set($x, $y, $z, $level);
+		$this->\pocketmine\worldormat\LightArray->set($x, $y, $z, $level);
 	}
 
 	/**
@@ -86,17 +86,17 @@ class LightArray
 	 */
 	public function setAll(int $level) : void
 	{
-		$this->lightArray->setAll($level);
+		$this->\pocketmine\worldormat\LightArray->setAll($level);
 	}
 
 	/**
 	 * Wrapper for the `getData` method.
 	 *
-	 * @return string The data associated with the LightArray.
+	 * @return string The data associated with the \pocketmine\worldormat\LightArray.
 	 */
 	public function getData() : string
 	{
-		return $this->lightArray->getData();
+		return $this->\pocketmine\worldormat\LightArray->getData();
 	}
 
 	/**
@@ -106,7 +106,7 @@ class LightArray
 	 */
 	public function collectGarbage() : void
 	{
-		$this->lightArray->collectGarbage();
+		$this->\pocketmine\worldormat\LightArray->collectGarbage();
 	}
 
 	/**
@@ -118,6 +118,6 @@ class LightArray
 	 */
 	public function isUniform(int $level) : bool
 	{
-		return $this->lightArray->isUniform($level);
+		return $this->\pocketmine\worldormat\LightArray->isUniform($level);
 	}
 }

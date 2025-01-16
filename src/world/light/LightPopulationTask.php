@@ -22,7 +22,7 @@ use watermossmc\block\RuntimeBlockStateRegistry;
 use watermossmc\scheduler\AsyncTask;
 use watermossmc\world\format\Chunk;
 use watermossmc\world\format\io\FastChunkSerializer;
-use watermossmc\world\format\LightArray;
+
 use watermossmc\world\SimpleChunkManager;
 use watermossmc\world\utils\SubChunkExplorer;
 use watermossmc\world\World;
@@ -37,11 +37,11 @@ class LightPopulationTask extends AsyncTask
 	public string $chunk;
 
 	private string $resultHeightMap;
-	private string $resultSkyLightArrays;
-	private string $resultBlockLightArrays;
+	private string $resultSky\pocketmine\worldormat\LightArrays;
+	private string $resultBlock\pocketmine\worldormat\LightArrays;
 
 	/**
-	 * @phpstan-param \Closure(array<int, LightArray> $blockLight, array<int, LightArray> $skyLight, array<int, int> $heightMap) : void $onCompletion
+	 * @phpstan-param \Closure(array<int, \pocketmine\worldormat\LightArray> $blockLight, array<int, \pocketmine\worldormat\LightArray> $skyLight, array<int, int> $heightMap) : void $onCompletion
 	 */
 	public function __construct(Chunk $chunk, \Closure $onCompletion)
 	{
@@ -68,14 +68,14 @@ class LightPopulationTask extends AsyncTask
 		$chunk->setLightPopulated();
 
 		$this->resultHeightMap = igbinary_serialize($chunk->getHeightMapArray());
-		$skyLightArrays = [];
-		$blockLightArrays = [];
+		$sky\pocketmine\worldormat\LightArrays = [];
+		$block\pocketmine\worldormat\LightArrays = [];
 		foreach ($chunk->getSubChunks() as $y => $subChunk) {
-			$skyLightArrays[$y] = $subChunk->getBlockSkyLightArray();
-			$blockLightArrays[$y] = $subChunk->getBlockLightArray();
+			$sky\pocketmine\worldormat\LightArrays[$y] = $subChunk->getBlockSky\pocketmine\worldormat\LightArray();
+			$block\pocketmine\worldormat\LightArrays[$y] = $subChunk->getBlock\pocketmine\worldormat\LightArray();
 		}
-		$this->resultSkyLightArrays = igbinary_serialize($skyLightArrays);
-		$this->resultBlockLightArrays = igbinary_serialize($blockLightArrays);
+		$this->resultSky\pocketmine\worldormat\LightArrays = igbinary_serialize($sky\pocketmine\worldormat\LightArrays);
+		$this->resultBlock\pocketmine\worldormat\LightArrays = igbinary_serialize($block\pocketmine\worldormat\LightArrays);
 	}
 
 	public function onCompletion() : void
@@ -83,16 +83,16 @@ class LightPopulationTask extends AsyncTask
 		/** @var int[] $heightMapArray */
 		$heightMapArray = igbinary_unserialize($this->resultHeightMap);
 
-		/** @var LightArray[] $skyLightArrays */
-		$skyLightArrays = igbinary_unserialize($this->resultSkyLightArrays);
-		/** @var LightArray[] $blockLightArrays */
-		$blockLightArrays = igbinary_unserialize($this->resultBlockLightArrays);
+		/** @var \pocketmine\worldormat\LightArray[] $sky\pocketmine\worldormat\LightArrays */
+		$sky\pocketmine\worldormat\LightArrays = igbinary_unserialize($this->resultSky\pocketmine\worldormat\LightArrays);
+		/** @var \pocketmine\worldormat\LightArray[] $block\pocketmine\worldormat\LightArrays */
+		$block\pocketmine\worldormat\LightArrays = igbinary_unserialize($this->resultBlock\pocketmine\worldormat\LightArrays);
 
 		/**
 		 * @var \Closure
-		 * @phpstan-var \Closure(array<int, LightArray> $blockLight, array<int, LightArray> $skyLight, array<int, int> $heightMap) : void
+		 * @phpstan-var \Closure(array<int, \pocketmine\worldormat\LightArray> $blockLight, array<int, \pocketmine\worldormat\LightArray> $skyLight, array<int, int> $heightMap) : void
 		 */
 		$callback = $this->fetchLocal(self::TLS_KEY_COMPLETION_CALLBACK);
-		$callback($blockLightArrays, $skyLightArrays, $heightMapArray);
+		$callback($block\pocketmine\worldormat\LightArrays, $sky\pocketmine\worldormat\LightArrays, $heightMapArray);
 	}
 }
