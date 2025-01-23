@@ -1,0 +1,14 @@
+parameters:
+    level: max
+    paths:
+        - src
+    autoload_files:
+        - vendor/autoload.php
+    ignoreErrors:
+        - '#^Call to an undefined method#'
+    excludes_analyse:
+        - tests/*
+    memoryLimit: -1
+
+services:
+    # PHPStan extensions or custom services can be added here if needed
