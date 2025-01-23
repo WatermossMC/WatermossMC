@@ -34,4 +34,4 @@ jobs:
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
     - name: Run PHPStan Analysis
-      run: composer post-install-cmd
+      run: php ./vendor/phpstan analyse src
