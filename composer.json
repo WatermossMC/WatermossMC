@@ -8,8 +8,8 @@
         }
     },
     "require": {
-        "pocketmine\raknet": "dev-master",
-        "pocketmine\bedrock-protocol": "~3.35.1"
+        "pocketmine/raknet": "dev-master",
+        "pocketmine/bedrock-protocol": "~3.35.1"
     },
     "require-dev": {
         "phpstan/phpstan": "^1.6"
