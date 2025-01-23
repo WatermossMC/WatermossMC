@@ -9,7 +9,7 @@
         }
     },
     "require": {
-        "pocketmine/raklib": "dev-master",
+        "pocketmine/raklib": "dev-stable",
         "pocketmine/bedrock-protocol": "~35.0.3"
     },
     "require-dev": {
