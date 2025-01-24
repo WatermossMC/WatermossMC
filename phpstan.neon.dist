@@ -1,16 +1,11 @@
 includes:
-    - vendor/phpstan/phpstan-phpunit/extension.neon
+	- vendor/phpstan/phpstan-phpunit/extension.neon
 	- vendor/phpstan/phpstan-phpunit/rules.neon
 	- vendor/phpstan/phpstan-strict-rules/rules.neon
 
 parameters:
-    level: max
-    paths:
-        - src
-    autoload_files:
-        - vendor/autoload.php
-    reportUnmatchedIgnoredErrors: false
-    memoryLimit: -1
-
-services:
-    # PHPStan extensions or custom services can be added here if needed
+	level: 9
+	paths:
+		- src
+	reportUnmatchedIgnoredErrors: false
+	memoryLimit: -1
