@@ -8,7 +8,7 @@ use WatermossMC\Plugin\PluginLoader;
 use WatermossMC\ResourcePack\ResourcePackManager;
 use WatermossMC\BehaviorPack\BehaviorPackManager;
 use WatermossMC\World\World;
-use raknet\server\RakNetServer;
+use raklib\server\RakLibServer;
 
 class Server
 {
@@ -18,7 +18,7 @@ class Server
     private $resourcePackManager;
     private $behaviorPackManager;
     private $world;
-    private $raknetServer;
+    private $raklibServer;
 
     public function __construct()
     {
@@ -34,10 +34,10 @@ class Server
         $this->resourcePackManager = new ResourcePackManager(__DIR__ . '/../resources/resource_packs');
         $this->behaviorPackManager = new BehaviorPackManager(__DIR__ . '/../resources/behavior_packs');
         $this->world = new World(__DIR__ . '/../resources/world', 12345);
-        $this->raknetServer = new RakNetServer("0.0.0.0", 19132, "WatermossMC");
+        $this->raklibServer = new RakLibServer("0.0.0.0", 19132, "WatermossMC");
 
         // Start server
-        $this->raknetServer->start();
+        $this->raklibServer->start();
         $this->pluginLoader->loadPlugins();
         $this->mainLoop();
     }
@@ -57,7 +57,7 @@ class Server
     private function mainLoop()
     {
         while (true) {
-            $this->raknetServer->tick();
+            $this->raklibServer->tick();
 
             // Update world and entities
             $this->world->tick();
