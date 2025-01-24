@@ -1,13 +1,15 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+	- vendor/phpstan/phpstan-phpunit/rules.neon
+	- vendor/phpstan/phpstan-strict-rules/rules.neon
+
 parameters:
     level: max
     paths:
         - src
     autoload_files:
         - vendor/autoload.php
-    ignoreErrors:
-        - '#^Call to an undefined method#'
-    excludes_analyse:
-        - tests/*
+    reportUnmatchedIgnoredErrors: false
     memoryLimit: -1
 
 services:
