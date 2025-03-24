@@ -6,7 +6,7 @@ use WatermossMC\Server;
 
 class CommandManager
 {
-    private $server;
+    private Server $server;
     private $commands = [];
 
     public function __construct(Server $server)
@@ -15,7 +15,7 @@ class CommandManager
         $this->registerDefaultCommands();
     }
 
-    public function registerCommand(Command $command)
+    public function registerCommand(Command $command): void
     {
         $this->commands[$command->getName()] = $command;
     }
@@ -34,7 +34,12 @@ class CommandManager
         return false;
     }
 
-    private function registerDefaultCommands()
+    public function getServer(): void
+    {
+        return $this->server;
+    }
+
+    private function registerDefaultCommands(): void
     {
         $this->registerCommand(new StopCommand($this->server));
         $this->registerCommand(new HelpCommand($this->server));
