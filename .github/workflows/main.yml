@@ -31,7 +31,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
 
     - name: Run PHPStan Analysis
-      run: php ./vendor/phpstan analyse
+      run: php ./vendor/bin/phpstan analyse
 
     - name: Make WatermossMC.phar
       run: php -d phar.readonly=0 make_phar.php
