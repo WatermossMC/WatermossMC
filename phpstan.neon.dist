@@ -8,4 +8,3 @@ parameters:
 	paths:
 		- src
 	reportUnmatchedIgnoredErrors: false
-	memoryLimit: -1
