@@ -10,10 +10,10 @@
     },
     "require": {
         "pocketmine/raklib": "dev-stable",
-        "pocketmine/bedrock-protocol": "~35.0.3"
+        "pocketmine/bedrock-protocol": "~36.0.0+1.21.60"
     },
     "require-dev": {
-        "phpstan/phpstan": "^1.11",
+        "phpstan/phpstan": "^1.12",
         "phpstan/phpstan-strict-rules": "^1.1.0"
     },
     "config": {
