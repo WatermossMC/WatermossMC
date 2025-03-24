@@ -4,12 +4,12 @@ namespace WatermossMC\World;
 
 class Entity
 {
-    private $id;
-    private $x;
-    private $y;
-    private $z;
+    private int $id;
+    private float|int $x;
+    private float|int $y;
+    private float|int $z;
 
-    public function __construct(int $id, float $x, float $y, float $z)
+    public function __construct(int $id, float|int $x, float|int $y, float|int $z)
     {
         $this->id = $id;
         $this->x = $x;
@@ -17,7 +17,7 @@ class Entity
         $this->z = $z;
     }
 
-    public function move(float $dx, float $dy, float $dz)
+    public function move(float|int $dx, float|int $dy, float|int $dz): void
     {
         $this->x += $dx;
         $this->y += $dy;
@@ -32,5 +32,20 @@ class Entity
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getX(): float|int
+    {
+        return $this->x;
+    }
+
+    public function getY(): float|int
+    {
+        return $this->y;
+    }
+
+    public function getZ(): float|int
+    {
+        return $this->z;
     }
 }
