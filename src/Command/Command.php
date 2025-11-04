@@ -4,8 +4,8 @@ namespace WatermossMC\Command;
 
 abstract class Command
 {
-    protected $name;
-    protected $description;
+    private string $name;
+    private string $description;
 
     public function __construct(string $name, string $description)
     {
@@ -23,5 +23,5 @@ abstract class Command
         return $this->description;
     }
 
-    abstract public function execute(array $args): void;
+    abstract public function execute(string[] $args): void;
 }
