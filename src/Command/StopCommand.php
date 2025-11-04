@@ -6,7 +6,7 @@ use WatermossMC\Server;
 
 class StopCommand extends Command
 {
-    private $server;
+    private Server $server;
 
     public function __construct(Server $server)
     {
@@ -17,6 +17,7 @@ class StopCommand extends Command
     public function execute(array $args): void
     {
         echo "Stopping server...\n";
+        // $this->server->shutdown();
         exit(0);
     }
 }
