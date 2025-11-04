@@ -6,7 +6,7 @@ use WatermossMC\Server;
 
 class HelpCommand extends Command
 {
-    private $server;
+    private Server $server;
 
     public function __construct(Server $server)
     {
