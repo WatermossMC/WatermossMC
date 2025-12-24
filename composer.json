@@ -1,0 +1,17 @@
+{
+    "name": "watermossmc/server",
+    "description": "Minimal PHP Bedrock Server",
+    "type": "project",
+    "require": {
+        "php": "^8.1",
+        "ramsey/uuid": "^4.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "WatermossMC\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1"
+    }
+}

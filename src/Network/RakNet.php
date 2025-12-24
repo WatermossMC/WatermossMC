@@ -1,0 +1,525 @@
+<?php
+
+declare(strict_types=1);
+
+namespace WatermossMC\Network;
+
+use Socket;
+use WatermossMC\Binary\Binary;
+use WatermossMC\Minecraft\PacketHandler;
+use WatermossMC\Util\Logger;
+use WatermossMC\Util\Motd;
+
+final class RakNet
+{
+    public const MAGIC = "\x00\xff\xff\x00\xfe\xfe\xfe\xfe\xfd\xfd\xfd\xfd\x12\x34\x56\x78";
+    public const CONNECTED_PING = 0x00;
+    public const CONNECTED_PONG = 0x03;
+    public const UNCONNECTED_PING = 0x01;
+    public const UNCONNECTED_PONG = 0x1C;
+    public const OPEN_CONNECTION_REQUEST_1 = 0x05;
+    public const OPEN_CONNECTION_REPLY_1 = 0x06;
+    public const OPEN_CONNECTION_REQUEST_2 = 0x07;
+    public const OPEN_CONNECTION_REPLY_2 = 0x08;
+    public const CONNECTION_REQUEST = 0x09;
+    public const CONNECTION_REQUEST_ACCEPTED = 0x10;
+    public const NEW_INCOMING_CONNECTION = 0x13;
+    public const DISCONNECT = 0x15;
+    public const FRAME_SET_MIN = 0x80;
+    public const FRAME_SET_MAX = 0x8D;
+    public const ACK = 0xC0;
+    public const NACK = 0xA0;
+
+    /** @var Session[] */
+    private static array $sessions = [];
+
+    private static int $serverId;
+
+    public static function init(): void
+    {
+        self::$serverId = random_int(1, \PHP_INT_MAX);
+    }
+
+    public static function handle(string $packet, string $addr, int $port, Socket $socket): void
+    {
+        if ($packet === '') {
+            return;
+        }
+
+        $pid = \ord($packet[0]);
+
+        Logger::debug(sprintf(
+            "UDP recv len=%d first=0x%02X from %s:%d",
+            \strlen($packet),
+            \ord($packet[0]),
+            $addr,
+            $port
+        ));
+
+        if ($pid >= self::FRAME_SET_MIN && $pid <= self::FRAME_SET_MAX) {
+            self::handleFrameSet($packet, $addr, $port, $socket);
+            return;
+        }
+
+        match ($pid) {
+            self::UNCONNECTED_PING => self::handlePing($packet, $addr, $port, $socket),
+            self::OPEN_CONNECTION_REQUEST_1 => self::handleOpen1($packet, $addr, $port, $socket),
+            self::OPEN_CONNECTION_REQUEST_2 => self::handleOpen2($packet, $addr, $port, $socket),
+            self::CONNECTION_REQUEST => self::handleConnectionRequest($packet, $addr, $port, $socket),
+            self::ACK => self::handleAck($packet, $addr, $port),
+            self::NACK => self::handleNack($packet, $addr, $port, $socket),
+            default => null
+        };
+    }
+
+    private static function session(string $addr, int $port, ?\Socket $sock = null): Session
+    {
+        $key = "$addr:$port";
+
+        if (!isset(self::$sessions[$key])) {
+            $s = new Session($addr, $port);
+            self::$sessions[$key] = $s;
+        }
+
+        $session = self::$sessions[$key];
+
+        if ($sock !== null) {
+            $session->attachSocket($sock);
+        }
+
+        return $session;
+    }
+
+    private static function readAddress(string $p, int &$o): void
+    {
+        $type = Binary::readByte($p, $o);
+
+        if ($type === 4) {
+            $o += 4; // IPv4 bytes
+            Binary::readShort($p, $o);
+        } else {
+            $o += 16; // IPv6 bytes
+            Binary::readShort($p, $o);
+        }
+    }
+
+    private static function writeAddress(string $ip, int $port): string
+    {
+        $parts = explode('.', $ip);
+
+        $buf = Binary::writeByte(4);
+        foreach ($parts as $p) {
+            $buf .= Binary::writeByte(((int)$p) ^ 0xFF);
+        }
+        $buf .= Binary::writeShort($port);
+
+        return $buf;
+    }
+
+    private static function handlePing(string $p, string $a, int $po, Socket $s): void
+    {
+        $o = 1;
+        $time = Binary::readLong($p, $o);
+        if (substr($p, $o, 16) !== self::MAGIC) {
+            return;
+        }
+
+        $buf = Binary::writeByte(self::UNCONNECTED_PONG);
+        $buf .= Binary::writeLong($time);
+        $buf .= Binary::writeLong(self::$serverId);
+        $buf .= self::MAGIC;
+
+        $motd = (new Motd())
+            ->motd("WatermossMC")
+            ->worldName("RakNet PHP Server")
+            ->protocol(860)
+            ->version("1.21.124")
+            ->players(\count(self::$sessions), 20)
+            ->gameMode("Survival", 1)
+            ->port(19132)
+            ->build(self::$serverId);
+
+        $buf .= Binary::writeString($motd);
+        socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
+    }
+
+    private static function handleOpen1(string $p, string $a, int $po, Socket $s): void
+    {
+        $o = 1;
+
+        if (substr($p, $o, 16) !== self::MAGIC) {
+            return;
+        }
+        $o += 16;
+
+        $protocol = Binary::readByte($p, $o);
+        $mtu = \strlen($p);
+
+        Logger::debug("OPEN_CONNECTION_REQUEST_1 mtu={$mtu} protocol={$protocol}");
+
+        $session = self::session($a, $po);
+        $session->mtu = $mtu;
+        $session->setRakNetState(Session::RN_CONNECTING);
+
+        $buf = Binary::writeByte(self::OPEN_CONNECTION_REPLY_1);
+        $buf .= self::MAGIC;
+        $buf .= Binary::writeLong(self::$serverId);
+        $buf .= Binary::writeByte(0);
+        $buf .= Binary::writeShort($mtu);
+
+        socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
+    }
+
+    private static function handleOpen2(string $p, string $a, int $po, Socket $s): void
+    {
+        $o = 1;
+
+        if (substr($p, $o, 16) !== self::MAGIC) {
+            return;
+        }
+        $o += 16;
+
+        self::readAddress($p, $o);
+
+        $mtu = Binary::readShort($p, $o);
+        $clientGuid = Binary::readLong($p, $o);
+
+        Logger::debug("OPEN_CONNECTION_REQUEST_2 mtu={$mtu} guid={$clientGuid}");
+
+        $session = self::session($a, $po);
+        $session->guid = $clientGuid;
+        $session->mtu = $mtu;
+
+        $buf = Binary::writeByte(self::OPEN_CONNECTION_REPLY_2);
+        $buf .= self::MAGIC;
+        $buf .= Binary::writeLong(self::$serverId);
+        $buf .= self::writeAddress($a, $po);
+        $buf .= Binary::writeShort($mtu);
+        $buf .= Binary::writeByte(0);
+
+        socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
+    }
+
+    private static function handleConnectionRequest(string $p, string $a, int $po, Socket $sock): void
+    {
+        Logger::debug("CONNECTION_REQUEST received");
+        $o = 1;
+        $clientGuid = Binary::readLong($p, $o);
+        $time = Binary::readLong($p, $o);
+        $useSecurity = Binary::readByte($p, $o);
+
+        $session = self::session($a, $po);
+        $session->guid = $clientGuid;
+
+        $buf = Binary::writeByte(self::CONNECTION_REQUEST_ACCEPTED);
+        $buf .= self::writeAddress($a, $po);
+        $buf .= Binary::writeShort(0);
+
+        for ($i = 0; $i < 10; $i++) {
+            $buf .= self::writeAddress("255.255.255.255", 19132);
+        }
+
+        $buf .= Binary::writeLong($time);
+        $buf .= Binary::writeLong(time());
+
+        Logger::debug("CONNECTION_REQUEST_ACCEPTED packet");
+
+        self::sendReliable(
+            $session,
+            $buf,
+            Reliability::RELIABLE,
+            $sock
+        );
+
+        $buf = Binary::writeByte(self::NEW_INCOMING_CONNECTION);
+        $buf .= self::writeAddress($a, $po);
+
+        for ($i = 0; $i < 20; $i++) {
+            $buf .= self::writeAddress("255.255.255.255", 19132);
+        }
+
+        $buf .= Binary::writeLong((int)(microtime(true) * 1000));
+        $buf .= Binary::writeLong((int)(microtime(true) * 1000));
+
+        self::sendReliable(
+            $session,
+            $buf,
+            Reliability::RELIABLE,
+            $sock
+        );
+
+        Logger::debug("NEW_INCOMING_CONNECTION SENT");
+        $session->setRakNetState(Session::RN_CONNECTED);
+        $session->setMcpeState(Session::MC_NONE);
+    }
+
+    private static function sendReliable(
+        Session $s,
+        string $payload,
+        int $reliability,
+        Socket $sock,
+        int $channel = 0
+    ): void {
+        $frameSetSeq = $s->frameSeq++;
+        $reliableSeq = $s->reliableSeq++;
+
+        if (!isset($s->orderedSeq[$channel])) {
+            $s->orderedSeq[$channel] = 0;
+        }
+
+        // FrameSet header
+        $buf = Binary::writeByte(self::FRAME_SET_MIN | ($channel & 0x0F));
+        $buf .= Binary::writeTriad($frameSetSeq);
+
+        // Encapsulated frame
+        $flags = ($reliability << 5) & 0xE0;
+        $buf .= Binary::writeByte($flags);
+        $buf .= Binary::writeShort(\strlen($payload) * 8);
+        $buf .= Binary::writeTriad($reliableSeq);
+
+        // ordered
+        if ($reliability === Reliability::RELIABLE_ORDERED) {
+            $buf .= Binary::writeTriad($s->orderedSeq[$channel]++);
+            $buf .= Binary::writeByte($channel);
+        }
+
+        $buf .= $payload;
+
+        $s->reliableQueue[$reliableSeq] = $buf;
+
+        socket_sendto(
+            $sock,
+            $buf,
+            \strlen($buf),
+            0,
+            $s->address,
+            $s->port
+        );
+    }
+
+    private static function sendUnreliable(
+        Session $s,
+        string $payload,
+        Socket $sock,
+        int $channel = 0
+    ): void {
+        $frameSetSeq = $s->frameSeq++;
+
+        $buf = Binary::writeByte(self::FRAME_SET_MIN | ($channel & 0x0F));
+        $buf .= Binary::writeTriad($frameSetSeq);
+
+        $buf .= Binary::writeByte(0x00);
+        $buf .= Binary::writeShort(\strlen($payload) * 8);
+
+        $buf .= $payload;
+
+        socket_sendto(
+            $sock,
+            $buf,
+            \strlen($buf),
+            0,
+            $s->address,
+            $s->port
+        );
+    }
+
+    private static function handleFrameSet(string $p, string $a, int $po, Socket $sock): void
+    {
+        $session = self::session($a, $po);
+        $o = 1;
+
+        $seq = Binary::readTriad($p, $o);
+        $session->markReceived($seq);
+
+        Logger::debug("FrameSet recv seq=$seq from {$a}:{$po}");
+
+        while ($o < \strlen($p)) {
+            Logger::debug("Parsing frame at offset=$o");
+            $flags = \ord($p[$o++]);
+            $reliability = $flags >> 5;
+            $fragmented = ($flags & 0x10) !== 0;
+
+            $lengthBits = Binary::readShort($p, $o);
+            $length = intdiv($lengthBits + 7, 8);
+
+            if ($reliability !== 0) {
+                Binary::readTriad($p, $o);
+            }
+            if ($reliability === Reliability::RELIABLE_ORDERED) {
+                Binary::readTriad($p, $o);
+                $o++;
+            }
+
+            if ($fragmented) {
+                Binary::readInt($p, $o);
+                Binary::readShort($p, $o);
+                Binary::readInt($p, $o);
+
+                $o += $length;
+                continue;
+            }
+
+            Logger::debug(sprintf(
+                "Frame flags=0x%02X reliability=%d fragmented=%s",
+                $flags,
+                $reliability,
+                $fragmented
+            ));
+
+            $body = substr($p, $o, $length);
+            $o += $length;
+
+            Logger::debug("Frame payload length=$length bytes");
+
+            if ($body === '') {
+                continue;
+            }
+
+            $pid = \ord($body[0]);
+
+            Logger::debug(sprintf(
+                "Connected frame PID=0x%02X len=%d reliability=%d",
+                $pid,
+                \strlen($body),
+                $reliability
+            ));
+
+            if ($pid === self::CONNECTION_REQUEST) {
+                self::handleConnectionRequest($body, $a, $po, $sock);
+                continue;
+            }
+
+            if ($pid === self::NEW_INCOMING_CONNECTION) {
+                Logger::debug("New Incoming Connection received (CLIENT)");
+
+                $session->setRakNetState(Session::RN_CONNECTED);
+
+                continue;
+            }
+
+            if ($pid === self::CONNECTED_PING) {
+                $o2 = 1;
+                $time = Binary::readLong($body, $o2);
+                $serverTime = (int) (microtime(true) * 1000);
+
+                $pong = Binary::writeByte(self::CONNECTED_PONG);
+                $pong .= Binary::writeLong($time);
+                $pong .= Binary::writeLong($serverTime);
+
+                self::sendUnreliable(
+                    $session,
+                    $pong,
+                    $sock
+                );
+                continue;
+            }
+
+            if ($pid === 0xFE) {
+                $compressed = substr($body, 1);
+
+                if ($session->shouldDecompressInbound()) {
+                    $batch = @gzinflate($compressed);
+                    if ($batch === false) {
+                        Logger::debug("MCPE batch ZLIB_RAW inflate failed");
+                        continue;
+                    }
+                } else {
+                    $batch = $compressed;
+                }
+
+                Logger::debug("MCPE batch decoded len=" . \strlen($batch));
+                PacketHandler::handleBatch($batch, $session, $sock);
+                continue;
+            }
+        }
+        self::sendAck($seq, $a, $po, $sock);
+        Logger::debug("ACK sent seq=$seq to $a:$po");
+    }
+
+    private static function sendAck(int $seq, string $a, int $p, Socket $s): void
+    {
+        $buf = Binary::writeByte(self::ACK);
+        $buf .= Binary::writeShort(1);
+        $buf .= Binary::writeByte(0);
+        $buf .= Binary::writeTriad($seq);
+        $buf .= Binary::writeTriad($seq);
+
+        socket_sendto($s, $buf, \strlen($buf), 0, $a, $p);
+    }
+
+    private static function handleAck(string $p, string $a, int $po): void
+    {
+        $o = 1;
+        $count = Binary::readShort($p, $o);
+        $session = self::session($a, $po);
+
+        for ($i = 0; $i < $count; $i++) {
+            $isRange = \ord($p[$o++]);
+
+            if ($isRange === 1) {
+                $seq = Binary::readTriad($p, $o);
+                unset($session->reliableQueue[$seq]);
+            } else {
+                $start = Binary::readTriad($p, $o);
+                $end = Binary::readTriad($p, $o);
+                for ($s = $start; $s <= $end; $s++) {
+                    unset($session->reliableQueue[$s]);
+                }
+            }
+        }
+        if ($session->hasPendingEncryption() || $session->hasWaitingHandshakeAck()) {
+            $session->enablePendingEncryption();
+        }
+        if (
+            $session->hasSentNetworkSettings()
+            && !$session->isCompressionEnabled()
+        ) {
+            $session->enableOutboundCompression(
+                NetworkSettings::COMPRESS_EVERYTHING
+            );
+            $session->enableInboundCompression();
+        }
+    }
+
+    private static function handleNack(string $p, string $a, int $po, Socket $sock): void
+    {
+        $o = 1;
+        $count = Binary::readShort($p, $o);
+        $session = self::session($a, $po);
+
+        for ($i = 0; $i < $count; $i++) {
+            $isSingle = \ord($p[$o++]);
+
+            if ($isSingle === 1) {
+                $seq = Binary::readTriad($p, $o);
+
+                if (isset($session->reliableQueue[$seq])) {
+                    socket_sendto(
+                        $sock,
+                        $session->reliableQueue[$seq],
+                        \strlen($session->reliableQueue[$seq]),
+                        0,
+                        $a,
+                        $po
+                    );
+                }
+            } else {
+                $start = Binary::readTriad($p, $o);
+                $end = Binary::readTriad($p, $o);
+
+                for ($s = $start; $s <= $end; $s++) {
+                    if (isset($session->reliableQueue[$s])) {
+                        socket_sendto(
+                            $sock,
+                            $session->reliableQueue[$s],
+                            \strlen($session->reliableQueue[$s]),
+                            0,
+                            $a,
+                            $po
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
