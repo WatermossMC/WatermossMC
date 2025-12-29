@@ -27,7 +27,7 @@ final class SubChunk
 
     public function encode(): string
     {
-        // version
+
         $out = Binary::writeByte(8);
 
         $palette = array_values(array_unique($this->blocks));
@@ -35,10 +35,10 @@ final class SubChunk
 
         $out .= Binary::writeByte($bits);
 
-        // block data
+
         $out .= $this->encodeBlocks($palette, $bits);
 
-        // palette entries
+
         $out .= Binary::writeVarInt(\count($palette));
         foreach ($palette as $id) {
             $out .= Binary::writeVarInt($id);

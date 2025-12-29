@@ -16,14 +16,12 @@ final class Player
 
     public int $runtimeId;
 
-    /* Position */
     public float $x = 0;
 
     public float $y = 64;
 
     public float $z = 0;
 
-    /* Rotation */
     public float $yaw = 0;
 
     public float $pitch = 0;

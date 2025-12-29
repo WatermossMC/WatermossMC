@@ -1,11 +1,11 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace WatermossMC\Minecraft;
 
 use Socket;
+use Throwable;
 use WatermossMC\Binary\Binary;
 use WatermossMC\Crypto\Crypto;
 use WatermossMC\Minecraft\Packets\{
@@ -34,241 +34,210 @@ final class PacketHandler
 
     public static function handleBatch(string $data, Session $session, Socket $socket): void
     {
+        try {
+            $data = $session->decodeInbound($data);
+        } catch (Throwable $e) {
+            Logger::error("Decode inbound failed: {$e->getMessage()}");
+            return;
+        }
+
         $offset = 0;
         $length = \strlen($data);
-
-        Logger::debug("handleBatch len={$length} mcpestate={$session->getMcpeState()}");
+        $count = 0;
 
         while ($offset < $length) {
-            $pkLen = Binary::readVarInt($data, $offset);
-            $pk = substr($data, $offset, $pkLen);
-            $offset += $pkLen;
+            try {
+                $len = Binary::readVarInt($data, $offset);
 
-            if ($pk === '') {
-                Logger::warning("Empty packet in batch");
-                continue;
+                if ($len === 0) {
+                    continue;
+                }
+
+                if ($len < 0 || $offset + $len > $length) {
+                    Logger::warning("Corrupted packet length={$len}");
+                    break;
+                }
+
+                $packet = substr($data, $offset, $len);
+                $offset += $len;
+
+                $count++;
+                self::handlePacket($packet, $session, $socket);
+
+            } catch (Throwable $e) {
+                Logger::error("Batch packet error @{$offset}: {$e->getMessage()}");
+                break;
             }
-
-            self::handlePacket($pk, $session, $socket);
         }
+
+        Logger::debug("Batch processed {$count} packets");
     }
 
     private static function handlePacket(string $packet, Session $session, Socket $socket): void
     {
-        $pid = \ord($packet[0]);
+        try {
+            $o = 0;
+            $pid = Binary::readVarInt($packet, $o);
 
-        Logger::debug(sprintf(
-            "IN packet pid=0x%02X len=%d state=%d",
-            $pid,
-            \strlen($packet),
-            $session->getMcpeState()
-        ));
+            Logger::debug(
+                "IN pid=0x" . dechex($pid) .
+                " state=" . $session->getMcpeState()
+            );
 
-        switch ($pid) {
-            // CLIENT TO SERVER HANDSHAKE
-            case 0x04:
-                if (!\in_array($session->getMcpeState(), [
-                    Session::MC_LOGIN,
-                    Session::MC_HANDSHAKE,
-                ], true)) {
-                    Logger::warning("ClientToServerHandshake invalid state");
+            switch ($pid) {
+
+
+
+                case 0xC1:
+                    if ($session->getMcpeState() !== Session::MC_NONE) {
+                        Logger::warning("RequestNetworkSettings wrong state");
+                        return;
+                    }
+
+                    RequestNetworkSettings::read($packet, $o, $session, $socket);
+                    NetworkSettings::send($session, $socket);
+
+                    $session->enableOutboundCompression(NetworkSettings::COMPRESS_EVERYTHING);
+                    $session->enableInboundCompression();
+
+                    $session->markNetworkSettingsSent();
+                    $session->setMcpeState(Session::MC_NETWORK);
                     return;
-                }
-                $o = 1;
 
-                $keys = Crypto::generateKeyPair();
-                $session->setServerKeys($keys);
 
-                $shared = Crypto::deriveSecret(
-                    $keys['private'],
-                    $session->getClientPublicKey()
-                );
 
-                $jwt = self::buildServerHandshakeJwt($keys['public'], $keys['private']);
-                ServerToClientHandshake::send($session, $socket, $jwt);
+                case 0x01:
+                    if ($session->getMcpeState() !== Session::MC_NETWORK) {
+                        Logger::warning("Login wrong state");
+                        return;
+                    }
 
-                $session->setHandshakeDone();
-                Logger::info("Handshake complete → RESOURCE");
+                    $login = Login::read($packet, $o);
+                    $payload = $login['payload'] ?? null;
+                    $pubKey = $login['identityPublicKey'] ?? null;
 
-                if ($session->isHandshakeDone()) {
+                    if (!\is_array($payload) || !\is_string($pubKey)) {
+                        Disconnect::send($session, $socket, "Invalid login payload");
+                        return;
+                    }
+
+                    $uuid = $payload['identity'] ?? null;
+                    $name = $payload['ThirdPartyName'] ?? 'Player';
+
+                    if (!\is_string($uuid)) {
+                        Disconnect::send($session, $socket, "Invalid UUID");
+                        return;
+                    }
+
+                    $session->setClientPublicKey($pubKey);
+                    $session->setLoginData($uuid, (string)$name, null);
+                    $session->setMcpeState(Session::MC_LOGIN);
+                    return;
+
+
+
+                case 0x04:
+                    if ($session->getMcpeState() !== Session::MC_LOGIN) {
+                        Logger::warning("Handshake wrong state");
+                        return;
+                    }
+
+                    $keys = Crypto::generateKeyPair();
+                    $session->setServerKeys($keys);
+
+                    $shared = Crypto::deriveSecret(
+                        $keys['private'],
+                        $session->getClientPublicKey()
+                    );
+
+                    $jwt = self::buildServerHandshakeJwt(
+                        $keys['public'],
+                        $keys['private']
+                    );
+
+                    ServerToClientHandshake::send($session, $socket, $jwt);
+
+                    [$key, $iv] = Crypto::deriveAes($shared);
+                    $session->setPendingEncryption($key, $iv);
+                    $session->setWaitingHandshakeAck(true);
+
                     ResourcePacksInfo::send($session, $socket);
                     $session->setMcpeState(Session::MC_RESOURCE);
-                }
-
-                [$key, $iv] = Crypto::deriveAes($shared);
-                $session->setPendingEncryption($key, $iv);
-
-                return;
-
-                // LOGIN
-            case 0x01:
-                if ($session->getMcpeState() !== Session::MC_NETWORK) {
-                    Logger::warning(
-                        "Login invalid in state={$session->getMcpeState()})"
-                    );
                     return;
-                }
-                $o = 1;
-                $login = Login::read($packet, $o);
-                $payload = $login['payload'];
-                $identityPublicKey = $login['identityPublicKey'] ?? null;
 
-                if (!\is_string($identityPublicKey) || $identityPublicKey === '') {
-                    Logger::error("Login missing identityPublicKey");
-                    Disconnect::send($session, $socket, "Invalid login key");
+
+
+                case 0x08:
+                    if ($session->getMcpeState() !== Session::MC_RESOURCE) {
+                        Logger::warning("Resource response wrong state");
+                        return;
+                    }
+
+                    $rp = ResourcePackClientResponse::read($packet, $o);
+
+                    match ($rp['status']) {
+                        ResourcePackClientResponse::STATUS_HAVE_ALL_PACKS
+                            => ResourcePackStack::send($session, $socket),
+
+                        ResourcePackClientResponse::STATUS_COMPLETED
+                            => self::startPlay($session, $socket),
+
+                        default => null
+                    };
                     return;
-                }
+            }
 
-                $session->setClientPublicKey($identityPublicKey);
-
-                $uuid = $payload['identity'] ?? null;
-                $name = $payload['ThirdPartyName'] ?? 'Player';
-
-                Logger::info("Login packet name={$name}");
-
-                if (!\is_string($uuid)) {
-                    Logger::error("Invalid login UUID");
-                    Disconnect::send($session, $socket, 'Invalid login');
-                    return;
-                }
-
-                $session->setLoginData($uuid, $name, null);
-                $session->enableOutboundCompression(NetworkSettings::COMPRESS_EVERYTHING);
-                $session->enableInboundCompression();
-                $session->setMcpeState(Session::MC_LOGIN);
-
-                Logger::info("Login OK uuid={$uuid}, waiting handshake");
-                return;
-
-                // RESOURCE PACK CLIENT RESPONSE
-            case 0x08:
-                if ($session->getMcpeState() !== Session::MC_RESOURCE) {
-                    Logger::warning("ResourcePackClientResponse ignored (invalid state)");
-                    return;
-                }
-
-                $o = 1;
-                $rp = ResourcePackClientResponse::read($packet, $o);
-                $status = $rp['status'];
-
-                Logger::info("ResourcePackClientResponse status={$status}");
-
-                if ($status === ResourcePackClientResponse::STATUS_REFUSED) {
-                    Logger::error("Client refused resource packs");
-                    Disconnect::send($session, $socket, 'Resource pack refused');
-                    return;
-                }
-
-                if ($status === ResourcePackClientResponse::STATUS_HAVE_ALL_PACKS) {
-                    Logger::debug("Client has all packs, sending ResourcePackStack");
-                    ResourcePackStack::send($session, $socket);
-                    return;
-                }
-
-                if ($status === ResourcePackClientResponse::STATUS_COMPLETED) {
-                    Logger::info("Resource pack phase completed, starting play");
-                    self::startPlay($session, $socket);
-                    return;
-                }
-
-                Logger::warning("Unhandled resource pack status={$status}");
-                return;
-
-            case 0xC1:
-                if ($session->getMcpeState() !== Session::MC_NONE) {
-                    Logger::warning(
-                        "RequestNetworkSettings must send before Login (state={$session->getMcpeState()})"
-                    );
-                    return;
-                }
-
-                RequestNetworkSettings::read($packet, $session, $socket);
-
-                $session->setMcpeState(Session::MC_NETWORK);
-
-                Logger::info("NetworkSettings sent, waiting login");
-                return;
+        } catch (Throwable $e) {
+            Logger::error("Packet handling error: {$e->getMessage()}");
         }
-
-        Logger::debug("Unhandled packet pid=0x" . dechex($pid));
     }
 
-    private static function startPlay(Session $session, Socket $socket): void
+    private static function startPlay(Session $s, Socket $sock): void
     {
-        if ($session->getMcpeState() === Session::MC_PLAY) {
-            Logger::warning("startPlay called but already in PLAY state");
-            return;
-        }
+        self::$world ??= new World('world', random_int(1, \PHP_INT_MAX));
 
-        if (self::$world === null) {
-            Logger::info("Creating world instance");
-            self::$world = new World(
-                'world',
-                random_int(1, \PHP_INT_MAX)
-            );
-        }
+        $s->setMcpeState(Session::MC_PLAY);
 
-        $session->setMcpeState(Session::MC_PLAY);
-        PlayStatus::sendSuccess($session, $socket);
-        $session->setPosition(0.0, 6.0, 0.0);
+        PlayStatus::sendSuccess($s, $sock);
+        StartGame::send($s, $sock);
+        PlayStatus::sendPlayerSpawn($s, $sock);
 
-        Logger::info("Sending StartGame");
-        StartGame::send($session, $socket);
-        Logger::info("Sending PlayStatus (success)");
-        PlayStatus::sendPlayerSpawn($session, $socket);
+        SetTime::send($s, $sock);
+        SpawnPosition::send($s, $sock);
 
-        Logger::debug("Sending SetTime & SpawnPosition");
-        SetTime::send($session, $socket);
-        SpawnPosition::send($session, $socket);
-
-        Logger::info("Sending initial chunks");
-
-        for ($cx = -1; $cx <= 1; $cx++) {
-            for ($cz = -1; $cz <= 1; $cz++) {
-                $chunk = self::$world->getChunk($cx, $cz);
-
-                Logger::debug("Sending chunk {$cx}:{$cz}");
-
+        for ($x = -1; $x <= 1; $x++) {
+            for ($z = -1; $z <= 1; $z++) {
                 LevelChunk::send(
-                    $session,
-                    $socket,
-                    $cx,
-                    $cz,
-                    $chunk->encode()
+                    $s,
+                    $sock,
+                    $x,
+                    $z,
+                    self::$world->getChunk($x, $z)->encode()
                 );
             }
         }
 
-        $session->enterPlay();
+        PlayerList::send($s, $sock);
+        AddPlayer::send($s, $sock);
 
-        Logger::info("Player entered PLAY state");
-
-        PlayerManager::add($session, $session->getUsername());
-        PlayerList::send($session, $socket);
-        AddPlayer::send($session, $socket);
-
-        Logger::debug("PlayerList + AddPlayer sent");
+        Logger::info("Player entered PLAY");
     }
 
-    private static function buildServerHandshakeJwt(string $serverPubPem, string $serverPrivPem): string
+    private static function buildServerHandshakeJwt(string $pub, string $priv): string
     {
-        $header = [
-            "alg" => "ES256",
-            "typ" => "JWT",
-        ];
-
-        $payload = [
+        $header = json_encode(["alg" => "ES256", "typ" => "JWT"], \JSON_THROW_ON_ERROR);
+        $payload = json_encode([
             "salt" => base64_encode(random_bytes(16)),
-            "identityPublicKey" => $serverPubPem,
-        ];
+            "identityPublicKey" => $pub,
+        ], \JSON_THROW_ON_ERROR);
 
-        $h = rtrim(strtr(base64_encode(json_encode($header)), '+/', '-_'), '=');
-        $p = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+        $h = rtrim(strtr(base64_encode($header), '+/', '-_'), '=');
+        $p = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
 
-        openssl_sign("$h.$p", $sig, $serverPrivPem, \OPENSSL_ALGO_SHA256);
+        if (!openssl_sign("$h.$p", $sig, $priv, \OPENSSL_ALGO_SHA256)) {
+            throw new \RuntimeException("JWT sign failed");
+        }
 
-        $s = rtrim(strtr(base64_encode($sig), '+/', '-_'), '=');
-
-        return "$h.$p.$s";
+        return "$h.$p." . rtrim(strtr(base64_encode($sig), '+/', '-_'), '=');
     }
 }

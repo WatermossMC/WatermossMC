@@ -17,26 +17,25 @@ final class LevelChunk extends Packet
         int $chunkZ,
         string $chunkData
     ): void {
-        $p = Binary::writeByte(0x3A);      // LevelChunk
-        $p .= Binary::writeInt($chunkX);    // chunkX
-        $p .= Binary::writeInt($chunkZ);    // chunkZ
-        $p .= Binary::writeVarInt(24);      // subchunk count
-        $p .= Binary::writeBool(false);     // cache enabled
+        $p = Binary::writeInt($chunkX);
+        $p .= Binary::writeInt($chunkZ);
+        $p .= Binary::writeVarInt(24);
+        $p .= Binary::writeBool(false);
 
         $p .= Binary::writeVarInt(\strlen($chunkData));
         $p .= $chunkData;
 
         $p .= self::writeBiomeData();
-        $p .= Binary::writeVarInt(0);       // no block entities
+        $p .= Binary::writeVarInt(0);
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x3A, $p, $s, $sock);
     }
 
     private static function writeBiomeData(): string
     {
         $out = '';
 
-        $palette = [1]; // plains
+        $palette = [1];
         $bits = 1;
 
         $out .= Binary::writeByte($bits);

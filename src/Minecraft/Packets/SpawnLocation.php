@@ -12,11 +12,10 @@ final class SpawnPosition extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $p = Binary::writeByte(0x44);
-        $p .= Binary::writeInt(0);
+        $p = Binary::writeInt(0);
         $p .= Binary::writeInt(0);
         $p .= Binary::writeInt(64);
         $p .= Binary::writeInt(0);
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x44, $p, $s, $sock);
     }
 }

@@ -12,12 +12,11 @@ final class UpdateAbilities extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $p = Binary::writeByte(ProtocolInfo::UPDATE_ABILITIES_PACKET);
-        $p .= Binary::writeVarLong($s->getRuntimeId());
-        $p .= Binary::writeByte(0); // player permissions
-        $p .= Binary::writeByte(0); // command permissions
-        $p .= Binary::writeVarInt(0); // abilities count
+        $p = Binary::writeVarLong($s->getRuntimeId());
+        $p .= Binary::writeByte(0);
+        $p .= Binary::writeByte(0);
+        $p .= Binary::writeVarInt(0);
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(ProtocolInfo::UPDATE_ABILITIES_PACKET, $p, $s, $sock);
     }
 }

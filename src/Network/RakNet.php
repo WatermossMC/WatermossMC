@@ -95,10 +95,10 @@ final class RakNet
         $type = Binary::readByte($p, $o);
 
         if ($type === 4) {
-            $o += 4; // IPv4 bytes
+            $o += 4;
             Binary::readShort($p, $o);
         } else {
-            $o += 16; // IPv6 bytes
+            $o += 16;
             Binary::readShort($p, $o);
         }
     }
@@ -267,17 +267,17 @@ final class RakNet
             $s->orderedSeq[$channel] = 0;
         }
 
-        // FrameSet header
-        $buf = Binary::writeByte(self::FRAME_SET_MIN | ($channel & 0x0F));
+
+        $buf = Binary::writeByte(self::FRAME_SET_MIN);
         $buf .= Binary::writeTriad($frameSetSeq);
 
-        // Encapsulated frame
+
         $flags = ($reliability << 5) & 0xE0;
         $buf .= Binary::writeByte($flags);
         $buf .= Binary::writeShort(\strlen($payload) * 8);
         $buf .= Binary::writeTriad($reliableSeq);
 
-        // ordered
+
         if ($reliability === Reliability::RELIABLE_ORDERED) {
             $buf .= Binary::writeTriad($s->orderedSeq[$channel]++);
             $buf .= Binary::writeByte($channel);
@@ -305,7 +305,7 @@ final class RakNet
     ): void {
         $frameSetSeq = $s->frameSeq++;
 
-        $buf = Binary::writeByte(self::FRAME_SET_MIN | ($channel & 0x0F));
+        $buf = Binary::writeByte(self::FRAME_SET_MIN);
         $buf .= Binary::writeTriad($frameSetSeq);
 
         $buf .= Binary::writeByte(0x00);
@@ -327,49 +327,67 @@ final class RakNet
     {
         $session = self::session($a, $po);
         $o = 1;
+        $len = \strlen($p);
+
+        if ($o + 3 > $len) {
+            return;
+        }
 
         $seq = Binary::readTriad($p, $o);
         $session->markReceived($seq);
 
         Logger::debug("FrameSet recv seq=$seq from {$a}:{$po}");
 
-        while ($o < \strlen($p)) {
-            Logger::debug("Parsing frame at offset=$o");
+        while (true) {
+
+            if ($o + 3 > $len) {
+                break;
+            }
+
             $flags = \ord($p[$o++]);
             $reliability = $flags >> 5;
             $fragmented = ($flags & 0x10) !== 0;
 
+            if ($o + 2 > $len) {
+                break;
+            }
+
             $lengthBits = Binary::readShort($p, $o);
-            $length = intdiv($lengthBits + 7, 8);
+            $frameLength = intdiv($lengthBits + 7, 8);
+
 
             if ($reliability !== 0) {
+                if ($o + 3 > $len) {
+                    break;
+                }
                 Binary::readTriad($p, $o);
             }
+
+
             if ($reliability === Reliability::RELIABLE_ORDERED) {
+                if ($o + 4 > $len) {
+                    break;
+                }
                 Binary::readTriad($p, $o);
                 $o++;
             }
 
+
             if ($fragmented) {
+                if ($o + 10 > $len) {
+                    break;
+                }
                 Binary::readInt($p, $o);
                 Binary::readShort($p, $o);
                 Binary::readInt($p, $o);
-
-                $o += $length;
-                continue;
             }
 
-            Logger::debug(sprintf(
-                "Frame flags=0x%02X reliability=%d fragmented=%s",
-                $flags,
-                $reliability,
-                $fragmented
-            ));
+            if ($o + $frameLength > $len) {
+                break;
+            }
 
-            $body = substr($p, $o, $length);
-            $o += $length;
-
-            Logger::debug("Frame payload length=$length bytes");
+            $body = substr($p, $o, $frameLength);
+            $o += $frameLength;
 
             if ($body === '') {
                 continue;
@@ -384,47 +402,53 @@ final class RakNet
                 $reliability
             ));
 
+
+
             if ($pid === self::CONNECTION_REQUEST) {
                 self::handleConnectionRequest($body, $a, $po, $sock);
                 continue;
             }
 
             if ($pid === self::NEW_INCOMING_CONNECTION) {
-                Logger::debug("New Incoming Connection received (CLIENT)");
-
+                Logger::debug("NEW_INCOMING_CONNECTION received (client)");
                 $session->setRakNetState(Session::RN_CONNECTED);
-
                 continue;
             }
 
             if ($pid === self::CONNECTED_PING) {
                 $o2 = 1;
                 $time = Binary::readLong($body, $o2);
-                $serverTime = (int) (microtime(true) * 1000);
 
                 $pong = Binary::writeByte(self::CONNECTED_PONG);
                 $pong .= Binary::writeLong($time);
-                $pong .= Binary::writeLong($serverTime);
+                $pong .= Binary::writeLong((int)(microtime(true) * 1000));
 
-                self::sendUnreliable(
-                    $session,
-                    $pong,
-                    $sock
-                );
+                self::sendUnreliable($session, $pong, $sock);
                 continue;
             }
 
+
             if ($pid === 0xFE) {
                 $compressed = substr($body, 1);
+                $payload = $compressed;
+
+                if ($session->isEncryptionEnabled()) {
+                    try {
+                        $payload = $session->decrypt($payload);
+                    } catch (\Throwable $e) {
+                        Logger::debug("Decrypt failed: " . $e->getMessage());
+                        continue;
+                    }
+                }
 
                 if ($session->shouldDecompressInbound()) {
-                    $batch = @gzinflate($compressed);
+                    $batch = @gzinflate($payload);
                     if ($batch === false) {
-                        Logger::debug("MCPE batch ZLIB_RAW inflate failed");
+                        Logger::debug("MCPE batch inflate failed (RAW)");
                         continue;
                     }
                 } else {
-                    $batch = $compressed;
+                    $batch = $payload;
                 }
 
                 Logger::debug("MCPE batch decoded len=" . \strlen($batch));
@@ -432,6 +456,7 @@ final class RakNet
                 continue;
             }
         }
+
         self::sendAck($seq, $a, $po, $sock);
         Logger::debug("ACK sent seq=$seq to $a:$po");
     }
@@ -440,8 +465,7 @@ final class RakNet
     {
         $buf = Binary::writeByte(self::ACK);
         $buf .= Binary::writeShort(1);
-        $buf .= Binary::writeByte(0);
-        $buf .= Binary::writeTriad($seq);
+        $buf .= Binary::writeByte(1);
         $buf .= Binary::writeTriad($seq);
 
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $p);
@@ -458,26 +482,26 @@ final class RakNet
 
             if ($isRange === 1) {
                 $seq = Binary::readTriad($p, $o);
-                unset($session->reliableQueue[$seq]);
+                self::handleAckSeq($session, $seq);
             } else {
                 $start = Binary::readTriad($p, $o);
                 $end = Binary::readTriad($p, $o);
-                for ($s = $start; $s <= $end; $s++) {
-                    unset($session->reliableQueue[$s]);
+
+                for ($seq = $start; $seq <= $end; $seq++) {
+                    self::handleAckSeq($session, $seq);
                 }
             }
         }
-        if ($session->hasPendingEncryption() || $session->hasWaitingHandshakeAck()) {
+    }
+
+    private static function handleAckSeq(Session $session, int $seq): void
+    {
+        if ($session->hasPendingEncryption() && $session->hasWaitingHandshakeAck()) {
             $session->enablePendingEncryption();
-        }
-        if (
-            $session->hasSentNetworkSettings()
-            && !$session->isCompressionEnabled()
-        ) {
-            $session->enableOutboundCompression(
-                NetworkSettings::COMPRESS_EVERYTHING
-            );
-            $session->enableInboundCompression();
+            $session->setWaitingHandshakeAck(false);
+            $session->setHandshakeDone();
+
+            Logger::info("Encryption, Handshake ACK");
         }
     }
 

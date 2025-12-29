@@ -12,29 +12,27 @@ final class ResourcePacksInfo extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $p = Binary::writeByte(0x06);
 
-        // mustAccept
+        $p = Binary::writeBool(false);
+
+
         $p .= Binary::writeBool(false);
 
-        // hasAddons
+
         $p .= Binary::writeBool(false);
 
-        // hasScripts
+
         $p .= Binary::writeBool(false);
 
-        // forceDisableVibrantVisuals
-        $p .= Binary::writeBool(false);
 
-        // worldTemplateId
         $p .= Binary::writeUUID('00000000-0000-0000-0000-000000000000');
 
-        // worldTemplateVersion
+
         $p .= Binary::writeStringInt("");
 
-        // resourcePackCount
+
         $p .= Binary::writeShort(0);
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x06, $p, $s, $sock);
     }
 }

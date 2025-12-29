@@ -12,8 +12,7 @@ final class SetTime extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $p = Binary::writeByte(0x0A);
-        $p .= Binary::writeInt(6000);
-        self::sendBatch($p, $s, $sock);
+        $p = Binary::writeInt(6000);
+        self::sendBatch(0x0A, $p, $s, $sock);
     }
 }

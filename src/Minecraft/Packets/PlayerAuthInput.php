@@ -35,17 +35,17 @@ final class PlayerAuthInput extends Packet
         $headYaw = Binary::readFloat($p, $o);
         $o += 4;
 
-        // BitSet (input flags)
-        $flags = Binary::readBitSet($p, $o, 65); // PlayerAuthInputFlags::NUMBER_OF_FLAGS
 
-        Binary::readVarInt($p, $o); // inputMode
-        Binary::readVarInt($p, $o); // playMode
-        Binary::readVarInt($p, $o); // interactionMode
+        $flags = Binary::readBitSet($p, $o, 65);
 
-        Binary::readVector2($p, $o); // interactRotation
+        Binary::readVarInt($p, $o);
+        Binary::readVarInt($p, $o);
+        Binary::readVarInt($p, $o);
+
+        Binary::readVector2($p, $o);
         $tick = Binary::readVarLong($p, $o);
 
-        Binary::readVector3($p, $o); // delta
+        Binary::readVector3($p, $o);
 
         if ($flags[PlayerAuthInputFlags::PERFORM_ITEM_INTERACTION]) {
             Binary::skipItemInteractionData($p, $o);
@@ -65,8 +65,8 @@ final class PlayerAuthInput extends Packet
         $analogZ = Binary::readFloat($p, $o);
         $o += 4;
 
-        Binary::readVector3($p, $o); // cameraOrientation
-        Binary::readVector2($p, $o); // rawMove
+        Binary::readVector3($p, $o);
+        Binary::readVector2($p, $o);
 
         $player = PlayerManager::get($s);
         if ($player === null) {

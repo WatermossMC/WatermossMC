@@ -11,7 +11,7 @@ require __DIR__ . '/vendor/autoload.php';
 $bindIp = "0.0.0.0";
 $bindPort = 19132;
 
-/* ========= ERROR HANDLER ========= */
+
 set_exception_handler(function (\Throwable $e): void {
     Logger::error($e::class . ": " . $e->getMessage());
 
@@ -24,10 +24,10 @@ set_exception_handler(function (\Throwable $e): void {
     }
 });
 
-/* ========= STARTUP ========= */
+
 Logger::info("Starting WatermossMC server");
 
-/* ========= SOCKET ========= */
+
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     Logger::error("Failed to create UDP socket");
@@ -42,20 +42,18 @@ if (!socket_bind($socket, $bindIp, $bindPort)) {
     exit(1);
 }
 
-/* ========= NETWORK ========= */
+
 RakNet::init();
 Logger::info("RakNet initialized");
 
-/* ========= TICK LOOP ========= */
+
 $tickLoop = new TickLoop();
 
-$tickLoop->add(function (): void {
-    // future: entity tick, world tick, etc
-});
+$tickLoop->add(function (): void {});
 
 Logger::info("Started on {$bindIp}:{$bindPort}");
 
-/* ========= MAIN LOOP ========= */
+
 $buffer = '';
 $fromIp = '';
 $fromPort = 0;

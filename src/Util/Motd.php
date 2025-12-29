@@ -37,7 +37,7 @@ final class Motd
 
     private string $gameMode = 'Survival';
 
-    private int $gameModeId = 1; // Survival
+    private int $gameModeId = 1;
 
     private int $port = 19132;
 
@@ -98,8 +98,8 @@ final class Motd
             $this->worldName,
             $this->gameMode,
             (string) $this->gameModeId,
-            (string) $this->port, // IPv4
-            (string) $this->port, // IPv6
+            (string) $this->port,
+            (string) $this->port,
         ]);
     }
 }

@@ -7,13 +7,15 @@ namespace WatermossMC\Network;
 use Socket;
 use WatermossMC\Crypto\EncryptionContext;
 use WatermossMC\Minecraft\Packets\NetworkSettings;
+use WatermossMC\Util\Logger;
 
 final class Session
 {
-    /* RakNet */
     public int $sendSequence = 0;
 
-    public int $lastReceivedSequence = -1;
+    private int $lastReceivedSequence = -1;
+
+    public int $orderedIndex = 0;
 
     public int $frameSeq = 0;
 
@@ -31,7 +33,9 @@ final class Session
     /** @var array<int, bool> */
     private array $received = [];
 
-    /* Network */
+    /** @var array<int, array{count:int, parts:array<int,string>}> */
+    public array $fragments = [];
+
     public string $address;
 
     public int $port;
@@ -40,7 +44,6 @@ final class Session
 
     public int $lastSeen;
 
-    /* Login */
     public int $guid = 0;
 
     private string $uuid = '';
@@ -56,6 +59,8 @@ final class Session
     private bool $compressInbound = false;
 
     private int $compressionAlgorithm = NetworkSettings::COMPRESS_NOTHING;
+
+    private ?int $networkSettingsReliableSeq = null;
 
     private bool $networkSettingsSent = false;
 
@@ -81,7 +86,6 @@ final class Session
 
     private float $z = 0.0;
 
-    /* Runtime */
     private int $runtimeId;
 
     public const RN_CONNECTING = 0;
@@ -110,6 +114,7 @@ final class Session
         $this->port = $port;
         $this->runtimeId = self::$nextRuntimeId++;
         $this->lastSeen = time();
+        $this->orderedIndex = 0;
     }
 
     public function nextSendSeq(): int
@@ -140,7 +145,6 @@ final class Session
         $this->outgoingFrames[$seq] = $frame;
     }
 
-    /* Login */
     public function setLoginData(string $uuid, string $username, ?string $xuid): void
     {
         $this->uuid = $uuid;
@@ -238,7 +242,7 @@ final class Session
 
     public function getGameMode(): int
     {
-        return 0; // survival
+        return 0;
     }
 
     /**
@@ -303,7 +307,7 @@ final class Session
         $this->orderedSeq = [];
 
         if ($notify && $this->socket !== null) {
-            $pk = "\x15"; // DISCONNECT_NOTIFICATION
+            $pk = "\x15";
 
             @socket_sendto(
                 $this->socket,
@@ -349,6 +353,11 @@ final class Session
         return $this->encryption !== null;
     }
 
+    public function isEncryptionEnabled(): bool
+    {
+        return $this->hasEncryption();
+    }
+
     public function encrypt(string $data): string
     {
         return $this->encryption?->encrypt($data) ?? $data;
@@ -357,6 +366,28 @@ final class Session
     public function decrypt(string $data): string
     {
         return $this->encryption?->decrypt($data) ?? $data;
+    }
+
+    public function decodeInbound(string $data): string
+    {
+        Logger::debug("Decoding inbound, encryption: " . ($this->hasEncryption() ? 'yes' : 'no') .
+                     ", decompress: " . ($this->shouldDecompressInbound() ? 'yes' : 'no'));
+
+        if ($this->hasEncryption()) {
+            $data = $this->decrypt($data);
+        }
+
+        if ($this->shouldDecompressInbound()) {
+            $originalLength = \strlen($data);
+            $data = zlib_decode(
+                $data,
+                1024 * 1024
+            )
+                ?: throw new \RuntimeException("zlib decode failed");
+            Logger::debug("Decompressed from $originalLength to " . \strlen($data));
+        }
+
+        return $data;
     }
 
     public function setHandshakeDone(): void
@@ -392,6 +423,20 @@ final class Session
         $this->pendingIv = null;
     }
 
+    public function finalizeEncryption(): void
+    {
+        if ($this->pendingKey === null || $this->pendingIv === null) {
+            throw new \LogicException('No pending encryption to finalize');
+        }
+
+        $this->enableEncryption($this->pendingKey, $this->pendingIv);
+
+        $this->pendingKey = null;
+        $this->pendingIv = null;
+
+        $this->handshakeDone = true;
+    }
+
     public function markNetworkSettingsSent(): void
     {
         $this->networkSettingsSent = true;
@@ -415,5 +460,47 @@ final class Session
     public function setWaitingHandshakeAck(bool $v): void
     {
         $this->hasWaitingHandshakeAck = $v;
+    }
+
+    public function nextOrderedIndex(): int
+    {
+        return $this->orderedIndex++;
+    }
+
+    public function storeFragment(
+        int $fragmentId,
+        int $fragmentCount,
+        int $fragmentIndex,
+        string $payload
+    ): bool {
+        $this->fragments[$fragmentId]['count'] ??= $fragmentCount;
+        $this->fragments[$fragmentId]['parts'][$fragmentIndex] = $payload;
+
+        return \count($this->fragments[$fragmentId]['parts']) >= $fragmentCount;
+    }
+
+    public function consumeFragments(int $fragmentId): string
+    {
+        ksort($this->fragments[$fragmentId]['parts']);
+        $data = implode('', $this->fragments[$fragmentId]['parts']);
+        unset($this->fragments[$fragmentId]);
+        return $data;
+    }
+
+    public function markNetworkSettingsReliableSeq(int $seq): void
+    {
+        $this->networkSettingsReliableSeq = $seq;
+    }
+
+    public function isAckForNetworkSettings(int $seq): bool
+    {
+        return $this->networkSettingsSent
+            && $this->networkSettingsReliableSeq !== null
+            && $seq === $this->networkSettingsReliableSeq;
+    }
+
+    public function clearNetworkSettingsReliableSeq(): void
+    {
+        $this->networkSettingsReliableSeq = null;
     }
 }

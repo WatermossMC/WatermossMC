@@ -95,6 +95,21 @@ final class Binary
         return \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
     }
 
+    public static function writeUShortBE(int $v): string
+    {
+        return pack('n', $v & 0xFFFF);
+    }
+
+    public static function writeUInt8(int $v): string
+    {
+        return \chr($v & 0xFF);
+    }
+
+    public static function writeFloatBE(float $v): string
+    {
+        return pack('G', $v);
+    }
+
     private static function ensure(string $buf, int $o, int $need): void
     {
         if (\strlen($buf) < $o + $need) {
@@ -127,7 +142,7 @@ final class Binary
     public static function readLShort(string $buf, int &$o): int
     {
         self::ensure($buf, $o, 2);
-        $r = unpack('v', substr($buf, $o, 2)); // little-endian unsigned short
+        $r = unpack('v', substr($buf, $o, 2));
         if ($r === false) {
             throw new \RuntimeException('unpack lshort failed');
         }

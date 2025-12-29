@@ -12,8 +12,7 @@ final class StartGame extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $p = Binary::writeByte(0x0B);
-        $p .= Binary::writeVarLong(1);
+        $p = Binary::writeVarLong(1);
         $p .= Binary::writeVarLong(1);
         $p .= Binary::writeInt(1);
         $p .= pack("g", 0.0) . pack("g", 64.0) . pack("g", 0.0);
@@ -36,6 +35,6 @@ final class StartGame extends Packet
         $p .= Binary::writeBool(true);
         $p .= Binary::writeBool(true);
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x0B, $p, $s, $sock);
     }
 }

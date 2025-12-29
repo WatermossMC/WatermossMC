@@ -24,7 +24,7 @@ final class Crypto
 
         return [
             'private' => $private,
-            'public' => $details['key'], // PEM
+            'public' => $details['key'],
         ];
     }
 

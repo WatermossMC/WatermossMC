@@ -11,11 +11,9 @@ use WatermossMC\Util\Logger;
 
 final class RequestNetworkSettings extends Packet
 {
-    public static function read(string $payload, Session $s, Socket $sock): void
+    public static function read(string $payload, int &$o, Session $s, Socket $sock): void
     {
-        $offset = 1; // skip packetId (0xC1)
-
-        $protocol = Binary::readVarInt($payload, $offset);
+        $protocol = Binary::readInt($payload, $o);
 
         Logger::debug("RequestNetworkSettings protocol={$protocol}");
     }

@@ -37,11 +37,11 @@ final class World
     {
         $chunk = new Chunk($x, $z);
 
-        // ===== FLAT WORLD =====
-        // y 0   = bedrock
-        // y 1-3 = dirt
-        // y 4   = grass
-        // sisanya udara
+
+
+
+
+
 
         for ($cx = 0; $cx < 16; $cx++) {
             for ($cz = 0; $cz < 16; $cz++) {

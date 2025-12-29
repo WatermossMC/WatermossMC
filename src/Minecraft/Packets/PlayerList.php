@@ -15,14 +15,13 @@ final class PlayerList extends Packet
     {
         $uuid = Uuid::uuid4()->getBytes();
 
-        $p = Binary::writeByte(0x3F);
-        $p .= Binary::writeByte(0);
+        $p = Binary::writeByte(0);
         $p .= Binary::writeInt(1);
         $p .= $uuid;
         $p .= Binary::writeLong(1);
         $p .= Binary::writeStringInt("Player");
         $p .= Binary::writeStringInt("");
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x3F, $p, $s, $sock);
     }
 }

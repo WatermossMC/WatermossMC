@@ -12,9 +12,8 @@ final class Disconnect extends Packet
 {
     public static function send(Session $s, Socket $sock, string $reason = ''): void
     {
-        $p = Binary::writeByte(0x05);
-        $p .= Binary::writeString($reason);
+        $p = Binary::writeString($reason);
 
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x05, $p, $s, $sock);
     }
 }

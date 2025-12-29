@@ -15,15 +15,15 @@ final class MovePlayer extends Packet
     {
         $o = 1;
 
-        // actorRuntimeId
+
         Binary::readLong($p, $o);
 
-        // position
+
         $x = Binary::readFloat($p, $o);
         $y = Binary::readFloat($p, $o);
         $z = Binary::readFloat($p, $o);
 
-        // rotation
+
         $pitch = Binary::readFloat($p, $o);
         $yaw = Binary::readFloat($p, $o);
         $headYaw = Binary::readFloat($p, $o);
@@ -31,15 +31,15 @@ final class MovePlayer extends Packet
         $mode = Binary::readByte($p, $o);
         $onGround = Binary::readBool($p, $o);
 
-        // ridingActorRuntimeId
+
         Binary::readLong($p, $o);
 
         if ($mode === MovePlayerMode::TELEPORT) {
-            Binary::readInt($p, $o); // teleportCause
-            Binary::readInt($p, $o); // teleportItem
+            Binary::readInt($p, $o);
+            Binary::readInt($p, $o);
         }
 
-        Binary::readVarLong($p, $o); // tick
+        Binary::readVarLong($p, $o);
 
         $player = PlayerManager::get($s);
         if ($player === null) {

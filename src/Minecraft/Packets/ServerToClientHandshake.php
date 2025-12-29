@@ -12,9 +12,8 @@ final class ServerToClientHandshake extends Packet
 {
     public static function send(Session $session, Socket $sock, string $jwt): void
     {
-        $p = Binary::writeByte(0x03); // ServerToClientHandshake
-        $p .= Binary::writeString($jwt);
+        $p = Binary::writeString($jwt);
 
-        self::sendBatch($p, $session, $sock);
+        self::sendBatch(0x03, $p, $session, $sock);
     }
 }

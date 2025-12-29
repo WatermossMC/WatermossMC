@@ -25,7 +25,7 @@ final class AddPlayer extends Packet
         $p .= Binary::writeFloat($pos['y']);
         $p .= Binary::writeFloat($pos['z']);
 
-        $p .= Binary::writeBool(false); // motion = null
+        $p .= Binary::writeBool(false);
 
         $p .= Binary::writeFloat($rot['pitch']);
         $p .= Binary::writeFloat($rot['yaw']);
@@ -34,13 +34,13 @@ final class AddPlayer extends Packet
         $p .= Binary::itemStackAir();
         $p .= Binary::writeVarInt($s->getGameMode());
 
-        $p .= Binary::writeVarInt(0); // metadata
-        $p .= Binary::writeVarInt(0); // property sync
+        $p .= Binary::writeVarInt(0);
+        $p .= Binary::writeVarInt(0);
         $p .= Binary::writeVarInt(0);
 
-        $p .= Binary::writeVarInt(0); // links
+        $p .= Binary::writeVarInt(0);
         $p .= Binary::writeString("");
         $p .= Binary::writeInt(0);
-        self::sendBatch($p, $s, $sock);
+        self::sendBatch(0x0c, $p, $s, $sock);
     }
 }
