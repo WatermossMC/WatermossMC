@@ -36,6 +36,11 @@ final class Session
     /** @var array<int, array{count:int, parts:array<int,string>}> */
     public array $fragments = [];
 
+    /** @var array<int, array<int, string|null> */
+    public array $splitQueue = [];
+
+    public array $sendQueue = [];
+
     public string $address;
 
     public int $port;
@@ -103,6 +108,9 @@ final class Session
     public const MC_PLAY = 5;
 
     private int $mcpeState = self::MC_NONE;
+
+    /** @var array<int, bool> */
+    public array $completedSplits = [];
 
     private static int $nextRuntimeId = 1;
 
@@ -379,10 +387,7 @@ final class Session
 
         if ($this->shouldDecompressInbound()) {
             $originalLength = \strlen($data);
-            $data = zlib_decode(
-                $data,
-                1024 * 1024
-            )
+            $data = zlib_decode($data)
                 ?: throw new \RuntimeException("zlib decode failed");
             Logger::debug("Decompressed from $originalLength to " . \strlen($data));
         }
@@ -502,5 +507,10 @@ final class Session
     public function clearNetworkSettingsReliableSeq(): void
     {
         $this->networkSettingsReliableSeq = null;
+    }
+
+    public function getPlayerName(): string
+    {
+        return $this->username;
     }
 }

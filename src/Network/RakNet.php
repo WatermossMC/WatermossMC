@@ -251,6 +251,8 @@ final class RakNet
         Logger::debug("NEW_INCOMING_CONNECTION SENT");
         $session->setRakNetState(Session::RN_CONNECTED);
         $session->setMcpeState(Session::MC_NONE);
+
+        self::flush($session, $sock);
     }
 
     private static function sendReliable(
@@ -287,14 +289,7 @@ final class RakNet
 
         $s->reliableQueue[$reliableSeq] = $buf;
 
-        socket_sendto(
-            $sock,
-            $buf,
-            \strlen($buf),
-            0,
-            $s->address,
-            $s->port
-        );
+        $s->sendQueue[] = $buf;
     }
 
     private static function sendUnreliable(
@@ -313,14 +308,7 @@ final class RakNet
 
         $buf .= $payload;
 
-        socket_sendto(
-            $sock,
-            $buf,
-            \strlen($buf),
-            0,
-            $s->address,
-            $s->port
-        );
+        $s->sendQueue[] = $buf;
     }
 
     private static function handleFrameSet(string $p, string $a, int $po, Socket $sock): void
@@ -372,14 +360,16 @@ final class RakNet
                 $o++;
             }
 
-
+            $splitId = 0;
+            $splitIndex = 0;
+            $splitCount = 0;
             if ($fragmented) {
                 if ($o + 10 > $len) {
                     break;
                 }
-                Binary::readInt($p, $o);
-                Binary::readShort($p, $o);
-                Binary::readInt($p, $o);
+                $splitCount = Binary::readInt($p, $o);
+                $splitId = Binary::readShort($p, $o);
+                $splitIndex = Binary::readInt($p, $o);
             }
 
             if ($o + $frameLength > $len) {
@@ -389,7 +379,31 @@ final class RakNet
             $body = substr($p, $o, $frameLength);
             $o += $frameLength;
 
-            if ($body === '') {
+            if ($fragmented) {
+                if (isset($session->completedSplits[$splitId])) {
+                    $body = null;
+                } else {
+                    if (!isset($session->splitQueue[$splitId])) {
+                        $session->splitQueue[$splitId] = array_fill(0, $splitCount, null);
+                    }
+
+                    $session->splitQueue[$splitId][$splitIndex] = $body;
+
+                    $receivedCount = \count(array_filter($session->splitQueue[$splitId], fn ($v) => $v !== null));
+
+                    if ($receivedCount === $splitCount) {
+                        $body = implode('', $session->splitQueue[$splitId]);
+                        unset($session->splitQueue[$splitId]);
+
+                        $session->completedSplits[$splitId] = true;
+                        Logger::debug("Split Packet Reassembled! Total len=" . \strlen($body));
+                    } else {
+                        $body = null;
+                    }
+                }
+            }
+
+            if ($body === null || $body === '') {
                 continue;
             }
 
@@ -401,8 +415,6 @@ final class RakNet
                 \strlen($body),
                 $reliability
             ));
-
-
 
             if ($pid === self::CONNECTION_REQUEST) {
                 self::handleConnectionRequest($body, $a, $po, $sock);
@@ -427,31 +439,86 @@ final class RakNet
                 continue;
             }
 
-
             if ($pid === 0xFE) {
-                $compressed = substr($body, 1);
-                $payload = $compressed;
+                if (!$session->hasSentNetworkSettings()) {
+                    $batch = substr($body, 1);
+
+                    Logger::debug(sprintf(
+                        "MCPE batch PRE-NETWORK raw len=%d first=0x%02X",
+                        \strlen($batch),
+                        $batch !== '' ? \ord($batch[0]) : 0
+                    ));
+
+                    PacketHandler::handleBatch($batch, $session, $sock);
+                    continue;
+                }
+
+                if (\strlen($body) < 2) {
+                    Logger::debug("MCPE batch POST-NETWORK invalid (too short)");
+                    continue;
+                }
+
+                $compressionId = \ord($body[1]);
+                $payload = substr($body, 2);
+
+                Logger::debug(sprintf(
+                    "MCPE batch POST-NETWORK compression=0x%02X payloadLen=%d enc=%s",
+                    $compressionId,
+                    \strlen($payload),
+                    $session->isEncryptionEnabled() ? 'yes' : 'no'
+                ));
 
                 if ($session->isEncryptionEnabled()) {
                     try {
                         $payload = $session->decrypt($payload);
                     } catch (\Throwable $e) {
-                        Logger::debug("Decrypt failed: " . $e->getMessage());
-                        continue;
+                        Logger::error("Decryption failed: " . $e->getMessage());
                     }
                 }
 
-                if ($session->shouldDecompressInbound()) {
-                    $batch = @gzinflate($payload);
-                    if ($batch === false) {
-                        Logger::debug("MCPE batch inflate failed (RAW)");
-                        continue;
-                    }
-                } else {
-                    $batch = $payload;
+                switch ($compressionId) {
+                    case 0x00: // ZLIB (RAW DEFLATE)
+                        Logger::debug(
+                            "ZLIB payload head=" . bin2hex(substr($payload, 0, 8))
+                        );
+
+                        $batch = gzinflate($payload);
+
+                        if ($batch === false) {
+                            Logger::debug("MCPE batch ZLIB decode failed");
+                            break;
+                        }
+
+                        Logger::debug(sprintf(
+                            "MCPE batch ZLIB inflated len=%d first=0x%02X",
+                            \strlen($batch),
+                            $batch !== '' ? \ord($batch[0]) : 0
+                        ));
+                        break;
+
+                    case 0xFF: // NO COMPRESSION
+                        $batch = $payload;
+                        break;
+
+                    default:
+                        Logger::debug(sprintf(
+                            "MCPE batch unknown compressionId=0x%02X",
+                            $compressionId
+                        ));
+                        continue 2;
                 }
 
-                Logger::debug("MCPE batch decoded len=" . \strlen($batch));
+                if ($batch === false) {
+                    Logger::debug("MCPE batch decompress failed");
+                    continue;
+                }
+
+                Logger::debug(sprintf(
+                    "MCPE batch decoded len=%d first=0x%02X",
+                    \strlen($batch),
+                    $batch !== '' ? \ord($batch[0]) : 0
+                ));
+
                 PacketHandler::handleBatch($batch, $session, $sock);
                 continue;
             }
@@ -496,13 +563,7 @@ final class RakNet
 
     private static function handleAckSeq(Session $session, int $seq): void
     {
-        if ($session->hasPendingEncryption() && $session->hasWaitingHandshakeAck()) {
-            $session->enablePendingEncryption();
-            $session->setWaitingHandshakeAck(false);
-            $session->setHandshakeDone();
-
-            Logger::info("Encryption, Handshake ACK");
-        }
+        unset($session->reliableQueue[$seq]);
     }
 
     private static function handleNack(string $p, string $a, int $po, Socket $sock): void
@@ -545,5 +606,25 @@ final class RakNet
                 }
             }
         }
+    }
+
+    public static function flush(Session $session, Socket $sock): void
+    {
+        if (!isset($session->sendQueue) || empty($session->sendQueue)) {
+            return;
+        }
+
+        foreach ($session->sendQueue as $buffer) {
+            socket_sendto(
+                $sock,
+                $buffer,
+                \strlen($buffer),
+                0,
+                $session->address,
+                $session->port
+            );
+        }
+
+        $session->sendQueue = [];
     }
 }
