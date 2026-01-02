@@ -23,7 +23,7 @@ abstract class Packet
         $batch .= $mcpePacket;
 
         if ($s->shouldCompressOutbound()) {
-            $compressed = zlib_encode($batch, \ZLIB_ENCODING_RAW);
+            $compressed = zlib_encode($batch, \ZLIB_ENCODING_DEFLATE);
             if ($compressed === false) {
                 throw new \RuntimeException("zlib_encode failed");
             }
@@ -49,14 +49,7 @@ abstract class Packet
 
         $frame .= $packet;
 
-        socket_sendto(
-            $sock,
-            $frame,
-            \strlen($frame),
-            0,
-            $s->address,
-            $s->port
-        );
+        $s->sendQueue[] = $frame;
 
         $s->storeReliable($sendSeq, $frame);
         return $sendSeq;
