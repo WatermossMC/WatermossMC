@@ -8,42 +8,104 @@ use RuntimeException;
 
 final class Crypto
 {
+    /**
+     * Generate EC key pair (P-384) for Bedrock ECDH
+     */
     public static function generateKeyPair(): array
     {
         $res = openssl_pkey_new([
             'private_key_type' => \OPENSSL_KEYTYPE_EC,
-            'curve_name' => 'prime256v1',
+            'curve_name' => 'secp384r1',
         ]);
 
         if ($res === false) {
-            throw new RuntimeException("ECDH keygen failed");
+            throw new RuntimeException("ECDH keygen failed: " . openssl_error_string());
         }
 
-        openssl_pkey_export($res, $private);
+        openssl_pkey_export($res, $privatePem);
         $details = openssl_pkey_get_details($res);
 
+        if (!isset($details['key'])) {
+            throw new RuntimeException("Failed extracting public key");
+        }
+
         return [
-            'private' => $private,
-            'public' => $details['key'],
+            'private' => $privatePem,
+            'public' => $details['key'], // PEM format
         ];
     }
 
-    public static function deriveSecret(string $serverPrivPem, string $clientPubPem): string
+    /**
+     * Derive shared secret using ECDH
+     */
+    public static function deriveSecret(string $serverPrivatePem, string $clientPublicPem): string
     {
-        $priv = openssl_pkey_get_private($serverPrivPem);
-        $pub = openssl_pkey_get_public($clientPubPem);
+        $priv = openssl_pkey_get_private($serverPrivatePem);
+        $pub = openssl_pkey_get_public($clientPublicPem);
 
-        if (!$priv || !$pub) {
-            throw new RuntimeException("Invalid ECDH keys");
+        if ($pub === false) {
+            throw new RuntimeException("Invalid client public key format for ECDH");
         }
 
-        return openssl_pkey_derive($pub, $priv, 32);
+        $secret = openssl_pkey_derive($pub, $priv);
+
+        if ($secret === false) {
+            throw new RuntimeException("ECDH derive failed");
+        }
+
+        // Shared Secret P-384 biasanya 48 bytes, tapi jika leading byte 0, PHP mungkin memotongnya.
+        // Kita tidak boleh padding manual dengan \0 di kiri sembarangan kecuali kita yakin panjangnya kurang.
+        // Bedrock menggunakan koordinat X dari hasil ECDH.
+        return str_pad($secret, 48, "\0", \STR_PAD_LEFT);
     }
 
-    public static function deriveAes(string $sharedSecret): array
+    public static function deriveAes(string $sharedSecret, string $salt): array
     {
-        $key = hash('sha256', $sharedSecret, true);
-        $iv = substr(hash('sha256', "IV" . $sharedSecret, true), 0, 16);
+        $key = hash('sha256', $salt . $sharedSecret, true);
+
+        $ivHash = hash('sha256', $salt . $sharedSecret . $salt, true);
+        $iv = substr($ivHash, 0, 16);
+
         return [$key, $iv];
+    }
+
+    public static function pemToBase64(string $pem): string
+    {
+        return str_replace(
+            ["-----BEGIN PUBLIC KEY-----", "-----END PUBLIC KEY-----", "\n", "\r", " "],
+            "",
+            $pem
+        );
+    }
+
+    public static function bedrockIdentityKeyToPem(string $b64): string
+    {
+        $der = base64_decode($b64, true);
+        if ($der === false) {
+            throw new RuntimeException("Invalid base64 identityPublicKey");
+        }
+
+        return "-----BEGIN PUBLIC KEY-----\n"
+            . chunk_split(base64_encode($der), 64, "\n")
+            . "-----END PUBLIC KEY-----\n";
+    }
+
+    public static function derToSignature(string $der, int $keySize): string
+    {
+        $offset = 2;
+        if (\ord($der[1]) & 0x80) {
+            $offset += \ord($der[1]) & 0x7f;
+        }
+
+        $sig = "";
+        for($i = 0; $i < 2; $i++) {
+            $offset++; // tag
+            $len = \ord($der[$offset++]);
+            $val = substr($der, $offset, $len);
+            $offset += $len;
+            $val = ltrim($val, "\0");
+            $sig .= str_pad($val, $keySize, "\0", \STR_PAD_LEFT);
+        }
+        return $sig;
     }
 }
