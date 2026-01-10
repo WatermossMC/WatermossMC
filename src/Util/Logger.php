@@ -16,7 +16,14 @@ final class Logger
     private const CYAN = "\033[1;36m";
 
     /** Config */
-    /** private static bool $debugEnabled = true; */
+    private static bool $debugEnabled;
+
+    public static function init(): void
+    {
+        $debugEnv = getenv('DEBUG');
+        self::$debugEnabled = $debugEnv === false || $debugEnv === '' || $debugEnv === '1' || $debugEnv === 'true';
+    }
+
     private static function log(string $level, string $msg, string $color): void
     {
         $time = date('H:i:s');
@@ -52,9 +59,9 @@ final class Logger
 
     public static function debug(string $msg): void
     {
-        /** if (!self::$debugEnabled) {
+        if (!self::$debugEnabled) {
             return;
-        } */
+        }
 
         self::log('DEBUG', $msg, self::GRAY);
     }
