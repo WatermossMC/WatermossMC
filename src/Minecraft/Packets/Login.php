@@ -5,74 +5,89 @@ declare(strict_types=1);
 namespace WatermossMC\Minecraft\Packets;
 
 use WatermossMC\Binary\Binary;
+use WatermossMC\Util\Logger;
 
 final class Login extends Packet
 {
     /**
      * @return array{
-     *   protocol:int,
-     *   chain:array<int,string>,
-     *   clientJwt:string,
-     *   payload:array<string,mixed>,
-     *   identityPublicKey:?string
+     *     protocol:int,
+     *     chain:list<string>,
+     *     clientJwt:string,
+     *     payload:?array<string,mixed>,
+     *     identityPublicKey:string
      * }
      */
     public static function read(string $p, int &$o): array
     {
-        $offset = 0;
-
-        $pid = Binary::readVarInt($p, $o);
-
         $protocol = Binary::readInt($p, $o);
 
-        $json = Binary::readStringInt($p, $o);
+        $connLen = Binary::readVarInt($p, $o);
+        $conn = substr($p, $o, $connLen);
+        $o += $connLen;
 
-        $data = json_decode($json, true);
-        if (!\is_array($data)) {
-            throw new \RuntimeException('Invalid Login JSON');
+        $io = 0;
+
+        $authLen = Binary::readLInt($conn, $io);
+        $authRaw = substr($conn, $io, $authLen);
+        $io += $authLen;
+
+        Logger::debug("AuthInfo RAW: " . substr($authRaw, 0, 80));
+
+        $authInfo = json_decode($authRaw, true);
+        if (!\is_array($authInfo) || !isset($authInfo['Certificate'])) {
+            throw new \RuntimeException("Malformed authInfo");
         }
 
-        $chain = $data['chain'] ?? [];
-        $clientJwt = $data['clientDataJwt'] ?? '';
-
-        if (!\is_array($chain) || !\is_string($clientJwt)) {
-            throw new \RuntimeException('Invalid Login structure');
+        $cert = json_decode($authInfo['Certificate'], true);
+        if (!\is_array($cert) || !isset($cert['chain'])) {
+            throw new \RuntimeException("Invalid Certificate JSON");
         }
+
+        $chain = $cert['chain'];
+
+        $clientJwtLen = Binary::readLInt($conn, $io);
+        $clientJwt = substr($conn, $io, $clientJwtLen);
 
         $payload = [];
         $identityPublicKey = null;
 
-        foreach ($chain as $token) {
-            if (!\is_string($token)) {
+        foreach ($chain as $jwt) {
+            if (!\is_string($jwt)) {
                 continue;
             }
 
-            $parts = explode('.', $token);
-            if (!isset($parts[1])) {
+            $parts = explode('.', $jwt);
+            if (\count($parts) !== 3) {
                 continue;
             }
 
-            $decoded = json_decode(self::b64($parts[1]), true);
-            if (!\is_array($decoded)) {
+            $body = json_decode(self::b64($parts[1]), true);
+            if (!\is_array($body)) {
                 continue;
             }
 
-            $payload = $decoded;
+            if (isset($body['identityPublicKey'])) {
+                $identityPublicKey = $body['identityPublicKey'];
+            }
 
-            if (isset($decoded['identityPublicKey'])) {
-                $identityPublicKey = $decoded['identityPublicKey'];
+            if (isset($body['extraData'])) {
+                $payload = $body['extraData'];
             }
         }
 
-        if ($payload === [] && $clientJwt !== '') {
+        if ($clientJwt !== '') {
             $parts = explode('.', $clientJwt);
             if (isset($parts[1])) {
                 $decoded = json_decode(self::b64($parts[1]), true);
                 if (\is_array($decoded)) {
-                    $payload = $decoded;
+                    $payload = array_merge($payload, $decoded);
                 }
             }
         }
+
+        Logger::debug("Login OK name=" . ($payload['displayName'] ?? 'unknown'));
+        Logger::debug("identityPublicKey=" . ($identityPublicKey ? 'YES' : 'NO'));
 
         return [
             'protocol' => $protocol,
@@ -90,7 +105,7 @@ final class Login extends Packet
 
         $decoded = base64_decode($data . str_repeat('=', $pad), true);
         if ($decoded === false) {
-            throw new \RuntimeException('Invalid base64 data');
+            throw new \RuntimeException("Invalid base64");
         }
 
         return $decoded;
