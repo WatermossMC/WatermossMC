@@ -30,24 +30,23 @@ final class Text
         int $type = self::TYPE_RAW,
         string $sourceName = ""
     ): void {
-        $packet = Binary::writeVarInt(0x09); // Packet ID
-        $packet .= Binary::writeByte($type);
+        $packet = Binary::writeByte($type);
         $packet .= Binary::writeByte(0); // Needs Translation (false)
 
         switch ($type) {
             case self::TYPE_CHAT:
             case self::TYPE_WHISPER:
             case self::TYPE_ANNOUNCEMENT:
-                $packet .= Binary::writeUnsignedVarInt(\strlen($sourceName)) . $sourceName;
-                $packet .= Binary::writeUnsignedVarInt(\strlen("")) . ""; // Platform ID
+                $packet .= Binary::writeVarInt(\strlen($sourceName)) . $sourceName;
+                $packet .= Binary::writeVarInt(\strlen("")) . ""; // Platform ID
                 break;
         }
 
-        $packet .= Binary::writeUnsignedVarInt(\strlen($message)) . $message;
-        $packet .= Binary::writeUnsignedVarInt(0);
-        $packet .= Binary::writeUnsignedVarInt(\strlen("")) . "";
-        $packet .= Binary::writeUnsignedVarInt(\strlen("")) . "";
+        $packet .= Binary::writeVarInt(\strlen($message)) . $message;
+        $packet .= Binary::writeVarInt(0);
+        $packet .= Binary::writeVarInt(\strlen("")) . "";
+        $packet .= Binary::writeVarInt(\strlen("")) . "";
 
-        $session->sendPacket($packet, $socket);
+        Packet::sendBatch(0x09, $packet, $session, $socket);
     }
 }

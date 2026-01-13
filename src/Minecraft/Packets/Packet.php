@@ -10,7 +10,7 @@ use WatermossMC\Network\Session;
 
 abstract class Packet
 {
-    protected static function sendBatch(
+    public static function sendBatch(
         int $packetId,
         string $payload,
         Session $s,

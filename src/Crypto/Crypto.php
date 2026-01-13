@@ -10,6 +10,7 @@ final class Crypto
 {
     /**
      * Generate EC key pair (P-384) for Bedrock ECDH
+     * @return array{private: string, public: string}
      */
     public static function generateKeyPair(): array
     {
@@ -41,6 +42,9 @@ final class Crypto
     public static function deriveSecret(string $serverPrivatePem, string $clientPublicPem): string
     {
         $priv = openssl_pkey_get_private($serverPrivatePem);
+        if ($priv === false) {
+            throw new RuntimeException("Invalid server private key format for ECDH");
+        }
         $pub = openssl_pkey_get_public($clientPublicPem);
 
         if ($pub === false) {
@@ -59,6 +63,9 @@ final class Crypto
         return str_pad($secret, 48, "\0", \STR_PAD_LEFT);
     }
 
+    /**
+     * @return array{0: string, 1: string}
+     */
     public static function deriveAes(string $sharedSecret, string $salt): array
     {
         $key = hash('sha256', $salt . $sharedSecret, true);

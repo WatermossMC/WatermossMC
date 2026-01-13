@@ -13,8 +13,6 @@ final class Session
 {
     public int $sendSequence = 0;
 
-    private int $lastReceivedSequence = -1;
-
     public int $orderedIndex = 0;
 
     public int $frameSeq = 0;
@@ -33,12 +31,13 @@ final class Session
     /** @var array<int, bool> */
     private array $received = [];
 
-    /** @var array<int, array{count:int, parts:array<int,string>}> */
+    /** @var array<int, array{count?: int, parts: array<int, string>}> */
     public array $fragments = [];
 
-    /** @var array<int, array<int, string|null> */
+    /** @var array<int, array<int, string|null>> */
     public array $splitQueue = [];
 
+    /** @var array<int, string> */
     public array $sendQueue = [];
 
     public string $address;
@@ -73,6 +72,7 @@ final class Session
 
     private ?string $clientPublicKey = null;
 
+    /** @var ?array{private: string, public: string} */
     private ?array $serverKeys = null;
 
     private ?EncryptionContext $encryption = null;
@@ -346,13 +346,19 @@ final class Session
             ?? throw new \RuntimeException("Client public key not set");
     }
 
+    /**
+     * @param array{private: string, public: string} $keys
+     */
     public function setServerKeys(array $keys): void
     {
         $this->serverKeys = $keys;
     }
 
-    public function enableEncryption(string $key, string $iv): void
+    public function enableEncryption(?string $key, ?string $iv): void
     {
+        if ($key === null || $iv === null) {
+            throw new \RuntimeException("Key or IV is null");
+        }
         $this->encryption = new EncryptionContext($key, $iv);
     }
 

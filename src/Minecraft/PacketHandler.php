@@ -120,15 +120,15 @@ final class PacketHandler
                     }
                     $loginData = Login::read($packet, $o);
 
-                    $payload = $loginData['payload'] ?? null;
-                    $clientIdentityKey = $loginData['identityPublicKey'] ?? null;
+                    $payload = $loginData['payload'];
+                    $clientIdentityKey = $loginData['identityPublicKey'];
 
                     if (!\is_array($payload) || empty($clientIdentityKey)) {
                         Logger::error("[0x01] Login failed: Invalid payload or missing identity key.");
                         Disconnect::send($session, $socket, "Invalid login payload");
                         return;
                     }
-                    $clientProtocol = $loginData['protocol'] ?? 0;
+                    $clientProtocol = $loginData['protocol'];
 					if ($clientProtocol !== 890) {
 					    Disconnect::send($session, $socket, "Outdated client");
 					    return;
@@ -180,7 +180,7 @@ final class PacketHandler
                 case 0x04: // ClientToServerHandshake
                     Logger::debug("[0x04] ClientToServerHandshake received.");
 
-                    if (!$session->isWaitingHandshakeAck()) {
+                    if (!$session->hasWaitingHandshakeAck()) {
                         Logger::warning("[0x04] Unexpected packet. Not waiting for ACK.");
                         return;
                     }
@@ -265,10 +265,8 @@ final class PacketHandler
         for ($x = -2; $x <= 2; $x++) {
             for ($z = -2; $z <= 2; $z++) {
                 $chunk = self::$world->getChunk($x, $z);
-                if ($chunk) {
-                    LevelChunk::send($s, $sock, $x, $z, $chunk->encode());
-                    $chunkCount++;
-                }
+                LevelChunk::send($s, $sock, $x, $z, $chunk->encode());
+                $chunkCount++;
             }
         }
         Logger::debug("Sent {$chunkCount} chunks.");
@@ -287,10 +285,16 @@ final class PacketHandler
             "alg" => "ES384",
             "x5u" => $pubBase64,
         ], \JSON_UNESCAPED_SLASHES);
+        if ($header === false) {
+            throw new \RuntimeException("Failed to encode header");
+        }
 
         $payload = json_encode([
             "salt" => base64_encode($salt),
         ], \JSON_UNESCAPED_SLASHES);
+        if ($payload === false) {
+            throw new \RuntimeException("Failed to encode payload");
+        }
 
         $h = $toUrlSafe($header);
         $p = $toUrlSafe($payload);

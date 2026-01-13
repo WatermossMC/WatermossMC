@@ -170,6 +170,9 @@ final class Binary
     {
         self::ensure($buf, $o, 4);
         $r = unpack('V', substr($buf, $o, 4));
+        if ($r === false) {
+            throw new \RuntimeException('unpack lint failed');
+        }
         $o += 4;
         return $r[1];
     }

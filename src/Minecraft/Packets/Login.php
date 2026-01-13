@@ -14,8 +14,8 @@ final class Login extends Packet
      *     protocol:int,
      *     chain:list<string>,
      *     clientJwt:string,
-     *     payload:array<string,mixed>,
-     *     identityPublicKey:?string
+     *     payload:?array<string,mixed>,
+     *     identityPublicKey:string
      * }
      */
     public static function read(string $p, int &$o): array

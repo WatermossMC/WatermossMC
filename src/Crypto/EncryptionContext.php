@@ -32,6 +32,9 @@ final class EncryptionContext
         $payload = substr($data, 0, -8);
 
         $result = openssl_decrypt($payload, 'aes-256-ctr', $this->key, \OPENSSL_RAW_DATA, $this->decryptIv);
+        if ($result === false) {
+            throw new \RuntimeException('Decryption failed');
+        }
         $this->decryptIv = $this->updateIv($this->decryptIv, \strlen($payload));
 
         return $result;
@@ -41,6 +44,9 @@ final class EncryptionContext
     {
         $addedSteps = $bytesProcessed >> 4;
         $ivParts = unpack('N4', $iv);
+        if ($ivParts === false) {
+            throw new \RuntimeException('Failed to unpack IV');
+        }
         $ivParts[4] += $addedSteps;
         return pack('N4', $ivParts[1], $ivParts[2], $ivParts[3], $ivParts[4]);
     }

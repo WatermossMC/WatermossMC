@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'watermossmc/server',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '44952d6477f2c32583e9a6b372a8865816371e72',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -53,9 +53,9 @@
             ),
         ),
         'watermossmc/server' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '44952d6477f2c32583e9a6b372a8865816371e72',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
