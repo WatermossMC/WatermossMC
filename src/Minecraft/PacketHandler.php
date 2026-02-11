@@ -118,10 +118,20 @@ final class PacketHandler
                         Logger::warning("[0x01] Ignored: Session state is not MC_NETWORK.");
                         return;
                     }
-                    $loginData = Login::read($packet, $o);
+                    
+                    try {
+                        $loginData = Login::read($packet, $o);
+                    } catch (Throwable $e) {
+                        Logger::error("[0x01] Login::read() failed: {$e->getMessage()}");
+                        Disconnect::send($session, $socket, "Login parsing failed");
+                        return;
+                    }
 
                     $payload = $loginData['payload'];
                     $clientIdentityKey = $loginData['identityPublicKey'];
+
+                    Logger::debug("[0x01] Payload type: " . gettype($payload) . ", payload empty: " . (empty($payload) ? 'YES' : 'NO'));
+                    Logger::debug("[0x01] IdentityKey present: " . ($clientIdentityKey ? 'YES' : 'NO'));
 
                     if (!\is_array($payload) || empty($clientIdentityKey)) {
                         Logger::error("[0x01] Login failed: Invalid payload or missing identity key.");
@@ -129,7 +139,9 @@ final class PacketHandler
                         return;
                     }
                     $clientProtocol = $loginData['protocol'];
+                    Logger::debug("[0x01] Protocol version: {$clientProtocol}");
 					if ($clientProtocol !== 890) {
+					    Logger::error("[0x01] Protocol mismatch. Client: {$clientProtocol}, Expected: 890");
 					    Disconnect::send($session, $socket, "Outdated client");
 					    return;
 					}
@@ -140,40 +152,64 @@ final class PacketHandler
 
                     Logger::info("Login attempt: {$name} (UUID: {$uuid})");
 
-                    Logger::debug("[0x01] Processing crypto keys...");
-                    $clientPem = Crypto::bedrockIdentityKeyToPem($clientIdentityKey);
-                    $session->setClientPublicKey($clientPem);
-                    $session->setLoginData((string)$uuid, (string)$name, null);
+                    try {
+                        Logger::debug("[0x01] Processing crypto keys...");
+                        $clientPem = Crypto::bedrockIdentityKeyToPem($clientIdentityKey);
+                        Logger::debug("[0x01] Client PEM generated");
+                        
+                        $session->setClientPublicKey($clientPem);
+                        $session->setLoginData((string)$uuid, (string)$name, null);
 
-                    $keys = Crypto::generateKeyPair();
-                    $session->setServerKeys($keys);
+                        $keys = Crypto::generateKeyPair();
+                        Logger::debug("[0x01] Server keypair generated");
+                        
+                        $session->setServerKeys($keys);
 
-                    $serverSalt = random_bytes(16);
-                    $sharedSecret = Crypto::deriveSecret(
-                        $keys['private'],
-                        $session->getClientPublicKey()
-                    );
-                    Logger::debug("[0x01] Shared secret derived.");
+                        $serverSalt = random_bytes(16);
+                        Logger::debug("[0x01] Server salt generated");
+                        
+                        $sharedSecret = Crypto::deriveSecret(
+                            $keys['private'],
+                            $session->getClientPublicKey()
+                        );
+                        Logger::debug("[0x01] Shared secret derived.");
 
-                    $serverPublicB64 = Crypto::pemToBase64($keys['public']);
-                    $jwt = self::buildServerHandshakeJwt(
-                        $serverPublicB64,
-                        $keys['private'],
-                        $serverSalt
-                    );
-                    var_dump($jwt);
+                        $serverPublicB64 = Crypto::pemToBase64($keys['public']);
+                        Logger::debug("[0x01] Server public key converted to base64");
+                        
+                        $jwt = self::buildServerHandshakeJwt(
+                            $serverPublicB64,
+                            $keys['private'],
+                            $serverSalt
+                        );
+                        Logger::debug("[0x01] Server handshake JWT built, length: " . strlen($jwt));
 
-                    ServerToClientHandshake::send($session, $socket, $jwt);
-                    Logger::debug("[0x03] ServerToClientHandshake sent.");
+                        ServerToClientHandshake::send($session, $socket, $jwt);
+                        Logger::debug("[0x03] ServerToClientHandshake sent, attempting to flush...");
 
-                    [$key, $iv] = Crypto::deriveAes($sharedSecret, $serverSalt);
-                    $session->setPendingEncryption($key, $iv);
-                    $session->enablePendingEncryption();
-                    $session->setWaitingHandshakeAck(true);
-                    RakNet::flush($session, $socket);
+                        [$key, $iv] = Crypto::deriveAes($sharedSecret, $serverSalt);
+                        Logger::debug("[0x01] AES key and IV derived");
+                        
+                        $session->setPendingEncryption($key, $iv);
+                        Logger::debug("[0x01] Pending encryption set");
+                        
+                        $session->enablePendingEncryption();
+                        Logger::debug("[0x01] Pending encryption enabled");
+                        
+                        $session->setWaitingHandshakeAck(true);
+                        RakNet::flush($session, $socket);
+                        Logger::debug("[0x01] RakNet flushed after ServerToClientHandshake");
 
-                    $session->setMcpeState(Session::MC_LOGIN);
-                    Logger::debug("[0x03] Encryption Enabled. State -> MC_LOGIN");
+                        $session->setMcpeState(Session::MC_LOGIN);
+                        Logger::debug("[0x03] Encryption Enabled. State -> MC_LOGIN");
+                        
+                    } catch (Throwable $e) {
+                        Logger::error("[0x01] Crypto/handshake processing failed: {$e->getMessage()}");
+                        Logger::debug($e->getTraceAsString());
+                        Disconnect::send($session, $socket, "Server handshake failed");
+                        RakNet::flush($session, $socket);
+                        return;
+                    }
 
                     return;
 
@@ -181,11 +217,17 @@ final class PacketHandler
                     Logger::debug("[0x04] ClientToServerHandshake received.");
 
                     if (!$session->hasWaitingHandshakeAck()) {
-                        Logger::warning("[0x04] Unexpected packet. Not waiting for ACK.");
+                        Logger::warning("[0x04] Unexpected packet. Not waiting for ACK. Current state: " . $session->getMcpeState());
                         return;
                     }
 
-                    ClientToServerHandshake::read($packet, $o);
+                    try {
+                        ClientToServerHandshake::read($packet, $o);
+                        Logger::debug("[0x04] ClientToServerHandshake parsed successfully");
+                    } catch (Throwable $e) {
+                        Logger::error("[0x04] Failed to parse ClientToServerHandshake: {$e->getMessage()}");
+                        return;
+                    }
 
                     $session->setWaitingHandshakeAck(false);
 
@@ -230,7 +272,7 @@ final class PacketHandler
                     return;
 
                 default:
-                    Logger::debug("Unhandled Packet ID: 0x{$pidHex}");
+                    Logger::debug("Unhandled Packet ID: 0x{$pidHex} in state " . $session->getMcpeState());
                     break;
             }
 
@@ -306,7 +348,6 @@ final class PacketHandler
         }
 
         $sigRaw = Crypto::derToSignature($sigDer, 48);
-        var_dump(bin2hex($sigRaw));
 
         return "$h.$p." . $toUrlSafe($sigRaw);
     }

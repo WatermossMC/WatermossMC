@@ -99,20 +99,36 @@ final class Crypto
 
     public static function derToSignature(string $der, int $keySize): string
     {
-        $offset = 2;
-        if (\ord($der[1]) & 0x80) {
-            $offset += \ord($der[1]) & 0x7f;
+        // DER SEQUENCE format: 30 [length] 02 [r_len] [r_bytes] 02 [s_len] [s_bytes]
+        if (strlen($der) < 8 || \ord($der[0]) !== 0x30) {
+            throw new RuntimeException("Invalid DER signature format");
         }
 
+        $offset = 2;
         $sig = "";
-        for($i = 0; $i < 2; $i++) {
-            $offset++; // tag
-            $len = \ord($der[$offset++]);
-            $val = substr($der, $offset, $len);
-            $offset += $len;
-            $val = ltrim($val, "\0");
-            $sig .= str_pad($val, $keySize, "\0", \STR_PAD_LEFT);
+
+        // Parse r
+        if (\ord($der[$offset]) !== 0x02) {
+            throw new RuntimeException("Invalid DER r tag");
         }
+        $offset++;
+        $rLen = \ord($der[$offset++]);
+        $r = substr($der, $offset, $rLen);
+        $offset += $rLen;
+        $r = ltrim($r, "\0");
+        $sig .= str_pad($r, $keySize, "\0", \STR_PAD_LEFT);
+
+        // Parse s
+        if (\ord($der[$offset]) !== 0x02) {
+            throw new RuntimeException("Invalid DER s tag");
+        }
+        $offset++;
+        $sLen = \ord($der[$offset++]);
+        $s = substr($der, $offset, $sLen);
+        $offset += $sLen;
+        $s = ltrim($s, "\0");
+        $sig .= str_pad($s, $keySize, "\0", \STR_PAD_LEFT);
+
         return $sig;
     }
 }
