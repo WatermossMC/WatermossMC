@@ -184,6 +184,37 @@ final class PacketHandler
                         );
                         Logger::debug("[0x01] Server handshake JWT built, length: " . strlen($jwt));
 
+                        // Decode JWT for diagnostics and verify signature raw length (should be 96 bytes)
+                        try {
+                            $parts = explode('.', $jwt);
+                            if (count($parts) !== 3) {
+                                throw new \RuntimeException('JWT must have 3 parts');
+                            }
+
+                            [$hdr, $pld, $sig] = $parts;
+
+                            $pad = fn(string $s): string => $s . str_repeat('=', (4 - (strlen($s) % 4)) % 4);
+                            $decodedHdr = json_decode(base64_decode(strtr($pad($hdr), '-_', '+/')), true);
+                            $decodedPld = json_decode(base64_decode(strtr($pad($pld), '-_', '+/')), true);
+                            $sigRaw = base64_decode(strtr($pad($sig), '-_', '+/'));
+
+                            Logger::debug('[0x01] Handshake JWT header: ' . ($decodedHdr === null ? 'INVALID' : json_encode($decodedHdr)));
+                            Logger::debug('[0x01] Handshake JWT payload: ' . ($decodedPld === null ? 'INVALID' : json_encode($decodedPld)));
+                            Logger::debug('[0x01] Handshake JWT sig length: ' . (is_string($sigRaw) ? strlen($sigRaw) : 'NULL') . " bytes");
+
+                            if (!is_string($sigRaw) || strlen($sigRaw) !== 96) {
+                                Logger::error('[0x01] Unexpected handshake signature length: ' . (is_string($sigRaw) ? strlen($sigRaw) : 'NULL') . ' (expected 96)');
+                                Disconnect::send($session, $socket, 'Handshake signature invalid');
+                                RakNet::flush($session, $socket);
+                                return;
+                            }
+                        } catch (\Throwable $e) {
+                            Logger::error('[0x01] JWT diagnostics failed: ' . $e->getMessage());
+                            Disconnect::send($session, $socket, 'Handshake construction failed');
+                            RakNet::flush($session, $socket);
+                            return;
+                        }
+
                         ServerToClientHandshake::send($session, $socket, $jwt);
                         Logger::debug("[0x03] ServerToClientHandshake sent, attempting to flush...");
 

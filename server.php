@@ -33,16 +33,20 @@ set_exception_handler(function (\Throwable $e): void {
     }
 });
 
-// Signal handlers for graceful shutdown
-pcntl_signal(SIGTERM, function () use (&$shutdown): void {
-    Logger::info("Received SIGTERM, shutting down gracefully...");
-    $shutdown = true;
-});
+// Signal handlers for graceful shutdown (guarded if pcntl is available)
+if (function_exists('pcntl_signal')) {
+    pcntl_signal(SIGTERM, function () use (&$shutdown): void {
+        Logger::info("Received SIGTERM, shutting down gracefully...");
+        $shutdown = true;
+    });
 
-pcntl_signal(SIGINT, function () use (&$shutdown): void {
-    Logger::info("Received SIGINT, shutting down gracefully...");
-    $shutdown = true;
-});
+    pcntl_signal(SIGINT, function () use (&$shutdown): void {
+        Logger::info("Received SIGINT, shutting down gracefully...");
+        $shutdown = true;
+    });
+} else {
+    Logger::warning('pcntl_signal not available; graceful SIGINT/SIGTERM handling disabled');
+}
 
 Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
 
@@ -92,8 +96,10 @@ $tickInterval = 1_000_000_000 / 20; // 20 TPS
 Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
-    // Handle signals
-    pcntl_signal_dispatch();
+    // Handle signals (if available)
+    if (function_exists('pcntl_signal_dispatch')) {
+        pcntl_signal_dispatch();
+    }
 
     // Process incoming packets
     while (!$shutdown && @socket_recvfrom(
