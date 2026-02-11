@@ -208,6 +208,26 @@ final class PacketHandler
                                 RakNet::flush($session, $socket);
                                 return;
                             }
+
+                            // Verify signature locally: convert raw r||s to DER and verify using server public key
+                            try {
+                                $dataToSign = $hdr . '.' . $pld;
+                                $sigDer = \WatermossMC\Crypto\Crypto::signatureToDer($sigRaw);
+                                $pubPem = $keys['public'];
+                                $verify = openssl_verify($dataToSign, $sigDer, $pubPem, \OPENSSL_ALGO_SHA384);
+                                if ($verify !== 1) {
+                                    Logger::error('[0x01] Local signature verification failed (openssl_verify != 1).');
+                                    Disconnect::send($session, $socket, 'Handshake signature verification failed');
+                                    RakNet::flush($session, $socket);
+                                    return;
+                                }
+                                Logger::debug('[0x01] Local signature verification succeeded');
+                            } catch (\Throwable $e) {
+                                Logger::error('[0x01] Signature verification error: ' . $e->getMessage());
+                                Disconnect::send($session, $socket, 'Handshake verification error');
+                                RakNet::flush($session, $socket);
+                                return;
+                            }
                         } catch (\Throwable $e) {
                             Logger::error('[0x01] JWT diagnostics failed: ' . $e->getMessage());
                             Disconnect::send($session, $socket, 'Handshake construction failed');

@@ -131,4 +131,36 @@ final class Crypto
 
         return $sig;
     }
+
+    public static function signatureToDer(string $sigRaw): string
+    {
+        $len = strlen($sigRaw);
+        if ($len % 2 !== 0) {
+            throw new RuntimeException('Invalid raw signature length');
+        }
+        $half = $len / 2;
+        $r = substr($sigRaw, 0, $half);
+        $s = substr($sigRaw, $half);
+
+        $r = ltrim($r, "\0");
+        if ($r === '') {
+            $r = "\0";
+        }
+        if ((ord($r[0]) & 0x80) !== 0) {
+            $r = "\0" . $r;
+        }
+
+        $s = ltrim($s, "\0");
+        if ($s === '') {
+            $s = "\0";
+        }
+        if ((ord($s[0]) & 0x80) !== 0) {
+            $s = "\0" . $s;
+        }
+
+        $derR = "\x02" . chr(strlen($r)) . $r;
+        $derS = "\x02" . chr(strlen($s)) . $s;
+        $seq = $derR . $derS;
+        return "\x30" . chr(strlen($seq)) . $seq;
+    }
 }
