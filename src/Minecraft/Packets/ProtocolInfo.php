@@ -6,7 +6,7 @@ namespace WatermossMC\Minecraft\Packets;
 
 final class ProtocolInfo
 {
-    public const CURRENT_PROTOCOL = 800;
+    public const CURRENT_PROTOCOL = 860;
 
     /** TODO: ADD ALL PACKET ID */
     public const UPDATE_ABILITIES_PACKET = 0xbb;

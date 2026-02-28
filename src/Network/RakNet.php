@@ -440,86 +440,15 @@ final class RakNet
             }
 
             if ($pid === 0xFE) {
-                if (!$session->hasSentNetworkSettings()) {
-                    $batch = substr($body, 1);
-
-                    Logger::debug(sprintf(
-                        "MCPE batch PRE-NETWORK raw len=%d first=0x%02X",
-                        \strlen($batch),
-                        $batch !== '' ? \ord($batch[0]) : 0
-                    ));
-
-                    PacketHandler::handleBatch($batch, $session, $sock);
-                    continue;
-                }
-
-                if (\strlen($body) < 2) {
-                    Logger::debug("MCPE batch POST-NETWORK invalid (too short)");
-                    continue;
-                }
-
-                $compressionId = \ord($body[1]);
-                $payload = substr($body, 2);
-
+                // Just strip the 0xFE wrapper, do not parse compression here!
+                $batchPayload = substr($body, 1);
+                
                 Logger::debug(sprintf(
-                    "MCPE batch POST-NETWORK compression=0x%02X payloadLen=%d enc=%s",
-                    $compressionId,
-                    \strlen($payload),
-                    $session->isEncryptionEnabled() ? 'yes' : 'no'
+                    "MCPE batch received, raw len=%d",
+                    \strlen($batchPayload)
                 ));
 
-                if ($session->isEncryptionEnabled()) {
-                    try {
-                        $payload = $session->decrypt($payload);
-                    } catch (\Throwable $e) {
-                        Logger::error("Decryption failed: " . $e->getMessage());
-                    }
-                }
-
-                switch ($compressionId) {
-                    case 0x00: // ZLIB (RAW DEFLATE)
-                        Logger::debug(
-                            "ZLIB payload head=" . bin2hex(substr($payload, 0, 8))
-                        );
-
-                        $batch = gzinflate($payload);
-
-                        if ($batch === false) {
-                            Logger::debug("MCPE batch ZLIB decode failed");
-                            break;
-                        }
-
-                        Logger::debug(sprintf(
-                            "MCPE batch ZLIB inflated len=%d first=0x%02X",
-                            \strlen($batch),
-                            $batch !== '' ? \ord($batch[0]) : 0
-                        ));
-                        break;
-
-                    case 0xFF: // NO COMPRESSION
-                        $batch = $payload;
-                        break;
-
-                    default:
-                        Logger::debug(sprintf(
-                            "MCPE batch unknown compressionId=0x%02X",
-                            $compressionId
-                        ));
-                        continue 2;
-                }
-
-                if ($batch === false) {
-                    Logger::debug("MCPE batch decompress failed");
-                    continue;
-                }
-
-                Logger::debug(sprintf(
-                    "MCPE batch decoded len=%d first=0x%02X",
-                    \strlen($batch),
-                    $batch !== '' ? \ord($batch[0]) : 0
-                ));
-
-                PacketHandler::handleBatch($batch, $session, $sock);
+                PacketHandler::handleBatch($batchPayload, $session, $sock);
                 continue;
             }
         }
@@ -615,7 +544,7 @@ final class RakNet
         }
 
         foreach ($session->sendQueue as $buffer) {
-            socket_sendto(
+            @socket_sendto(
                 $sock,
                 $buffer,
                 \strlen($buffer),

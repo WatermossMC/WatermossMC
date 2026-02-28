@@ -17,6 +17,7 @@ use WatermossMC\Minecraft\Packets\{
     NetworkSettings,
     PlayStatus,
     PlayerList,
+    ProtocolInfo,
     RequestNetworkSettings,
     ResourcePackClientResponse,
     ResourcePackStack,
@@ -140,8 +141,9 @@ final class PacketHandler
                     }
                     $clientProtocol = $loginData['protocol'];
                     Logger::debug("[0x01] Protocol version: {$clientProtocol}");
-					if ($clientProtocol !== 890) {
-					    Logger::error("[0x01] Protocol mismatch. Client: {$clientProtocol}, Expected: 890");
+					if ($clientProtocol !== ProtocolInfo::CURRENT_PROTOCOL) {
+					    Logger::error("[0x01] Protocol mismatch. Client: {$clientProtocol}, Expected: " . ProtocolInfo::CURRENT_PROTOCOL);
+					    PlayStatus::sendFailedClient($session, $socket);
 					    Disconnect::send($session, $socket, "Outdated client");
 					    return;
 					}
@@ -176,6 +178,7 @@ final class PacketHandler
 
                         $serverPublicB64 = Crypto::pemToBase64($keys['public']);
                         Logger::debug("[0x01] Server public key converted to base64");
+                        Logger::debug("[0x01] Base64" . $serverPublicB64);
                         
                         $jwt = self::buildServerHandshakeJwt(
                             $serverPublicB64,
@@ -183,8 +186,8 @@ final class PacketHandler
                             $serverSalt
                         );
                         Logger::debug("[0x01] Server handshake JWT built, length: " . strlen($jwt));
+                        Logger::debug($jwt);
 
-                        // Decode JWT for diagnostics and verify signature raw length (should be 96 bytes)
                         try {
                             $parts = explode('.', $jwt);
                             if (count($parts) !== 3) {
@@ -237,23 +240,24 @@ final class PacketHandler
 
                         ServerToClientHandshake::send($session, $socket, $jwt);
                         Logger::debug("[0x03] ServerToClientHandshake sent, attempting to flush...");
+                        Logger::debug("[0x01] RakNet flushed after ServerToClientHandshake");
+
+                        RakNet::flush($session, $socket);
+                        usleep(50000);
 
                         [$key, $iv] = Crypto::deriveAes($sharedSecret, $serverSalt);
                         Logger::debug("[0x01] AES key and IV derived");
                         
                         $session->setPendingEncryption($key, $iv);
                         Logger::debug("[0x01] Pending encryption set");
-                        
-                        $session->enablePendingEncryption();
-                        Logger::debug("[0x01] Pending encryption enabled");
-                        
-                        $session->setWaitingHandshakeAck(true);
-                        RakNet::flush($session, $socket);
-                        Logger::debug("[0x01] RakNet flushed after ServerToClientHandshake");
+                          
+						$session->enablePendingEncryption();
+						Logger::debug("[0x01] Pending encryption enabled");
 
+                        $session->setWaitingHandshakeAck(true);
                         $session->setMcpeState(Session::MC_LOGIN);
-                        Logger::debug("[0x03] Encryption Enabled. State -> MC_LOGIN");
-                        
+                        Logger::debug("[0x03] State -> MC_LOGIN");
+
                     } catch (Throwable $e) {
                         Logger::error("[0x01] Crypto/handshake processing failed: {$e->getMessage()}");
                         Logger::debug($e->getTraceAsString());
@@ -281,12 +285,15 @@ final class PacketHandler
                     }
 
                     $session->setWaitingHandshakeAck(false);
+					$session->enableInboundCompression();
+					Logger::debug("[0x04] Enable inbound compression");
+
 
                     Logger::info("Encryption ENABLED. Handshake connection secure.");
 
                     PlayStatus::sendSuccess($session, $socket);
-
-                    ResourcePacksInfo::send($session, $socket);
+                    RakNet::flush($session, $socket);
+                    ResourcePacksInfo::send($session, $socket, [], []);
                     RakNet::flush($session, $socket);
                     $session->setMcpeState(Session::MC_RESOURCE);
                     Logger::debug("[0x03] Sent PacksInfo. State -> MC_RESOURCE");
@@ -307,7 +314,7 @@ final class PacketHandler
                         ResourcePackClientResponse::STATUS_HAVE_ALL_PACKS =>
                             (function () use ($session, $socket): void {
                                 Logger::debug("Client has all packs. Sending stack.");
-                                ResourcePackStack::send($session, $socket);
+                                ResourcePackStack::send($session, $socket, [], []);
                                 RakNet::flush($session, $socket);
                             })(),
 

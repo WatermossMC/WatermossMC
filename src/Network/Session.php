@@ -77,6 +77,8 @@ final class Session
 
     private ?EncryptionContext $encryption = null;
 
+    private ?Cipher $cipher = null;
+
     private bool $handshakeDone = false;
 
     private ?string $pendingKey = null;
@@ -359,7 +361,13 @@ final class Session
         if ($key === null || $iv === null) {
             throw new \RuntimeException("Key or IV is null");
         }
-        $this->encryption = new EncryptionContext($key, $iv);
+        if (strlen($key) !== 32) {
+	        throw new \RuntimeException("Invalid key length: " . strlen($key));
+	    }
+	    if (strlen($iv) !== 16) {
+	        throw new \RuntimeException("Invalid IV length: " . strlen($iv));
+	    }
+	    $this->encryption = new EncryptionContext($key, $iv);
     }
 
     public function hasEncryption(): bool
@@ -384,21 +392,45 @@ final class Session
 
     public function decodeInbound(string $data): string
     {
-        Logger::debug("Decoding inbound, encryption: " . ($this->hasEncryption() ? 'yes' : 'no') .
-                     ", decompress: " . ($this->shouldDecompressInbound() ? 'yes' : 'no'));
-
         if ($this->hasEncryption()) {
             $data = $this->decrypt($data);
         }
 
         if ($this->shouldDecompressInbound()) {
-            $originalLength = \strlen($data);
-            $data = zlib_decode($data)
-                ?: throw new \RuntimeException("zlib decode failed");
-            Logger::debug("Decompressed from $originalLength to " . \strlen($data));
+            if ($data === '') {
+                throw new \RuntimeException("Empty packet, cannot read compression ID");
+            }
+
+            $compressionId = \ord($data[0]);
+            $compressedPayload = substr($data, 1);
+
+            if ($compressionId === 0x00) {
+                $decoded = @gzinflate($compressedPayload);
+                if ($decoded === false) {
+                    throw new \RuntimeException("Raw deflate decode failed");
+                }
+                $data = $decoded;
+            } elseif ($compressionId === 0xFF) {
+                $data = $compressedPayload; // No compression
+            } else {
+                throw new \RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
+            }
         }
 
         return $data;
+    }
+
+    public function encodeOutbound($data): string
+    {
+		if ($this->shouldCompressOutbound()) {
+			$data = "\x00" . @zlib_encode($data, ZLIB_ENCODING_DEFLATE, 7);
+		}
+
+		if ($this->hasEncryption()) {
+			$data = $this->encrypt($data);
+		}
+
+		return "\xFE" . $data;
     }
 
     public function setHandshakeDone(): void
@@ -429,9 +461,14 @@ final class Session
 
     public function enablePendingEncryption(): void
     {
+		if ($this->pendingKey === null || $this->pendingIv === null) {
+	        throw new \LogicException("No pending encryption keys available");
+	    }
+
         $this->enableEncryption($this->pendingKey, $this->pendingIv);
         $this->pendingKey = null;
         $this->pendingIv = null;
+        Logger::debug("Pending encryption activated");
     }
 
     public function finalizeEncryption(): void

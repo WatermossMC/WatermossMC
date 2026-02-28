@@ -15,8 +15,8 @@ final class NetworkSettings extends Packet
 
     public static function send(Session $s, Socket $sock): void
     {
-        $p = McpeBinary::writeLShort(self::COMPRESS_EVERYTHING);
-        $p .= McpeBinary::writeLShort(0);
+        $p = McpeBinary::writeLShort(self::COMPRESS_NOTHING);
+        $p .= McpeBinary::writeLShort(0); // 0 = Zlib, 1 = Snappy, 255 = None
         $p .= McpeBinary::writeBool(false);
         $p .= McpeBinary::writeByte(0);
         $p .= McpeBinary::writeFloat(0.0);
@@ -24,6 +24,5 @@ final class NetworkSettings extends Packet
         $sendSeq = self::sendBatch(0x8F, $p, $s, $sock);
 
         $s->markNetworkSettingsReliableSeq($sendSeq);
-        $s->markNetworkSettingsSent();
     }
 }
