@@ -9,6 +9,9 @@ final class ServerProperties
     /** @var array<string, string> */
     private array $properties = [];
 
+    /**
+     * @param array<string, string> $properties
+     */
     private function __construct(array $properties)
     {
         $this->properties = $properties;
@@ -71,7 +74,15 @@ final class ServerProperties
     public function getString(string $key, string $default = ''): string
     {
         $value = $this->get($key, $default);
-        return is_string($value) ? $value : (string) $value;
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_scalar($value) || $value === null) {
+            return (string) $value;
+        }
+
+        return $default;
     }
 
     public function getInt(string $key, int $default = 0): int
@@ -92,10 +103,17 @@ final class ServerProperties
             return (int) $value !== 0;
         }
 
+        if (!is_scalar($value) && $value !== null) {
+            return $default;
+        }
+
         $normalized = strtolower((string) $value);
         return in_array($normalized, ['true', 'yes', 'on', '1'], true);
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function all(): array
     {
         return $this->properties;

@@ -77,8 +77,6 @@ final class Session
 
     private ?EncryptionContext $encryption = null;
 
-    private ?Cipher $cipher = null;
-
     private bool $handshakeDone = false;
 
     private ?string $pendingKey = null;
@@ -356,6 +354,14 @@ final class Session
         $this->serverKeys = $keys;
     }
 
+    /**
+     * @return ?array{private: string, public: string}
+     */
+    public function getServerKeys(): ?array
+    {
+        return $this->serverKeys;
+    }
+
     public function enableEncryption(?string $key, ?string $iv): void
     {
         if ($key === null || $iv === null) {
@@ -420,17 +426,21 @@ final class Session
         return $data;
     }
 
-    public function encodeOutbound($data): string
+    public function encodeOutbound(string $data): string
     {
-		if ($this->shouldCompressOutbound()) {
-			$data = "\x00" . @zlib_encode($data, ZLIB_ENCODING_DEFLATE, 7);
-		}
+        if ($this->shouldCompressOutbound()) {
+            $compressed = zlib_encode($data, ZLIB_ENCODING_DEFLATE, 7);
+            if ($compressed === false) {
+                throw new \RuntimeException('zlib_encode failed');
+            }
+            $data = "\x00" . $compressed;
+        }
 
-		if ($this->hasEncryption()) {
-			$data = $this->encrypt($data);
-		}
+        if ($this->hasEncryption()) {
+            $data = $this->encrypt($data);
+        }
 
-		return "\xFE" . $data;
+        return "\xFE" . $data;
     }
 
     public function setHandshakeDone(): void

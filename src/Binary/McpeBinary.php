@@ -88,31 +88,37 @@ final class McpeBinary
     public static function readLShort(string $buf, int &$o): int
     {
         $r = unpack('v', substr($buf, $o, 2));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack failed');
         }
         $o += 2;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readInt(string $buf, int &$o): int
     {
         $r = unpack('N', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack int failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readFloat(string $buf, int &$o): float
     {
         $r = unpack('g', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack float failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var float $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readString(string $buf, int &$o): string
@@ -153,10 +159,12 @@ final class McpeBinary
     public static function readLInt(string $buf, int &$o): int
     {
         $r = unpack('V', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack lint failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 }

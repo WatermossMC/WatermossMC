@@ -136,8 +136,8 @@ final class PacketHandler
                     Logger::debug("[0x01] Payload type: " . gettype($payload) . ", payload empty: " . (empty($payload) ? 'YES' : 'NO'));
                     Logger::debug("[0x01] IdentityKey present: " . ($clientIdentityKey ? 'YES' : 'NO'));
 
-                    if (!\is_array($payload) || empty($clientIdentityKey)) {
-                        Logger::error("[0x01] Login failed: Invalid payload or missing identity key.");
+                    if (empty($clientIdentityKey)) {
+                        Logger::error("[0x01] Login failed: Missing identity key.");
                         Disconnect::send($session, $socket, "Invalid login payload");
                         return;
                     }
@@ -151,10 +151,19 @@ final class PacketHandler
 					}
 
                     $chainData = $payload['ExtraData'] ?? $payload;
-                    $uuid = $chainData['identity'] ?? null;
-                    $name = $chainData['displayName'] ?? 'unknown';
+                    $uuid = null;
+                    $name = 'unknown';
 
-                    Logger::info("Login attempt: {$name} (UUID: {$uuid})");
+                    if (is_array($chainData)) {
+                        if (isset($chainData['identity']) && is_string($chainData['identity'])) {
+                            $uuid = $chainData['identity'];
+                        }
+                        if (isset($chainData['displayName']) && is_string($chainData['displayName'])) {
+                            $name = $chainData['displayName'];
+                        }
+                    }
+
+                    Logger::info("Login attempt: {$name} (UUID: " . ($uuid ?? 'unknown') . ")");
 
                     try {
                         Logger::debug("[0x01] Processing crypto keys...");
@@ -201,14 +210,17 @@ final class PacketHandler
                             $pad = fn(string $s): string => $s . str_repeat('=', (4 - (strlen($s) % 4)) % 4);
                             $decodedHdr = json_decode(base64_decode(strtr($pad($hdr), '-_', '+/')), true);
                             $decodedPld = json_decode(base64_decode(strtr($pad($pld), '-_', '+/')), true);
-                            $sigRaw = base64_decode(strtr($pad($sig), '-_', '+/'));
+                            $sigRaw = base64_decode(strtr($pad($sig), '-_', '+/'), true);
+                            if (!is_string($sigRaw)) {
+                                throw new \RuntimeException('Invalid signature payload');
+                            }
 
                             Logger::debug('[0x01] Handshake JWT header: ' . ($decodedHdr === null ? 'INVALID' : json_encode($decodedHdr)));
                             Logger::debug('[0x01] Handshake JWT payload: ' . ($decodedPld === null ? 'INVALID' : json_encode($decodedPld)));
-                            Logger::debug('[0x01] Handshake JWT sig length: ' . (is_string($sigRaw) ? strlen($sigRaw) : 'NULL') . " bytes");
+                            Logger::debug('[0x01] Handshake JWT sig length: ' . strlen($sigRaw) . " bytes");
 
-                            if (!is_string($sigRaw) || strlen($sigRaw) !== 96) {
-                                Logger::error('[0x01] Unexpected handshake signature length: ' . (is_string($sigRaw) ? strlen($sigRaw) : 'NULL') . ' (expected 96)');
+                            if (strlen($sigRaw) !== 96) {
+                                Logger::error('[0x01] Unexpected handshake signature length: ' . strlen($sigRaw) . ' (expected 96)');
                                 Disconnect::send($session, $socket, 'Handshake signature invalid');
                                 RakNet::flush($session, $socket);
                                 return;
@@ -295,7 +307,7 @@ final class PacketHandler
 
                     PlayStatus::sendSuccess($session, $socket);
                     RakNet::flush($session, $socket);
-                    ResourcePacksInfo::send($session, $socket, [], []);
+                    ResourcePacksInfo::send($session, $socket, [], false);
                     RakNet::flush($session, $socket);
                     $session->setMcpeState(Session::MC_RESOURCE);
                     Logger::debug("[0x03] Sent PacksInfo. State -> MC_RESOURCE");
@@ -414,6 +426,7 @@ final class PacketHandler
             throw new \RuntimeException("OpenSSL sign failed");
         }
 
+        /** @var string $sigDer */
         $sigRaw = Crypto::derToSignature($sigDer, 48);
 
         return "$h.$p." . $toUrlSafe($sigRaw);

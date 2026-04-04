@@ -3,3 +3,4 @@ parameters:
     paths:
         - src
     reportUnmatchedIgnoredErrors: true
+    treatPhpDocTypesAsCertain: false

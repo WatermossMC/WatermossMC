@@ -12,6 +12,15 @@ use WatermossMC\Util\Logger;
 
 final class Login extends Packet
 {
+    /**
+     * @return array{
+     *   protocol: int,
+     *   chain: array<int, string>,
+     *   clientJwt: string,
+     *   payload: array<string, mixed>,
+     *   identityPublicKey: string|null
+     * }
+     */
     public static function read(string $p, int &$o): array
     {
         $protocol = Binary::readInt($p, $o);
@@ -35,12 +44,20 @@ final class Login extends Packet
             throw new RuntimeException("Login JSON corrupt: " . $e->getMessage());
         }
 
+        if (!is_array($authInfo)) {
+            throw new RuntimeException("Login JSON did not decode to an object");
+        }
+        /** @var array<string, mixed> $authInfo */
+
         $chain = $authInfo['chain'] ?? null;
 
         if ($chain === null && isset($authInfo['Certificate'])) {
-            $certData = is_string($authInfo['Certificate']) 
-                ? json_decode($authInfo['Certificate'], true) 
+            $certData = is_string($authInfo['Certificate'])
+                ? json_decode($authInfo['Certificate'], true)
                 : $authInfo['Certificate'];
+            if (!is_array($certData)) {
+                $certData = [];
+            }
             $chain = $certData['chain'] ?? null;
         }
 
@@ -49,6 +66,10 @@ final class Login extends Packet
             throw new RuntimeException("Login chain missing or malformed");
         }
 
+        /** @var array<int, string> $chain */
+        $chain = array_values(array_filter($chain, 'is_string'));
+
+        /** @var array<string, mixed> $payload */
         $payload = [];
         $identityPublicKey = null;
 
@@ -59,11 +80,23 @@ final class Login extends Packet
         } catch (Throwable $e) {
             foreach ($chain as $jwt) {
                 $parts = explode('.', $jwt);
-                if (count($parts) < 2) continue;
+                if (count($parts) < 2) {
+                    continue;
+                }
+
                 $body = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
-                
-                if (isset($body['identityPublicKey'])) $identityPublicKey = $body['identityPublicKey'];
-                if (isset($body['extraData'])) $payload = array_merge($payload, $body['extraData']);
+                if (!is_array($body)) {
+                    continue;
+                }
+
+                if (isset($body['identityPublicKey']) && is_string($body['identityPublicKey'])) {
+                    $identityPublicKey = $body['identityPublicKey'];
+                }
+                if (isset($body['extraData']) && is_array($body['extraData'])) {
+                    /** @var array<string, mixed> $extraData */
+                    $extraData = $body['extraData'];
+                    $payload = array_merge($payload, $extraData);
+                }
             }
         }
 
@@ -73,14 +106,24 @@ final class Login extends Packet
         if ($clientJwt !== '') {
             $parts = explode('.', $clientJwt);
             if (isset($parts[1])) {
-                $clientData = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
-                if (is_array($clientData)) {
-                    $payload = array_merge($payload, $clientData);
+                /** @var string $part1 */
+                $part1 = $parts[1];
+                if (is_string($part1)) {
+                    $clientData = json_decode(base64_decode(strtr($part1, '-_', '+/')), true);
+                    if (is_array($clientData)) {
+                        /** @var array<string, mixed> $clientData */
+                        $payload = array_merge($payload, $clientData);
+                    }
                 }
             }
         }
 
-        Logger::info("Login Success: " . ($payload['displayName'] ?? 'unknown') . " (Protocol: $protocol)");
+        $displayName = 'unknown';
+        if (isset($payload['displayName']) && is_string($payload['displayName'])) {
+            $displayName = $payload['displayName'];
+        }
+
+        Logger::info("Login Success: {$displayName} (Protocol: {$protocol})");
 
         return [
             'protocol' => $protocol,

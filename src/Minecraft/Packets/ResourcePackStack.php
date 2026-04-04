@@ -11,6 +11,10 @@ use WatermossMC\Network\Session;
 
 final class ResourcePackStack extends Packet
 {
+    /**
+     * @param array<int, array{uuid:string,version:string}> $resourcePacks
+     * @param array<int, array{uuid:string,version:string}> $behaviorPacks
+     */
     public static function send(
         Session $s, 
         Socket $sock, 

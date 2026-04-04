@@ -11,6 +11,9 @@ final class Crypto
     /**
      * @return array{private: string, public: string}
      */
+    /**
+     * @return array{private: string, public: string}
+     */
     public static function generateKeyPair(): array
     {
         $res = openssl_pkey_new([
@@ -22,11 +25,21 @@ final class Crypto
             throw new RuntimeException("ECDH keygen failed");
         }
 
-        openssl_pkey_export($res, $privatePem);
+        $exported = openssl_pkey_export($res, $privatePem);
+        if ($exported === false || !is_string($privatePem)) {
+            throw new RuntimeException("Failed to export private key");
+        }
+
         $details = openssl_pkey_get_details($res);
+        if ($details === false || !isset($details['key']) || !is_string($details['key'])) {
+            throw new RuntimeException("Failed to obtain public key details");
+        }
+
+        /** @var string $privatePemString */
+        $privatePemString = $privatePem;
 
         return [
-            'private' => $privatePem,
+            'private' => $privatePemString,
             'public' => $details['key'],
         ];
     }
@@ -107,8 +120,13 @@ final class Crypto
         $sig = "";
 
         for ($i = 0; $i < 2; $i++) {
-            if (\ord($der[$offset++]) !== 0x02) throw new RuntimeException("Invalid DER tag");
+            if ($offset >= strlen($der) || \ord($der[$offset++]) !== 0x02) {
+                throw new RuntimeException("Invalid DER tag");
+            }
             $len = \ord($der[$offset++]);
+            if (strlen($der) < $offset + $len) {
+                throw new RuntimeException("Invalid DER signature payload");
+            }
             $val = substr($der, $offset, $len);
             $offset += $len;
             $val = ltrim($val, "\0");
@@ -124,7 +142,11 @@ final class Crypto
         if ($len % 2 !== 0) {
             throw new RuntimeException('Invalid raw signature length');
         }
-        $half = $len / 2;
+        $half = intdiv($len, 2);
+        if (strlen($sigRaw) < $half) {
+            throw new RuntimeException('Invalid raw signature format');
+        }
+
         $r = substr($sigRaw, 0, $half);
         $s = substr($sigRaw, $half);
 

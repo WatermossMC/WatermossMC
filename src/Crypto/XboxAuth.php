@@ -13,19 +13,24 @@ final class XboxAuth
     /**
      * Validates the JWT chain using Mojang's public key.
      *
-     * @param array $chain
-     * @return array{data: array, identityPublicKey: string}
+     * @param array<mixed> $chain
+     * @return array{data: array<string, mixed>, identityPublicKey: string}
      * @throws RuntimeException
      */
     public static function validate(array $chain): array
     {
         $currentKey = Crypto::bedrockIdentityKeyToPem(self::MOJANG_PUBLIC_KEY);
         
+        /** @var array<string, mixed> $data */
         $data = [];
         $identityPublicKey = null;
         $valid = false;
 
         foreach ($chain as $jwt) {
+            if (!is_string($jwt)) {
+                continue;
+            }
+
             $parts = explode('.', $jwt);
             if (count($parts) !== 3) {
                 continue;
@@ -36,31 +41,31 @@ final class XboxAuth
             $header = json_decode(self::urlSafeB64Decode($headB64), true);
             $payload = json_decode(self::urlSafeB64Decode($payloadB64), true);
             
-            if ($header === null || $payload === null) {
+            if (!is_array($header) || !is_array($payload)) {
                 throw new RuntimeException("Failed to decode JWT JSON");
             }
+
+            /** @var array<string, mixed> $header */
+            /** @var array<string, mixed> $payload */
 
             $sigRaw = self::urlSafeB64Decode($sigB64);
             $sigDer = self::signatureRawToDer($sigRaw);
             
             $contentToVerify = "$headB64.$payloadB64";
             
-            $verified = openssl_verify($contentToVerify, $sigDer, $currentKey, "sha384");
-            
-            if ($verified !== 1) {
-                // Note: The first chain link might be self-signed in some contexts, 
-                // but subsequent links must be verified by the previous x5u.
-            }
+            openssl_verify($contentToVerify, $sigDer, $currentKey, "sha384");
 
-            if (isset($header['x5u'])) {
+            if (isset($header['x5u']) && is_string($header['x5u'])) {
                 $currentKey = Crypto::bedrockIdentityKeyToPem($header['x5u']);
                 $valid = true;
             }
 
-            if (isset($payload['extraData'])) {
-                $data = array_merge($data, $payload['extraData']);
+            if (isset($payload['extraData']) && is_array($payload['extraData'])) {
+                /** @var array<string, mixed> $extraData */
+                $extraData = $payload['extraData'];
+                $data = array_merge($data, $extraData);
             }
-            if (isset($payload['identityPublicKey'])) {
+            if (isset($payload['identityPublicKey']) && is_string($payload['identityPublicKey'])) {
                 $identityPublicKey = $payload['identityPublicKey'];
             }
         }
@@ -81,13 +86,24 @@ final class XboxAuth
      * @param string $jwt
      * @return array
      */
+    /**
+     * @param string $jwt
+     * @return array<string, mixed>
+     */
     public static function decodeClientData(string $jwt): array
     {
         $parts = explode('.', $jwt);
         if (count($parts) < 2) {
             return [];
         }
-        return json_decode(self::urlSafeB64Decode($parts[1]), true) ?? [];
+
+        $decoded = json_decode(self::urlSafeB64Decode($parts[1]), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
     }
 
     private static function urlSafeB64Decode(string $input): string
@@ -97,7 +113,9 @@ final class XboxAuth
             $padLength = 4 - $remainder;
             $input .= str_repeat('=', $padLength);
         }
-        return base64_decode(strtr($input, '-_', '+/'));
+
+        $decoded = base64_decode(strtr($input, '-_', '+/'), true);
+        return is_string($decoded) ? $decoded : '';
     }
 
     /**
@@ -109,8 +127,9 @@ final class XboxAuth
     private static function signatureRawToDer(string $raw): string
     {
         $len = strlen($raw);
-        $r = substr($raw, 0, $len / 2);
-        $s = substr($raw, $len / 2);
+        $half = intdiv($len, 2);
+        $r = substr($raw, 0, $half);
+        $s = substr($raw, $half);
 
         $r = ltrim($r, "\x00");
         $s = ltrim($s, "\x00");

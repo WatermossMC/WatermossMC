@@ -10,6 +10,9 @@ use WatermossMC\Network\Session;
 
 final class ResourcePacksInfo extends Packet
 {
+    /**
+     * @param array<int, array{uuid:string,version:string,size:int,key?:string}> $packs
+     */
     public static function send(Session $s, Socket $sock, array $packs = [], bool $mustAccept = false): void
     {
         $p = Binary::writeBool($mustAccept);

@@ -77,7 +77,7 @@ final class NBT
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<mixed, mixed> $data
      */
     private static function writeCompoundPayload(array $data): string
     {
@@ -91,7 +91,7 @@ final class NBT
     }
 
     /**
-     * @param array<int, mixed> $list
+     * @param array<mixed> $list
      * @return array{0:int,1:string}
      */
     private static function writeList(array $list): array
