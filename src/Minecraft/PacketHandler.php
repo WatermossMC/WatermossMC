@@ -27,8 +27,10 @@ use WatermossMC\Minecraft\Packets\{
     SpawnPosition,
     StartGame
 };
+use WatermossMC\Minecraft\PlayerManager;
 use WatermossMC\Network\RakNet;
 use WatermossMC\Network\Session;
+use WatermossMC\Util\Config;
 use WatermossMC\Util\Logger;
 
 final class PacketHandler
@@ -347,16 +349,22 @@ final class PacketHandler
         Logger::debug("Initializing world sequence...");
 
         if (self::$world === null) {
-            self::$world = new World('world', 12345);
-            Logger::debug("World created with seed 12345.");
+            self::$world = new World(
+                Config::getString('level_name', 'world'),
+                Config::getInt('level_seed', 12345)
+            );
+            Logger::debug("World created with seed " . self::$world->seed . ".");
+        }
+
+        if (PlayerManager::get($s) === null) {
+            PlayerManager::add($s, $s->getPlayerName());
         }
 
         $s->setMcpeState(Session::MC_PLAY);
+        $s->setPosition(0.0, 64.0, 0.0);
 
         StartGame::send($s, $sock);
-        RakNet::flush($s, $sock);
         PlayStatus::sendPlayerSpawn($s, $sock);
-
         SetTime::send($s, $sock);
         SpawnPosition::send($s, $sock);
 
@@ -371,6 +379,7 @@ final class PacketHandler
         }
         Logger::debug("Sent {$chunkCount} chunks.");
 
+        AddPlayer::send($s, $sock);
         PlayerList::send($s, $sock);
 
         Logger::info("Player " . $s->getPlayerName() . " joined the game successfully!");

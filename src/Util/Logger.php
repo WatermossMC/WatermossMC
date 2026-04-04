@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace WatermossMC\Util;
 
+use WatermossMC\Util\Config;
+
 final class Logger
 {
     /** ANSI Colors */
@@ -16,10 +18,20 @@ final class Logger
     private const CYAN = "\033[1;36m";
 
     /** Config */
-    private static bool $debugEnabled;
+    private static bool $debugEnabled = false;
 
-    public static function init(): void
+    public static function init(?bool $forceDebug = null): void
     {
+        if ($forceDebug !== null) {
+            self::$debugEnabled = $forceDebug;
+            return;
+        }
+
+        if (Config::has('debug')) {
+            self::$debugEnabled = Config::getBool('debug', false);
+            return;
+        }
+
         $debugEnv = getenv('DEBUG');
         self::$debugEnabled = $debugEnv === false || $debugEnv === '' || $debugEnv === '1' || $debugEnv === 'true';
     }

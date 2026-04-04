@@ -7,6 +7,8 @@ namespace WatermossMC\Network;
 use Socket;
 use WatermossMC\Binary\Binary;
 use WatermossMC\Minecraft\PacketHandler;
+use WatermossMC\Minecraft\Packets\ProtocolInfo;
+use WatermossMC\Util\Config;
 use WatermossMC\Util\Logger;
 use WatermossMC\Util\Motd;
 
@@ -124,23 +126,37 @@ final class RakNet
             return;
         }
 
+        $gameModeName = Config::getString('gamemode', 'Survival');
+        $gameModeId = Config::getInt('game_mode_id', self::gameModeToId($gameModeName));
+
         $buf = Binary::writeByte(self::UNCONNECTED_PONG);
         $buf .= Binary::writeLong($time);
         $buf .= Binary::writeLong(self::$serverId);
         $buf .= self::MAGIC;
 
         $motd = (new Motd())
-            ->motd("WatermossMC")
-            ->worldName("RakNet PHP Server")
-            ->protocol(860)
-            ->version("1.21.124")
-            ->players(\count(self::$sessions), 20)
-            ->gameMode("Survival", 1)
-            ->port(19132)
+            ->motd(Config::getString('motd', 'WatermossMC'))
+            ->worldName(Config::getString('level_name', 'RakNet PHP Server'))
+            ->protocol(ProtocolInfo::CURRENT_PROTOCOL)
+            ->version(Config::getString('version_name', '1.21.124'))
+            ->players(\count(self::$sessions), Config::getInt('max_players', 20))
+            ->gameMode($gameModeName, $gameModeId)
+            ->port(Config::getInt('server_port', 19132))
             ->build(self::$serverId);
 
         $buf .= Binary::writeString($motd);
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
+    }
+
+    private static function gameModeToId(string $gameMode): int
+    {
+        return match (strtolower($gameMode)) {
+            'creative' => 0,
+            'survival' => 1,
+            'adventure' => 2,
+            'spectator' => 3,
+            default => 1,
+        };
     }
 
     private static function handleOpen1(string $p, string $a, int $po, Socket $s): void

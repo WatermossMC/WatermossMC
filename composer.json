@@ -11,6 +11,9 @@
             "WatermossMC\\": "src/"
         }
     },
+    "scripts": {
+        "build-phar": "php build-phar.php"
+    },
     "require-dev": {
         "phpstan/phpstan": "^2.1"
     }

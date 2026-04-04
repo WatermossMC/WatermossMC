@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 use WatermossMC\Network\RakNet;
 use WatermossMC\Network\TickLoop;
+use WatermossMC\Util\Config;
 use WatermossMC\Util\Logger;
 
 require __DIR__ . '/vendor/autoload.php';
 
-// Initialize logger
-\WatermossMC\Util\Logger::init();
+Config::load(__DIR__ . '/server.properties');
+
+Logger::init();
 
 // Configuration
 $config = [
-    'bind_ip' => getenv('SERVER_IP') ?: '0.0.0.0',
-    'bind_port' => (int) (getenv('SERVER_PORT') ?: 19132),
-    'max_players' => (int) (getenv('MAX_PLAYERS') ?: 20),
-    'motd' => getenv('MOTD') ?: 'WatermossMC Server',
+    'bind_ip' => Config::getString('server_ip', '0.0.0.0'),
+    'bind_port' => Config::getInt('server_port', 19132),
+    'max_players' => Config::getInt('max_players', 20),
+    'motd' => Config::getString('motd', 'WatermossMC Server'),
 ];
 
 $shutdown = false;
