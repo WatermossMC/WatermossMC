@@ -31,7 +31,7 @@ final class AddPlayer extends Packet
         $p .= Binary::writeFloat($rot['yaw']);
         $p .= Binary::writeFloat($rot['yaw']);
 
-        $p .= Binary::itemStackAir();
+        $p .= Binary::writeVarInt(0); // air item stack
         $p .= Binary::writeVarInt($s->getGameMode());
 
         $p .= Binary::writeVarInt(0);

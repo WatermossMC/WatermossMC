@@ -4,75 +4,126 @@ declare(strict_types=1);
 
 namespace WatermossMC\Minecraft\Packets;
 
+use RuntimeException;
+use Throwable;
 use WatermossMC\Binary\Binary;
+use WatermossMC\Crypto\XboxAuth;
+use WatermossMC\Util\Logger;
 
 final class Login extends Packet
 {
     /**
      * @return array{
-     *   protocol:int,
-     *   chain:array<int,string>,
-     *   clientJwt:string,
-     *   payload:array<string,mixed>,
-     *   identityPublicKey:?string
+     *   protocol: int,
+     *   chain: array<int, string>,
+     *   clientJwt: string,
+     *   payload: array<string, mixed>,
+     *   identityPublicKey: string|null
      * }
      */
     public static function read(string $p, int &$o): array
     {
-        $offset = 0;
-
-        $pid = Binary::readVarInt($p, $o);
-
         $protocol = Binary::readInt($p, $o);
 
-        $json = Binary::readStringInt($p, $o);
-
-        $data = json_decode($json, true);
-        if (!\is_array($data)) {
-            throw new \RuntimeException('Invalid Login JSON');
+        $connLen = Binary::readVarInt($p, $o);
+        if ($o + $connLen > strlen($p)) {
+             throw new RuntimeException("Buffer underflow");
         }
 
-        $chain = $data['chain'] ?? [];
-        $clientJwt = $data['clientDataJwt'] ?? '';
+        $conn = substr($p, $o, $connLen);
+        $o += $connLen;
 
-        if (!\is_array($chain) || !\is_string($clientJwt)) {
-            throw new \RuntimeException('Invalid Login structure');
+        $io = 0;
+        $authLen = Binary::readLInt($conn, $io);
+        $authRaw = substr($conn, $io, $authLen);
+        $io += $authLen;
+
+        try {
+            $authInfo = json_decode($authRaw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable $e) {
+            throw new RuntimeException("Login JSON corrupt: " . $e->getMessage());
         }
 
+        if (!is_array($authInfo)) {
+            throw new RuntimeException("Login JSON did not decode to an object");
+        }
+        /** @var array<string, mixed> $authInfo */
+
+        $chain = $authInfo['chain'] ?? null;
+
+        if ($chain === null && isset($authInfo['Certificate'])) {
+            $certData = is_string($authInfo['Certificate'])
+                ? json_decode($authInfo['Certificate'], true)
+                : $authInfo['Certificate'];
+            if (!is_array($certData)) {
+                $certData = [];
+            }
+            $chain = $certData['chain'] ?? null;
+        }
+
+        if (!is_array($chain) || empty($chain)) {
+            Logger::debug("Auth Data: " . json_encode($authInfo));
+            throw new RuntimeException("Login chain missing or malformed");
+        }
+
+        /** @var array<int, string> $chain */
+        $chain = array_values(array_filter($chain, 'is_string'));
+
+        /** @var array<string, mixed> $payload */
         $payload = [];
         $identityPublicKey = null;
 
-        foreach ($chain as $token) {
-            if (!\is_string($token)) {
-                continue;
-            }
+        try {
+            $authResult = XboxAuth::validate($chain);
+            $identityPublicKey = $authResult['identityPublicKey'];
+            $payload = $authResult['data'];
+        } catch (Throwable $e) {
+            foreach ($chain as $jwt) {
+                $parts = explode('.', $jwt);
+                if (count($parts) < 2) {
+                    continue;
+                }
 
-            $parts = explode('.', $token);
-            if (!isset($parts[1])) {
-                continue;
-            }
+                $body = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+                if (!is_array($body)) {
+                    continue;
+                }
 
-            $decoded = json_decode(self::b64($parts[1]), true);
-            if (!\is_array($decoded)) {
-                continue;
-            }
-
-            $payload = $decoded;
-
-            if (isset($decoded['identityPublicKey'])) {
-                $identityPublicKey = $decoded['identityPublicKey'];
-            }
-        }
-
-        if ($payload === [] && $clientJwt !== '') {
-            $parts = explode('.', $clientJwt);
-            if (isset($parts[1])) {
-                $decoded = json_decode(self::b64($parts[1]), true);
-                if (\is_array($decoded)) {
-                    $payload = $decoded;
+                if (isset($body['identityPublicKey']) && is_string($body['identityPublicKey'])) {
+                    $identityPublicKey = $body['identityPublicKey'];
+                }
+                if (isset($body['extraData']) && is_array($body['extraData'])) {
+                    /** @var array<string, mixed> $extraData */
+                    $extraData = $body['extraData'];
+                    $payload = array_merge($payload, $extraData);
                 }
             }
         }
+
+        $clientJwtLen = Binary::readLInt($conn, $io);
+        $clientJwt = substr($conn, $io, $clientJwtLen);
+
+        if ($clientJwt !== '') {
+            $parts = explode('.', $clientJwt);
+            if (isset($parts[1])) {
+                /** @var string $part1 */
+                $part1 = $parts[1];
+                if (is_string($part1)) {
+                    $clientData = json_decode(base64_decode(strtr($part1, '-_', '+/')), true);
+                    if (is_array($clientData)) {
+                        /** @var array<string, mixed> $clientData */
+                        $payload = array_merge($payload, $clientData);
+                    }
+                }
+            }
+        }
+
+        $displayName = 'unknown';
+        if (isset($payload['displayName']) && is_string($payload['displayName'])) {
+            $displayName = $payload['displayName'];
+        }
+
+        Logger::info("Login Success: {$displayName} (Protocol: {$protocol})");
 
         return [
             'protocol' => $protocol,
@@ -81,18 +132,5 @@ final class Login extends Packet
             'payload' => $payload,
             'identityPublicKey' => $identityPublicKey,
         ];
-    }
-
-    private static function b64(string $data): string
-    {
-        $data = str_replace(['-', '_'], ['+', '/'], $data);
-        $pad = (4 - (\strlen($data) % 4)) % 4;
-
-        $decoded = base64_decode($data . str_repeat('=', $pad), true);
-        if ($decoded === false) {
-            throw new \RuntimeException('Invalid base64 data');
-        }
-
-        return $decoded;
     }
 }

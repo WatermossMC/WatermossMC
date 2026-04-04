@@ -7,6 +7,8 @@ namespace WatermossMC\Network;
 use Socket;
 use WatermossMC\Binary\Binary;
 use WatermossMC\Minecraft\PacketHandler;
+use WatermossMC\Minecraft\Packets\ProtocolInfo;
+use WatermossMC\Util\Config;
 use WatermossMC\Util\Logger;
 use WatermossMC\Util\Motd;
 
@@ -124,23 +126,37 @@ final class RakNet
             return;
         }
 
+        $gameModeName = Config::getString('gamemode', 'Survival');
+        $gameModeId = Config::getInt('game_mode_id', self::gameModeToId($gameModeName));
+
         $buf = Binary::writeByte(self::UNCONNECTED_PONG);
         $buf .= Binary::writeLong($time);
         $buf .= Binary::writeLong(self::$serverId);
         $buf .= self::MAGIC;
 
         $motd = (new Motd())
-            ->motd("WatermossMC")
-            ->worldName("RakNet PHP Server")
-            ->protocol(860)
-            ->version("1.21.124")
-            ->players(\count(self::$sessions), 20)
-            ->gameMode("Survival", 1)
-            ->port(19132)
+            ->motd(Config::getString('motd', 'WatermossMC'))
+            ->worldName(Config::getString('level_name', 'RakNet PHP Server'))
+            ->protocol(ProtocolInfo::CURRENT_PROTOCOL)
+            ->version(Config::getString('version_name', '1.21.124'))
+            ->players(\count(self::$sessions), Config::getInt('max_players', 20))
+            ->gameMode($gameModeName, $gameModeId)
+            ->port(Config::getInt('server_port', 19132))
             ->build(self::$serverId);
 
         $buf .= Binary::writeString($motd);
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
+    }
+
+    private static function gameModeToId(string $gameMode): int
+    {
+        return match (strtolower($gameMode)) {
+            'creative' => 0,
+            'survival' => 1,
+            'adventure' => 2,
+            'spectator' => 3,
+            default => 1,
+        };
     }
 
     private static function handleOpen1(string $p, string $a, int $po, Socket $s): void
@@ -251,6 +267,8 @@ final class RakNet
         Logger::debug("NEW_INCOMING_CONNECTION SENT");
         $session->setRakNetState(Session::RN_CONNECTED);
         $session->setMcpeState(Session::MC_NONE);
+
+        self::flush($session, $sock);
     }
 
     private static function sendReliable(
@@ -287,14 +305,7 @@ final class RakNet
 
         $s->reliableQueue[$reliableSeq] = $buf;
 
-        socket_sendto(
-            $sock,
-            $buf,
-            \strlen($buf),
-            0,
-            $s->address,
-            $s->port
-        );
+        $s->sendQueue[] = $buf;
     }
 
     private static function sendUnreliable(
@@ -313,14 +324,7 @@ final class RakNet
 
         $buf .= $payload;
 
-        socket_sendto(
-            $sock,
-            $buf,
-            \strlen($buf),
-            0,
-            $s->address,
-            $s->port
-        );
+        $s->sendQueue[] = $buf;
     }
 
     private static function handleFrameSet(string $p, string $a, int $po, Socket $sock): void
@@ -372,14 +376,16 @@ final class RakNet
                 $o++;
             }
 
-
+            $splitId = 0;
+            $splitIndex = 0;
+            $splitCount = 0;
             if ($fragmented) {
                 if ($o + 10 > $len) {
                     break;
                 }
-                Binary::readInt($p, $o);
-                Binary::readShort($p, $o);
-                Binary::readInt($p, $o);
+                $splitCount = Binary::readInt($p, $o);
+                $splitId = Binary::readShort($p, $o);
+                $splitIndex = Binary::readInt($p, $o);
             }
 
             if ($o + $frameLength > $len) {
@@ -389,7 +395,31 @@ final class RakNet
             $body = substr($p, $o, $frameLength);
             $o += $frameLength;
 
-            if ($body === '') {
+            if ($fragmented) {
+                if (isset($session->completedSplits[$splitId])) {
+                    $body = null;
+                } else {
+                    if (!isset($session->splitQueue[$splitId])) {
+                        $session->splitQueue[$splitId] = array_fill(0, $splitCount, null);
+                    }
+
+                    $session->splitQueue[$splitId][$splitIndex] = $body;
+
+                    $receivedCount = \count(array_filter($session->splitQueue[$splitId], fn ($v) => $v !== null));
+
+                    if ($receivedCount === $splitCount) {
+                        $body = implode('', $session->splitQueue[$splitId]);
+                        unset($session->splitQueue[$splitId]);
+
+                        $session->completedSplits[$splitId] = true;
+                        Logger::debug("Split Packet Reassembled! Total len=" . \strlen($body));
+                    } else {
+                        $body = null;
+                    }
+                }
+            }
+
+            if ($body === null || $body === '') {
                 continue;
             }
 
@@ -401,8 +431,6 @@ final class RakNet
                 \strlen($body),
                 $reliability
             ));
-
-
 
             if ($pid === self::CONNECTION_REQUEST) {
                 self::handleConnectionRequest($body, $a, $po, $sock);
@@ -427,32 +455,16 @@ final class RakNet
                 continue;
             }
 
-
             if ($pid === 0xFE) {
-                $compressed = substr($body, 1);
-                $payload = $compressed;
+                // Just strip the 0xFE wrapper, do not parse compression here!
+                $batchPayload = substr($body, 1);
+                
+                Logger::debug(sprintf(
+                    "MCPE batch received, raw len=%d",
+                    \strlen($batchPayload)
+                ));
 
-                if ($session->isEncryptionEnabled()) {
-                    try {
-                        $payload = $session->decrypt($payload);
-                    } catch (\Throwable $e) {
-                        Logger::debug("Decrypt failed: " . $e->getMessage());
-                        continue;
-                    }
-                }
-
-                if ($session->shouldDecompressInbound()) {
-                    $batch = @gzinflate($payload);
-                    if ($batch === false) {
-                        Logger::debug("MCPE batch inflate failed (RAW)");
-                        continue;
-                    }
-                } else {
-                    $batch = $payload;
-                }
-
-                Logger::debug("MCPE batch decoded len=" . \strlen($batch));
-                PacketHandler::handleBatch($batch, $session, $sock);
+                PacketHandler::handleBatch($batchPayload, $session, $sock);
                 continue;
             }
         }
@@ -496,13 +508,7 @@ final class RakNet
 
     private static function handleAckSeq(Session $session, int $seq): void
     {
-        if ($session->hasPendingEncryption() && $session->hasWaitingHandshakeAck()) {
-            $session->enablePendingEncryption();
-            $session->setWaitingHandshakeAck(false);
-            $session->setHandshakeDone();
-
-            Logger::info("Encryption, Handshake ACK");
-        }
+        unset($session->reliableQueue[$seq]);
     }
 
     private static function handleNack(string $p, string $a, int $po, Socket $sock): void
@@ -545,5 +551,25 @@ final class RakNet
                 }
             }
         }
+    }
+
+    public static function flush(Session $session, Socket $sock): void
+    {
+        if (!isset($session->sendQueue) || empty($session->sendQueue)) {
+            return;
+        }
+
+        foreach ($session->sendQueue as $buffer) {
+            @socket_sendto(
+                $sock,
+                $buffer,
+                \strlen($buffer),
+                0,
+                $session->address,
+                $session->port
+            );
+        }
+
+        $session->sendQueue = [];
     }
 }

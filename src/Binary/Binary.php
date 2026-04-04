@@ -32,6 +32,11 @@ final class Binary
         return pack('N', $v);
     }
 
+    public static function writeLInt(int $v): string
+    {
+        return pack('V', $v);
+    }
+
     public static function writeLong(int $v): string
     {
         return pack('J', $v);
@@ -132,44 +137,65 @@ final class Binary
     {
         self::ensure($buf, $o, 2);
         $r = unpack('n', substr($buf, $o, 2));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack short failed');
         }
         $o += 2;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readLShort(string $buf, int &$o): int
     {
         self::ensure($buf, $o, 2);
         $r = unpack('v', substr($buf, $o, 2));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack lshort failed');
         }
         $o += 2;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readInt(string $buf, int &$o): int
     {
         self::ensure($buf, $o, 4);
         $r = unpack('N', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack int failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
+    }
+
+    public static function readLInt(string $buf, int &$o): int
+    {
+        self::ensure($buf, $o, 4);
+        $r = unpack('V', substr($buf, $o, 4));
+        if ($r === false || !isset($r[1])) {
+            throw new \RuntimeException('unpack lint failed');
+        }
+        $o += 4;
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readLong(string $buf, int &$o): int
     {
         self::ensure($buf, $o, 8);
         $r = unpack('J', substr($buf, $o, 8));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack long failed');
         }
         $o += 8;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readTriad(string $buf, int &$o): int
@@ -188,11 +214,13 @@ final class Binary
     {
         self::ensure($buf, $o, 4);
         $r = unpack('g', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack float failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var float $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readStringInt(string $buf, int &$o): string
@@ -228,24 +256,24 @@ final class Binary
     {
         $value = 0;
         $shift = 0;
+        $len = \strlen($buf);
 
         while (true) {
-            self::ensure($buf, $o, 1);
-            $b = \ord($buf[$o++]);
+            if ($o >= $len) {
+                throw new \RuntimeException("VarInt overflow");
+            }
 
+            $b = \ord($buf[$o++]);
             $value |= ($b & 0x7F) << $shift;
+
             if (($b & 0x80) === 0) {
                 break;
             }
 
             $shift += 7;
             if ($shift > 35) {
-                throw new \RuntimeException('VarInt too big');
+                throw new \RuntimeException("VarInt too big");
             }
-        }
-
-        if ($value & (1 << 31)) {
-            $value -= 1 << 32;
         }
 
         return $value;

@@ -16,6 +16,18 @@ final class PlayStatus extends Packet
         self::send($payload, $s, $sock);
     }
 
+    public static function sendFailedClient(Session $s, Socket $sock): void
+    {
+        $payload = Binary::writeInt(1);
+        self::send($payload, $s, $sock);
+    }
+
+    public static function sendFailedServer(Session $s, Socket $sock): void
+    {
+        $payload = Binary::writeInt(2);
+        self::send($payload, $s, $sock);
+    }
+
     public static function sendPlayerSpawn(Session $s, Socket $sock): void
     {
         $payload = Binary::writeInt(3);

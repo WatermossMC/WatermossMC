@@ -8,6 +8,6 @@ final class ClientToServerHandshake extends Packet
 {
     public static function read(string $buf, int &$o): void
     {
-        $o = \strlen($buf);
+        //NOOP
     }
 }

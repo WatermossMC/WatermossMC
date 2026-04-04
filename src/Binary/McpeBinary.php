@@ -88,36 +88,42 @@ final class McpeBinary
     public static function readLShort(string $buf, int &$o): int
     {
         $r = unpack('v', substr($buf, $o, 2));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack failed');
         }
         $o += 2;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readInt(string $buf, int &$o): int
     {
         $r = unpack('N', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack int failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var int $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readFloat(string $buf, int &$o): float
     {
         $r = unpack('g', substr($buf, $o, 4));
-        if ($r === false) {
+        if ($r === false || !isset($r[1])) {
             throw new \RuntimeException('unpack float failed');
         }
         $o += 4;
-        return $r[1];
+        /** @var float $value */
+        $value = $r[1];
+        return $value;
     }
 
     public static function readString(string $buf, int &$o): string
     {
-        $len = self::readLShort($buf, $o);
+        $len = self::readVarInt($buf, $o);
         $v = substr($buf, $o, $len);
         $o += $len;
         return $v;
@@ -127,8 +133,13 @@ final class McpeBinary
     {
         $value = 0;
         $shift = 0;
+        $len = \strlen($buf);
 
         while (true) {
+            if ($o >= $len) {
+                throw new \RuntimeException("VarInt overflow");
+            }
+
             $b = \ord($buf[$o++]);
             $value |= ($b & 0x7F) << $shift;
 
@@ -138,14 +149,22 @@ final class McpeBinary
 
             $shift += 7;
             if ($shift > 35) {
-                throw new \RuntimeException('VarInt too big');
+                throw new \RuntimeException("VarInt too big");
             }
         }
 
-        if ($value & (1 << 31)) {
-            $value -= 1 << 32;
-        }
+        return $value;
+    }
 
+    public static function readLInt(string $buf, int &$o): int
+    {
+        $r = unpack('V', substr($buf, $o, 4));
+        if ($r === false || !isset($r[1])) {
+            throw new \RuntimeException('unpack lint failed');
+        }
+        $o += 4;
+        /** @var int $value */
+        $value = $r[1];
         return $value;
     }
 }

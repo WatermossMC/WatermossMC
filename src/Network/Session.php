@@ -13,8 +13,6 @@ final class Session
 {
     public int $sendSequence = 0;
 
-    private int $lastReceivedSequence = -1;
-
     public int $orderedIndex = 0;
 
     public int $frameSeq = 0;
@@ -33,8 +31,14 @@ final class Session
     /** @var array<int, bool> */
     private array $received = [];
 
-    /** @var array<int, array{count:int, parts:array<int,string>}> */
+    /** @var array<int, array{count?: int, parts: array<int, string>}> */
     public array $fragments = [];
+
+    /** @var array<int, array<int, string|null>> */
+    public array $splitQueue = [];
+
+    /** @var array<int, string> */
+    public array $sendQueue = [];
 
     public string $address;
 
@@ -68,6 +72,7 @@ final class Session
 
     private ?string $clientPublicKey = null;
 
+    /** @var ?array{private: string, public: string} */
     private ?array $serverKeys = null;
 
     private ?EncryptionContext $encryption = null;
@@ -103,6 +108,9 @@ final class Session
     public const MC_PLAY = 5;
 
     private int $mcpeState = self::MC_NONE;
+
+    /** @var array<int, bool> */
+    public array $completedSplits = [];
 
     private static int $nextRuntimeId = 1;
 
@@ -338,14 +346,34 @@ final class Session
             ?? throw new \RuntimeException("Client public key not set");
     }
 
+    /**
+     * @param array{private: string, public: string} $keys
+     */
     public function setServerKeys(array $keys): void
     {
         $this->serverKeys = $keys;
     }
 
-    public function enableEncryption(string $key, string $iv): void
+    /**
+     * @return ?array{private: string, public: string}
+     */
+    public function getServerKeys(): ?array
     {
-        $this->encryption = new EncryptionContext($key, $iv);
+        return $this->serverKeys;
+    }
+
+    public function enableEncryption(?string $key, ?string $iv): void
+    {
+        if ($key === null || $iv === null) {
+            throw new \RuntimeException("Key or IV is null");
+        }
+        if (strlen($key) !== 32) {
+	        throw new \RuntimeException("Invalid key length: " . strlen($key));
+	    }
+	    if (strlen($iv) !== 16) {
+	        throw new \RuntimeException("Invalid IV length: " . strlen($iv));
+	    }
+	    $this->encryption = new EncryptionContext($key, $iv);
     }
 
     public function hasEncryption(): bool
@@ -370,24 +398,49 @@ final class Session
 
     public function decodeInbound(string $data): string
     {
-        Logger::debug("Decoding inbound, encryption: " . ($this->hasEncryption() ? 'yes' : 'no') .
-                     ", decompress: " . ($this->shouldDecompressInbound() ? 'yes' : 'no'));
-
         if ($this->hasEncryption()) {
             $data = $this->decrypt($data);
         }
 
         if ($this->shouldDecompressInbound()) {
-            $originalLength = \strlen($data);
-            $data = zlib_decode(
-                $data,
-                1024 * 1024
-            )
-                ?: throw new \RuntimeException("zlib decode failed");
-            Logger::debug("Decompressed from $originalLength to " . \strlen($data));
+            if ($data === '') {
+                throw new \RuntimeException("Empty packet, cannot read compression ID");
+            }
+
+            $compressionId = \ord($data[0]);
+            $compressedPayload = substr($data, 1);
+
+            if ($compressionId === 0x00) {
+                $decoded = @gzinflate($compressedPayload);
+                if ($decoded === false) {
+                    throw new \RuntimeException("Raw deflate decode failed");
+                }
+                $data = $decoded;
+            } elseif ($compressionId === 0xFF) {
+                $data = $compressedPayload; // No compression
+            } else {
+                throw new \RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
+            }
         }
 
         return $data;
+    }
+
+    public function encodeOutbound(string $data): string
+    {
+        if ($this->shouldCompressOutbound()) {
+            $compressed = zlib_encode($data, ZLIB_ENCODING_DEFLATE, 7);
+            if ($compressed === false) {
+                throw new \RuntimeException('zlib_encode failed');
+            }
+            $data = "\x00" . $compressed;
+        }
+
+        if ($this->hasEncryption()) {
+            $data = $this->encrypt($data);
+        }
+
+        return "\xFE" . $data;
     }
 
     public function setHandshakeDone(): void
@@ -418,9 +471,14 @@ final class Session
 
     public function enablePendingEncryption(): void
     {
+		if ($this->pendingKey === null || $this->pendingIv === null) {
+	        throw new \LogicException("No pending encryption keys available");
+	    }
+
         $this->enableEncryption($this->pendingKey, $this->pendingIv);
         $this->pendingKey = null;
         $this->pendingIv = null;
+        Logger::debug("Pending encryption activated");
     }
 
     public function finalizeEncryption(): void
@@ -502,5 +560,10 @@ final class Session
     public function clearNetworkSettingsReliableSeq(): void
     {
         $this->networkSettingsReliableSeq = null;
+    }
+
+    public function getPlayerName(): string
+    {
+        return $this->username;
     }
 }

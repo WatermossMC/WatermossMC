@@ -11,16 +11,38 @@ use WatermossMC\Network\Session;
 
 final class ResourcePackStack extends Packet
 {
-    public static function send(Session $s, Socket $sock): void
-    {
-        $p = Binary::writeBool(false);
-        $p .= Binary::writeVarInt(0);
+    /**
+     * @param array<int, array{uuid:string,version:string}> $resourcePacks
+     * @param array<int, array{uuid:string,version:string}> $behaviorPacks
+     */
+    public static function send(
+        Session $s, 
+        Socket $sock, 
+        array $resourcePacks = [], 
+        array $behaviorPacks = [], 
+        bool $mustAccept = false
+    ): void {
+        $p = Binary::writeBool($mustAccept);
+
+        // Behavior Packs
+        $p .= Binary::writeVarInt(count($behaviorPacks));
+        foreach ($behaviorPacks as $pack) {
+            $p .= Binary::writeStringInt($pack['uuid']);
+            $p .= Binary::writeStringInt($pack['version']);
+            $p .= Binary::writeStringInt(""); // subPackName
+        }
+
+        // Resource Packs
+        $p .= Binary::writeVarInt(count($resourcePacks));
+        foreach ($resourcePacks as $pack) {
+            $p .= Binary::writeStringInt($pack['uuid']);
+            $p .= Binary::writeStringInt($pack['version']);
+            $p .= Binary::writeStringInt(""); // subPackName
+        }
+
         $p .= Binary::writeStringInt("1.21.124");
-
         $p .= Experiments::writeEmpty();
-
-
-        $p .= Binary::writeBool(false);
+        $p .= Binary::writeBool(false); // useVanillaEditorPacks
 
         self::sendBatch(0x07, $p, $s, $sock);
     }
