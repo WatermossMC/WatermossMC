@@ -429,9 +429,9 @@ final class Session
     public function encodeOutbound(string $data): string
     {
         if ($this->shouldCompressOutbound()) {
-            $compressed = zlib_encode($data, ZLIB_ENCODING_DEFLATE, 7);
+            $compressed = gzdeflate($data, 7);
             if ($compressed === false) {
-                throw new \RuntimeException('zlib_encode failed');
+                throw new \RuntimeException('gzdeflate failed');
             }
             $data = "\x00" . $compressed;
         }

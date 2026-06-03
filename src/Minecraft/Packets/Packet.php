@@ -23,9 +23,9 @@ abstract class Packet
         $batch .= $mcpePacket;
 
         if ($s->shouldCompressOutbound()) {
-            $compressed = zlib_encode($batch, \ZLIB_ENCODING_DEFLATE);
+            $compressed = gzdeflate($batch, 7);
             if ($compressed === false) {
-                throw new \RuntimeException("zlib_encode failed");
+                throw new \RuntimeException("gzdeflate failed");
             }
             $packet = "\xFE" . $compressed;
         } else {
