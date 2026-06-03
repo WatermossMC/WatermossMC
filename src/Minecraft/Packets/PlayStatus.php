@@ -36,6 +36,6 @@ final class PlayStatus extends Packet
 
     private static function send(string $payload, Session $s, Socket $sock): void
     {
-        self::sendBatch(0x02, $payload, $s, $sock);
+        self::sendBatch(ProtocolInfo::PLAY_STATUS_PACKET, $payload, $s, $sock);
     }
 }

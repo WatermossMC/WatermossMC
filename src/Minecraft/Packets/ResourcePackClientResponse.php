@@ -19,11 +19,11 @@ final class ResourcePackClientResponse extends Packet
     public static function read(string $p, int &$o): array
     {
         $status = Binary::readByte($p, $o);
-        $count = Binary::readShort($p, $o);
+        $count = Binary::readLShort($p, $o);
 
         $packs = [];
         for ($i = 0; $i < $count; $i++) {
-            $packs[] = Binary::readStringInt($p, $o);
+            $packs[] = Binary::readString($p, $o);
         }
 
         return [

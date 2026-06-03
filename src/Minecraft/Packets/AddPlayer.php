@@ -25,22 +25,28 @@ final class AddPlayer extends Packet
         $p .= Binary::writeFloat($pos['y']);
         $p .= Binary::writeFloat($pos['z']);
 
-        $p .= Binary::writeBool(false);
+        $p .= Binary::writeFloat(0.0);
+        $p .= Binary::writeFloat(0.0);
+        $p .= Binary::writeFloat(0.0);
 
         $p .= Binary::writeFloat($rot['pitch']);
         $p .= Binary::writeFloat($rot['yaw']);
         $p .= Binary::writeFloat($rot['yaw']);
 
-        $p .= Binary::writeVarInt(0); // air item stack
+        $p .= Binary::writeVarInt(0); // air item stack wrapper
         $p .= Binary::writeVarInt($s->getGameMode());
 
-        $p .= Binary::writeVarInt(0);
-        $p .= Binary::writeVarInt(0);
-        $p .= Binary::writeVarInt(0);
+        $p .= Binary::writeVarInt(0); // metadata count
+        $p .= Binary::writeVarInt(0); // synced int properties
+        $p .= Binary::writeVarInt(0); // synced float properties
 
-        $p .= Binary::writeVarInt(0);
-        $p .= Binary::writeString("");
-        $p .= Binary::writeInt(0);
-        self::sendBatch(0x0c, $p, $s, $sock);
+        $p .= Binary::writeLong(0); // target actor unique id for abilities
+        $p .= Binary::writeByte(1); // player permission
+        $p .= Binary::writeByte(0); // command permission
+        $p .= Binary::writeByte(0); // ability layer count
+        $p .= Binary::writeVarInt(0); // link count
+        $p .= Binary::writeString(""); // device id
+        $p .= Binary::writeLInt(0); // build platform
+        self::sendBatch(ProtocolInfo::ADD_PLAYER_PACKET, $p, $s, $sock);
     }
 }

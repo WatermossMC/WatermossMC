@@ -21,23 +21,23 @@ final class ResourcePacksInfo extends Packet
         $p .= Binary::writeBool(false); // forceDisableVibrantVisuals
         
         $p .= Binary::writeUUID('00000000-0000-0000-0000-000000000000'); // worldTemplateId
-        $p .= Binary::writeStringInt(""); // worldTemplateVersion
+        $p .= Binary::writeString(""); // worldTemplateVersion
 
-        $p .= Binary::writeShort(count($packs));
+        $p .= Binary::writeLShort(count($packs));
         
         foreach ($packs as $pack) {
             $p .= Binary::writeUUID($pack['uuid']);
-            $p .= Binary::writeStringInt($pack['version']);
+            $p .= Binary::writeString($pack['version']);
             $p .= Binary::writeLong($pack['size']); // Unsigned Long (8 bytes)
-            $p .= Binary::writeStringInt($pack['key'] ?? "");
-            $p .= Binary::writeStringInt(""); // subPackName
-            $p .= Binary::writeStringInt(""); // contentId
+            $p .= Binary::writeString($pack['key'] ?? "");
+            $p .= Binary::writeString(""); // subPackName
+            $p .= Binary::writeString(""); // contentId
             $p .= Binary::writeBool(false);    // hasScripts
             $p .= Binary::writeBool(false);    // isAddonPack
             $p .= Binary::writeBool(false);    // isRtxCapable
-            $p .= Binary::writeStringInt(""); // cdnUrl
+            $p .= Binary::writeString(""); // cdnUrl
         }
 
-        self::sendBatch(0x06, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::RESOURCE_PACKS_INFO_PACKET, $p, $s, $sock);
     }
 }

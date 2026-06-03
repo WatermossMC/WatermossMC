@@ -93,7 +93,7 @@ final class PacketHandler
             Logger::debug("RX Packet: 0x{$pidHex} (State: " . $session->getMcpeState() . ")");
 
             switch ($pid) {
-                case 0xC1: // RequestNetworkSettings (193)
+                case ProtocolInfo::REQUEST_NETWORK_SETTINGS_PACKET: // RequestNetworkSettings (193)
                     Logger::debug("[0xC1] RequestNetworkSettings received.");
 
                     if ($session->getMcpeState() !== Session::MC_NONE) {
@@ -114,7 +114,7 @@ final class PacketHandler
                     Logger::debug("[0xC1] Compression enabled. State -> MC_NETWORK");
                     return;
 
-                case 0x01: // Login (01)
+                case ProtocolInfo::LOGIN_PACKET: // Login (01)
                     Logger::debug("[0x01] Login packet received.");
 
                     if ($session->getMcpeState() !== Session::MC_NETWORK) {
@@ -282,7 +282,7 @@ final class PacketHandler
 
                     return;
 
-                case 0x04: // ClientToServerHandshake
+                case ProtocolInfo::CLIENT_TO_SERVER_HANDSHAKE_PACKET: // ClientToServerHandshake
                     Logger::debug("[0x04] ClientToServerHandshake received.");
 
                     if (!$session->hasWaitingHandshakeAck()) {
@@ -314,7 +314,7 @@ final class PacketHandler
 
                     return;
 
-                case 0x08: // ResourcePackClientResponse
+                case ProtocolInfo::RESOURCE_PACK_CLIENT_RESPONSE_PACKET: // ResourcePackClientResponse
                     if ($session->getMcpeState() !== Session::MC_RESOURCE) {
                         return;
                     }
@@ -385,14 +385,11 @@ final class PacketHandler
         for ($x = -2; $x <= 2; $x++) {
             for ($z = -2; $z <= 2; $z++) {
                 $chunk = self::$world->getChunk($x, $z);
-                LevelChunk::send($s, $sock, $x, $z, $chunk->encode());
+                LevelChunk::send($s, $sock, $x, $z, $chunk->encode(), $chunk->getSubChunkCount());
                 $chunkCount++;
             }
         }
         Logger::debug("Sent {$chunkCount} chunks.");
-
-        AddPlayer::send($s, $sock);
-        PlayerList::send($s, $sock);
 
         Logger::info("Player " . $s->getPlayerName() . " joined the game successfully!");
         RakNet::flush($s, $sock);

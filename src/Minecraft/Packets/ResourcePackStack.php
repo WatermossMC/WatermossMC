@@ -24,26 +24,24 @@ final class ResourcePackStack extends Packet
     ): void {
         $p = Binary::writeBool($mustAccept);
 
-        // Behavior Packs
         $p .= Binary::writeVarInt(count($behaviorPacks));
         foreach ($behaviorPacks as $pack) {
-            $p .= Binary::writeStringInt($pack['uuid']);
-            $p .= Binary::writeStringInt($pack['version']);
-            $p .= Binary::writeStringInt(""); // subPackName
+            $p .= Binary::writeString($pack['uuid']);
+            $p .= Binary::writeString($pack['version']);
+            $p .= Binary::writeString(""); // subPackName
         }
 
-        // Resource Packs
         $p .= Binary::writeVarInt(count($resourcePacks));
         foreach ($resourcePacks as $pack) {
-            $p .= Binary::writeStringInt($pack['uuid']);
-            $p .= Binary::writeStringInt($pack['version']);
-            $p .= Binary::writeStringInt(""); // subPackName
+            $p .= Binary::writeString($pack['uuid']);
+            $p .= Binary::writeString($pack['version']);
+            $p .= Binary::writeString(""); // subPackName
         }
 
-        $p .= Binary::writeStringInt("1.21.124");
+        $p .= Binary::writeString("1.21.124");
         $p .= Experiments::writeEmpty();
         $p .= Binary::writeBool(false); // useVanillaEditorPacks
 
-        self::sendBatch(0x07, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::RESOURCE_PACK_STACK_PACKET, $p, $s, $sock);
     }
 }

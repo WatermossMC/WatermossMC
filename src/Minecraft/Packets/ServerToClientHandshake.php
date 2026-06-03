@@ -14,6 +14,6 @@ final class ServerToClientHandshake extends Packet
     {
         $p = McpeBinary::writeString($jwt);
 
-        self::sendBatch(0x03, $p, $session, $sock);
+        self::sendBatch(ProtocolInfo::SERVER_TO_CLIENT_HANDSHAKE_PACKET, $p, $session, $sock);
     }
 }

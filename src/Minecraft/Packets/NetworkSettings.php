@@ -21,7 +21,7 @@ final class NetworkSettings extends Packet
         $p .= McpeBinary::writeByte(0);
         $p .= McpeBinary::writeFloat(0.0);
 
-        $sendSeq = self::sendBatch(0x8F, $p, $s, $sock);
+        $sendSeq = self::sendBatch(ProtocolInfo::NETWORK_SETTINGS_PACKET, $p, $s, $sock);
 
         $s->markNetworkSettingsReliableSeq($sendSeq);
     }

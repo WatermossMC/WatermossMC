@@ -47,6 +47,6 @@ final class Text
         $packet .= Binary::writeVarInt(\strlen("")) . "";
         $packet .= Binary::writeVarInt(\strlen("")) . "";
 
-        Packet::sendBatch(0x09, $packet, $session, $socket);
+        Packet::sendBatch(ProtocolInfo::TEXT_PACKET, $packet, $session, $socket);
     }
 }

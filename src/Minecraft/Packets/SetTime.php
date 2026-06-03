@@ -13,6 +13,6 @@ final class SetTime extends Packet
     public static function send(Session $s, Socket $sock): void
     {
         $p = Binary::writeInt(6000);
-        self::sendBatch(0x0A, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::SET_TIME_PACKET, $p, $s, $sock);
     }
 }

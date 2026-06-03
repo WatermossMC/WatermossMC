@@ -22,6 +22,6 @@ final class UpdatePosition extends Packet
         $payload .= pack("g", 0.0);
         $payload .= Binary::writeBool($p->onGround);
 
-        self::sendBatch(0x15, $payload, $s, $sock);
+        self::sendBatch(ProtocolInfo::UPDATE_POSITION_PACKET, $payload, $s, $sock);
     }
 }

@@ -16,6 +16,6 @@ final class SpawnPosition extends Packet
         $p .= Binary::writeInt(0);
         $p .= Binary::writeInt(64);
         $p .= Binary::writeInt(0);
-        self::sendBatch(0x44, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::SPAWN_POSITION_PACKET, $p, $s, $sock);
     }
 }

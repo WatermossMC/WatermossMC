@@ -46,4 +46,9 @@ final class Chunk
 
         return $payload;
     }
+
+    public function getSubChunkCount(): int
+    {
+        return count($this->subChunks);
+    }
 }

@@ -61,7 +61,16 @@ final class Binary
 
     public static function writeString(string $v): string
     {
-        return self::writeShort(\strlen($v)) . $v;
+        return self::writeVarInt(\strlen($v)) . $v;
+    }
+
+    public static function readString(string $buf, int &$o): string
+    {
+        $len = self::readVarInt($buf, $o);
+        self::ensure($buf, $o, $len);
+        $v = substr($buf, $o, $len);
+        $o += $len;
+        return $v;
     }
 
     public static function writeStringInt(string $v): string
@@ -97,7 +106,8 @@ final class Binary
 
     public static function writeUUID(string $uuid): string
     {
-        return \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
+        $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
+        return \strrev(substr($bytes, 0, 8)) . \strrev(substr($bytes, 8, 8));
     }
 
     public static function writeUShortBE(int $v): string

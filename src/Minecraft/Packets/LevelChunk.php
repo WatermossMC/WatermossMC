@@ -15,20 +15,19 @@ final class LevelChunk extends Packet
         Socket $sock,
         int $chunkX,
         int $chunkZ,
-        string $chunkData
+        string $chunkData,
+        int $subChunkCount
     ): void {
-        $p = Binary::writeInt($chunkX);
-        $p .= Binary::writeInt($chunkZ);
-        $p .= Binary::writeVarInt(24);
-        $p .= Binary::writeBool(false);
+        $p = Binary::writeVarInt($chunkX);
+        $p .= Binary::writeVarInt($chunkZ);
+        $p .= Binary::writeVarInt(0); // dimension ID
+        $p .= Binary::writeVarInt($subChunkCount);
+        $p .= Binary::writeBool(false); // cache enabled
 
-        $p .= Binary::writeVarInt(\strlen($chunkData));
-        $p .= $chunkData;
+        $p .= Binary::writeString($chunkData);
+        $p .= Binary::writeString("");
 
-        $p .= self::writeBiomeData();
-        $p .= Binary::writeVarInt(0);
-
-        self::sendBatch(0x3A, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::LEVEL_CHUNK_PACKET, $p, $s, $sock);
     }
 
     private static function writeBiomeData(): string

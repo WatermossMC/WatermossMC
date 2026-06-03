@@ -14,6 +14,6 @@ final class Disconnect extends Packet
     {
         $p = McpeBinary::writeString($reason);
 
-        self::sendBatch(0x05, $p, $s, $sock);
+        self::sendBatch(ProtocolInfo::DISCONNECT_PACKET, $p, $s, $sock);
     }
 }
