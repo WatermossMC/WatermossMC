@@ -400,8 +400,19 @@ final class Session
 
     public function decodeInbound(string $data): string
     {
-        if ($this->hasEncryption()) {
-            $data = $this->decrypt($data);
+        // Attempt decryption only when inbound encryption context exists
+        // and the payload does not start with a valid compression ID (0x00 or 0xFF).
+        if ($this->inEncryption !== null && $data !== '') {
+            $first = \ord($data[0]);
+            if ($first !== 0x00 && $first !== 0xFF) {
+                try {
+                    $data = $this->decrypt($data);
+                } catch (\RuntimeException $e) {
+                    // Decryption failed (checksum/iv mismatch). Log and continue
+                    // without decryption so we can handle plaintext fallback.
+                    Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
+                }
+            }
         }
 
         if ($this->shouldDecompressInbound()) {
