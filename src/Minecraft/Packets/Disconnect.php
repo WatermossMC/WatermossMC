@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace WatermossMC\Minecraft\Packets;
 
 use Socket;
-use WatermossMC\Binary\McpeBinary;
+use WatermossMC\Binary\Binary;
 use WatermossMC\Network\Session;
 
 final class Disconnect extends Packet
 {
     public static function send(Session $s, Socket $sock, string $reason = ''): void
     {
-        $p = McpeBinary::writeString($reason);
+        $p = Binary::writeString($reason);
 
         self::sendBatch(ProtocolInfo::DISCONNECT_PACKET, $p, $s, $sock);
     }
