@@ -7,6 +7,7 @@ namespace WatermossMC\Minecraft\Packets;
 use Socket;
 use WatermossMC\Binary\Binary;
 use WatermossMC\Network\Session;
+use WatermossMC\Util\Logger;
 
 abstract class Packet
 {
@@ -23,6 +24,11 @@ abstract class Packet
         $batch .= $mcpePacket;
 
         $packet = $s->encodeOutbound($batch);
+
+        if ($packetId === ProtocolInfo::SERVER_TO_CLIENT_HANDSHAKE_PACKET) {
+            Logger::debug("[Packet] Outgoing MCPE packet hex: " . bin2hex($packet));
+            Logger::debug("[Packet] MCPE inner hex: " . bin2hex($mcpePacket));
+        }
 
         $sendSeq = $s->nextSendSeq();
         $reliableIndex = $s->nextReliableSeq();

@@ -408,9 +408,9 @@ final class Session
                 try {
                     $data = $this->decrypt($data);
                 } catch (\RuntimeException $e) {
-                    // Decryption failed (checksum/iv mismatch). Log and continue
-                    // without decryption so we can handle plaintext fallback.
+                    // Decryption failed: abort processing so caller can handle failure.
                     Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
+                    throw $e;
                 }
             }
         }
