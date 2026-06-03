@@ -22,15 +22,7 @@ abstract class Packet
         $batch = Binary::writeVarInt(\strlen($mcpePacket));
         $batch .= $mcpePacket;
 
-        if ($s->shouldCompressOutbound()) {
-            $compressed = gzdeflate($batch, 7);
-            if ($compressed === false) {
-                throw new \RuntimeException("gzdeflate failed");
-            }
-            $packet = "\xFE" . $compressed;
-        } else {
-            $packet = "\xFE" . $batch;
-        }
+        $packet = $s->encodeOutbound($batch);
 
         $sendSeq = $s->nextSendSeq();
         $reliableIndex = $s->nextReliableSeq();
