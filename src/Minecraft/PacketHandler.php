@@ -269,6 +269,7 @@ final class PacketHandler
 
                         [$key, $iv] = Crypto::deriveAes($sharedSecret, $serverSalt);
                         Logger::debug("[0x01] AES key and IV derived");
+                        Logger::debug("[0x01] AES key=" . bin2hex($key) . " iv=" . bin2hex($iv));
                         
                         $session->setPendingEncryption($key, $iv);
                         $session->enablePendingEncryption();
