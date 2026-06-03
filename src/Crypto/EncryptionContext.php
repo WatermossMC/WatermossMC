@@ -13,7 +13,7 @@ final class EncryptionContext
     private int $encryptionCounter = 0;
     private int $decryptionCounter = 0;
 
-    private const ALGORITHM = 'aes-256-cfb8';
+    private const ALGORITHM = 'aes-128-cfb8';
 
     public function __construct(string $key, string $iv)
     {
@@ -62,11 +62,24 @@ final class EncryptionContext
         $payload = substr($decrypted, 0, -8);
         $clientChecksum = substr($decrypted, -8);
 
-        $expected = $this->computeChecksum($payload, $this->decryptionCounter++);
+        $expected = $this->computeChecksum($payload, $this->decryptionCounter);
 
         if (!hash_equals($expected, $clientChecksum)) {
-            throw new RuntimeException("Checksum mismatch! Possible out of sync.");
+            $cipherHex = bin2hex(substr($data, 0, min(32, strlen($data))));
+            $plainHex = bin2hex(substr($decrypted, 0, min(32, strlen($decrypted))));
+            $payloadHex = bin2hex(substr($payload, 0, min(32, strlen($payload))));
+            $expectedHex = bin2hex($expected);
+            $actualHex = bin2hex($clientChecksum);
+            throw new RuntimeException(
+                "Checksum mismatch! Possible out of sync. " .
+                "cipher=" . $cipherHex . " decrypted=" . $plainHex .
+                " payload=" . $payloadHex .
+                " expected=" . $expectedHex . " actual=" . $actualHex .
+                " counter=" . $this->decryptionCounter
+            );
         }
+
+        $this->decryptionCounter++;
 
         return $payload;
     }

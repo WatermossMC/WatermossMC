@@ -73,8 +73,11 @@ final class Crypto
      */
     public static function deriveAes(string $sharedSecret, string $salt): array
     {
-        $key = hash('sha256', $sharedSecret . $salt, true);
-        $iv = substr(hash('sha256', $salt . $sharedSecret, true), 0, 16);
+        $hashKey = hash('sha256', $sharedSecret . $salt, true);
+        $hashIv = hash('sha256', $salt . $sharedSecret, true);
+
+        $key = substr($hashKey, 0, 16);
+        $iv = substr($hashIv, 0, 16);
 
         return [$key, $iv];
     }

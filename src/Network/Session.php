@@ -368,12 +368,12 @@ final class Session
         if ($key === null || $iv === null) {
             throw new \RuntimeException("Key or IV is null");
         }
-        if (strlen($key) !== 32) {
-	        throw new \RuntimeException("Invalid key length: " . strlen($key));
-	    }
-	    if (strlen($iv) !== 16) {
-	        throw new \RuntimeException("Invalid IV length: " . strlen($iv));
-	    }
+        if (strlen($key) !== 16) {
+            throw new \RuntimeException("Invalid key length: " . strlen($key));
+        }
+        if (strlen($iv) !== 16) {
+            throw new \RuntimeException("Invalid IV length: " . strlen($iv));
+        }
         $this->inEncryption = new EncryptionContext($key, $iv);
         $this->outEncryption = new EncryptionContext($key, $iv);
     }
@@ -406,7 +406,10 @@ final class Session
             $first = \ord($data[0]);
             if ($first !== 0x00 && $first !== 0xFF) {
                 try {
+                    Logger::debug("Inbound decrypt attempt: raw first=0x" . dechex($first) . " len=" . strlen($data));
+                    Logger::debug("Inbound raw hex=" . bin2hex(substr($data, 0, min(32, strlen($data)))));
                     $data = $this->decrypt($data);
+                    Logger::debug("Inbound decrypt succeeded, payload head=0x" . dechex(ord($data[0] ?? "\0")) . " len=" . strlen($data));
                 } catch (\RuntimeException $e) {
                     // Decryption failed: abort processing so caller can handle failure.
                     Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
