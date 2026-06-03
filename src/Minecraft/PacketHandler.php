@@ -50,6 +50,8 @@ final class PacketHandler
 
         $decodedLen = \strlen($data);
         Logger::debug("Batch received: {$rawDataLen} bytes (Decoded: {$decodedLen} bytes)");
+        $headHex = bin2hex(substr($data, 0, min(32, $decodedLen)));
+        Logger::info("Batch head (hex, first 32 bytes): {$headHex}");
 
         $offset = 0;
         $count = 0;
@@ -58,12 +60,16 @@ final class PacketHandler
             try {
                 $len = Binary::readVarInt($data, $offset);
 
+                $peekNext = bin2hex(substr($data, $offset, min(16, $decodedLen - $offset)));
+                $peekPrev = bin2hex(substr($data, max(0, $offset - 8), min(8, $offset)));
+                Logger::debug("Packet len read: {$len} at offset {$offset}. Next: {$peekNext}. Prev: {$peekPrev}");
+
                 if ($len === 0) {
                     continue;
                 }
 
                 if ($len < 0 || $offset + $len > $decodedLen) {
-                    Logger::warning("Packet length mismatch at offset {$offset}. Len: {$len}, Remaining: " . ($decodedLen - $offset));
+                    Logger::warning("Packet length mismatch at offset {$offset}. Len: {$len}, Remaining: " . ($decodedLen - $offset) . ". PeekNext: {$peekNext}");
                     break;
                 }
 

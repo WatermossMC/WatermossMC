@@ -61,12 +61,12 @@ final class Binary
 
     public static function writeString(string $v): string
     {
-        return self::writeVarInt(\strlen($v)) . $v;
+        return self::writeShort(\strlen($v)) . $v;
     }
 
     public static function readString(string $buf, int &$o): string
     {
-        $len = self::readVarInt($buf, $o);
+        $len = self::readShort($buf, $o);
         self::ensure($buf, $o, $len);
         $v = substr($buf, $o, $len);
         $o += $len;
