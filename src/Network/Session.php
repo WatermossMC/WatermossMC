@@ -471,14 +471,11 @@ final class Session
 
     public function enablePendingEncryption(): void
     {
-		if ($this->pendingKey === null || $this->pendingIv === null) {
-	        throw new \LogicException("No pending encryption keys available");
-	    }
+        if ($this->pendingKey === null || $this->pendingIv === null) {
+            throw new \LogicException("No pending encryption keys available");
+        }
 
-        $this->enableEncryption($this->pendingKey, $this->pendingIv);
-        $this->pendingKey = null;
-        $this->pendingIv = null;
-        Logger::debug("Pending encryption activated");
+        Logger::debug("Pending encryption prepared");
     }
 
     public function finalizeEncryption(): void

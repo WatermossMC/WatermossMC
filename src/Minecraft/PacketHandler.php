@@ -272,9 +272,6 @@ final class PacketHandler
                         
                         $session->setPendingEncryption($key, $iv);
                         Logger::debug("[0x01] Pending encryption set");
-                          
-						$session->enablePendingEncryption();
-						Logger::debug("[0x01] Pending encryption enabled");
 
                         $session->setWaitingHandshakeAck(true);
                         $session->setMcpeState(Session::MC_LOGIN);
@@ -307,8 +304,8 @@ final class PacketHandler
                     }
 
                     $session->setWaitingHandshakeAck(false);
-					$session->enableInboundCompression();
-					Logger::debug("[0x04] Enable inbound compression");
+                    $session->finalizeEncryption();
+                    Logger::debug("[0x04] Encryption finalized");
 
 
                     Logger::info("Encryption ENABLED. Handshake connection secure.");
