@@ -115,6 +115,8 @@ final class PacketHandler
                     $session->markNetworkSettingsSent();
 
                     $session->enableOutboundCompression(NetworkSettings::COMPRESS_EVERYTHING);
+                    // Allow client to send compressed inbound data after NetworkSettings
+                    $session->enableInboundCompression();
 
                     $session->setMcpeState(Session::MC_NETWORK);
                     Logger::debug("[0xC1] Compression enabled. State -> MC_NETWORK");
