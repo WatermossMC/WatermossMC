@@ -75,7 +75,8 @@ final class Session
     /** @var ?array{private: string, public: string} */
     private ?array $serverKeys = null;
 
-    private ?EncryptionContext $encryption = null;
+    private ?EncryptionContext $inEncryption = null;
+    private ?EncryptionContext $outEncryption = null;
 
     private bool $handshakeDone = false;
 
@@ -373,27 +374,28 @@ final class Session
 	    if (strlen($iv) !== 16) {
 	        throw new \RuntimeException("Invalid IV length: " . strlen($iv));
 	    }
-	    $this->encryption = new EncryptionContext($key, $iv);
+        $this->inEncryption = new EncryptionContext($key, $iv);
+        $this->outEncryption = new EncryptionContext($key, $iv);
     }
 
     public function hasEncryption(): bool
     {
-        return $this->encryption !== null;
+        return $this->inEncryption !== null || $this->outEncryption !== null;
     }
 
     public function isEncryptionEnabled(): bool
     {
-        return $this->hasEncryption();
+        return $this->outEncryption !== null;
     }
 
     public function encrypt(string $data): string
     {
-        return $this->encryption?->encrypt($data) ?? $data;
+        return $this->outEncryption?->encrypt($data) ?? $data;
     }
 
     public function decrypt(string $data): string
     {
-        return $this->encryption?->decrypt($data) ?? $data;
+        return $this->inEncryption?->decrypt($data) ?? $data;
     }
 
     public function decodeInbound(string $data): string
@@ -436,7 +438,7 @@ final class Session
             $data = "\x00" . $compressed;
         }
 
-        if ($this->hasEncryption()) {
+        if ($this->isEncryptionEnabled()) {
             $data = $this->encrypt($data);
         }
 
@@ -475,7 +477,11 @@ final class Session
             throw new \LogicException("No pending encryption keys available");
         }
 
-        Logger::debug("Pending encryption prepared");
+        // Prepare to decrypt incoming packets from client immediately,
+        // but do not enable outbound encryption until handshake finalization.
+        $this->inEncryption = new EncryptionContext($this->pendingKey, $this->pendingIv);
+
+        Logger::debug("Pending decryption activated (inbound only)");
     }
 
     public function finalizeEncryption(): void
@@ -484,12 +490,13 @@ final class Session
             throw new \LogicException('No pending encryption to finalize');
         }
 
-        $this->enableEncryption($this->pendingKey, $this->pendingIv);
+		// Enable outbound encryption now that handshake exchange is complete.
+		$this->outEncryption = new EncryptionContext($this->pendingKey, $this->pendingIv);
 
-        $this->pendingKey = null;
-        $this->pendingIv = null;
+		$this->pendingKey = null;
+		$this->pendingIv = null;
 
-        $this->handshakeDone = true;
+		$this->handshakeDone = true;
     }
 
     public function markNetworkSettingsSent(): void

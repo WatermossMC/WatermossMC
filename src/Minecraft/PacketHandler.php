@@ -271,6 +271,8 @@ final class PacketHandler
                         Logger::debug("[0x01] AES key and IV derived");
                         
                         $session->setPendingEncryption($key, $iv);
+                        $session->enablePendingEncryption();
+                        Logger::debug("[0x01] Pending decryption enabled (inbound)");
                         Logger::debug("[0x01] Pending encryption set");
 
                         $session->setWaitingHandshakeAck(true);
