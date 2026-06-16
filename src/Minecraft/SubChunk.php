@@ -9,7 +9,7 @@ use WatermossMC\Binary\Binary;
 
 final class SubChunk
 {
-    private const SIZE = 4096;
+    public const SIZE = 4096;
 
     /** @var int[] */
     private array $blocks = [];
@@ -27,17 +27,13 @@ final class SubChunk
 
     public function encode(): string
     {
-
         $out = Binary::writeByte(8);
 
         $palette = array_values(array_unique($this->blocks));
         $bits = max(1, (int)ceil(log(\count($palette), 2)));
 
         $out .= Binary::writeByte($bits);
-
-
         $out .= $this->encodeBlocks($palette, $bits);
-
 
         $out .= Binary::writeVarInt(\count($palette));
         foreach ($palette as $id) {
@@ -74,5 +70,27 @@ final class SubChunk
         }
 
         return $buffer;
+    }
+
+    public function exportBinary(): string
+    {
+        return pack('v*', ...$this->blocks);
+    }
+
+    public static function fromBinary(string $data): self
+    {
+        if (strlen($data) !== self::SIZE * 2) {
+            throw new \RuntimeException('Invalid subchunk binary size');
+        }
+
+        $values = unpack('v' . self::SIZE, $data);
+        if ($values === false) {
+            throw new \RuntimeException('Failed to decode subchunk binary');
+        }
+
+        $subChunk = new self();
+        $subChunk->blocks = array_values($values);
+
+        return $subChunk;
     }
 }

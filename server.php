@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use WatermossMC\Minecraft\PacketHandler;
 use WatermossMC\Network\RakNet;
 use WatermossMC\Network\TickLoop;
 use WatermossMC\Util\Config;
@@ -23,7 +24,7 @@ $config = [
 
 $shutdown = false;
 
-set_exception_handler(function (\Throwable $e): void {
+set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
     Logger::error($e::class . ": " . $e->getMessage());
 
     foreach ($e->getTrace() as $i => $t) {
@@ -137,5 +138,6 @@ while (!$shutdown) {
 
 // Cleanup
 Logger::info("Shutting down server...");
+PacketHandler::saveWorld();
 socket_close($socket);
 Logger::info("Server shutdown complete.");

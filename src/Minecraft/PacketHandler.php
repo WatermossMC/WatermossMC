@@ -369,11 +369,12 @@ final class PacketHandler
         Logger::debug("Initializing world sequence...");
 
         if (self::$world === null) {
-            self::$world = new World(
-                Config::getString('level_name', 'world'),
-                Config::getInt('level_seed', 12345)
-            );
-            Logger::debug("World created with seed " . self::$world->seed . ".");
+            $worldName = Config::getString('level_name', 'world');
+            $worldFolder = Config::getString('world_folder', $worldName);
+            $worldPath = dirname(__DIR__, 2) . '/' . $worldFolder;
+
+            self::$world = World::load($worldPath, $worldName, Config::getInt('level_seed', 12345));
+            Logger::debug("World loaded from {$worldPath} with seed " . self::$world->seed . ".");
         }
 
         if (PlayerManager::get($s) === null) {
@@ -401,6 +402,21 @@ final class PacketHandler
 
         Logger::info("Player " . $s->getPlayerName() . " joined the game successfully!");
         RakNet::flush($s, $sock);
+    }
+
+    public static function saveWorld(): void
+    {
+        if (self::$world === null) {
+            Logger::debug('No loaded world present to save.');
+            return;
+        }
+
+        try {
+            self::$world->save();
+            Logger::info('World saved successfully.');
+        } catch (Throwable $e) {
+            Logger::error('World save failed: ' . $e->getMessage());
+        }
     }
 
     private static function buildServerHandshakeJwt(string $pubBase64, string $priv, string $salt): string
