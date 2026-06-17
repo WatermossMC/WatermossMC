@@ -338,7 +338,11 @@ final class RakNet
         }
 
         $seq = Binary::readTriad($p, $o);
-        $session->markReceived($seq);
+        if (!$session->markReceived($seq)) {
+            self::sendAck($seq, $a, $po, $sock);
+            Logger::debug("ACK sent seq=$seq to $a:$po (duplicate, skipped)");
+            return;
+        }
 
         Logger::debug("FrameSet recv seq=$seq from {$a}:{$po}");
 

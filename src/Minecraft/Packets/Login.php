@@ -18,7 +18,8 @@ final class Login extends Packet
      *   chain: array<int, string>,
      *   clientJwt: string,
      *   payload: array<string, mixed>,
-     *   identityPublicKey: string|null
+     *   identityPublicKey: string|null,
+     *   ecdhPublicKey: string|null
      * }
      */
     public static function read(string $p, int &$o): array
@@ -27,7 +28,7 @@ final class Login extends Packet
 
         $connLen = Binary::readVarInt($p, $o);
         if ($o + $connLen > strlen($p)) {
-             throw new RuntimeException("Buffer underflow");
+            throw new RuntimeException("Buffer underflow");
         }
 
         $conn = substr($p, $o, $connLen);
@@ -47,7 +48,6 @@ final class Login extends Packet
         if (!is_array($authInfo)) {
             throw new RuntimeException("Login JSON did not decode to an object");
         }
-        /** @var array<string, mixed> $authInfo */
 
         $chain = $authInfo['chain'] ?? null;
 
@@ -100,20 +100,38 @@ final class Login extends Packet
             }
         }
 
+        // Ambil ECDH public key dari header x5u JWT terakhir di chain
+        $ecdhPublicKey = null;
+        $lastJwt = end($chain);
+        if (is_string($lastJwt)) {
+            $parts = explode('.', $lastJwt);
+            if (isset($parts[0])) {
+                $header = json_decode(
+                    base64_decode(strtr($parts[0], '-_', '+/')),
+                    true
+                );
+                if (is_array($header) && isset($header['x5u']) && is_string($header['x5u'])) {
+                    $ecdhPublicKey = $header['x5u'];
+                    Logger::debug("[Login] ECDH public key (x5u from last chain JWT): " . substr($ecdhPublicKey, 0, 32) . "...");
+                }
+            }
+        }
+
+        if ($ecdhPublicKey === null) {
+            Logger::warning("[Login] ecdhPublicKey not found in last chain JWT header, falling back to identityPublicKey");
+            $ecdhPublicKey = $identityPublicKey;
+        }
+
         $clientJwtLen = Binary::readLInt($conn, $io);
         $clientJwt = substr($conn, $io, $clientJwtLen);
 
         if ($clientJwt !== '') {
             $parts = explode('.', $clientJwt);
             if (isset($parts[1])) {
-                /** @var string $part1 */
-                $part1 = $parts[1];
-                if (is_string($part1)) {
-                    $clientData = json_decode(base64_decode(strtr($part1, '-_', '+/')), true);
-                    if (is_array($clientData)) {
-                        /** @var array<string, mixed> $clientData */
-                        $payload = array_merge($payload, $clientData);
-                    }
+                $clientData = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+                if (is_array($clientData)) {
+                    /** @var array<string, mixed> $clientData */
+                    $payload = array_merge($payload, $clientData);
                 }
             }
         }
@@ -126,11 +144,12 @@ final class Login extends Packet
         Logger::info("Login Success: {$displayName} (Protocol: {$protocol})");
 
         return [
-            'protocol' => $protocol,
-            'chain' => $chain,
-            'clientJwt' => $clientJwt,
-            'payload' => $payload,
+            'protocol'          => $protocol,
+            'chain'             => $chain,
+            'clientJwt'         => $clientJwt,
+            'payload'           => $payload,
             'identityPublicKey' => $identityPublicKey,
+            'ecdhPublicKey'     => $ecdhPublicKey,
         ];
     }
 }

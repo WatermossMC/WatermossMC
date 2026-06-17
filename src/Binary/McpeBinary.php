@@ -50,31 +50,24 @@ final class McpeBinary
     }
 
     public static function writeVarInt(int $value): string
-    {
-        $buf = '';
-        $v = $value & 0xFFFFFFFF;
+{
+    $buf = '';
+    $v = $value & 0xFFFFFFFF;
 
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
-            $v >>= 7;
-        }
-
-        return $buf . \chr($v);
+    while (($v & ~0x7F) !== 0) {
+        $buf .= chr(($v & 0x7F) | 0x80);
+        $v >>= 7;
     }
 
-    public static function writeVarLong(int $value): string
-    {
-        $buf = '';
-        $v = $value;
+    return $buf . chr($v);
+}
 
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
-            $v >>= 7;
-        }
-
-        return $buf . \chr($v);
-    }
-
+  public static function writeSignedVarInt(int $value): string
+{
+    $v = ($value << 1) ^ ($value >> 31);
+    return self::writeVarInt($v);
+}
+  
     public static function readByte(string $buf, int &$o): int
     {
         return \ord($buf[$o++]);

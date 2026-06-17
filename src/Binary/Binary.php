@@ -42,6 +42,11 @@ final class Binary
         return pack('J', $v);
     }
 
+    public static function writeLLong(int $v): string
+    {
+        return pack('P', $v);
+    }
+
     public static function writeTriad(int $v): string
     {
         return \chr($v & 0xFF)

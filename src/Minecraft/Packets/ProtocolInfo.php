@@ -29,4 +29,6 @@ final class ProtocolInfo
     public const SPAWN_POSITION_PACKET = 0x44;
     public const REQUEST_NETWORK_SETTINGS_PACKET = 0xC1;
     public const UPDATE_ABILITIES_PACKET = 0xBB;
+
+    public const CLIENT_CACHE_STATUS_PACKET = 0x81;
 }

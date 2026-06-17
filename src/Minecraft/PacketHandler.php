@@ -139,7 +139,7 @@ final class PacketHandler
                     }
 
                     $payload = $loginData['payload'];
-                    $clientIdentityKey = $loginData['identityPublicKey'];
+                    $clientIdentityKey = $loginData['ecdhPublicKey'] ?? $loginData['identityPublicKey'];
 
                     Logger::debug("[0x01] Payload type: " . gettype($payload) . ", payload empty: " . (empty($payload) ? 'YES' : 'NO'));
                     Logger::debug("[0x01] IdentityKey present: " . ($clientIdentityKey ? 'YES' : 'NO'));
@@ -267,11 +267,11 @@ final class PacketHandler
                         RakNet::flush($session, $socket);
                         usleep(50000);
 
-                        [$key, $iv] = Crypto::deriveAes($sharedSecret, $serverSalt);
+                        $key = Crypto::deriveAes($sharedSecret, $serverSalt);
                         Logger::debug("[0x01] AES key and IV derived");
-                        Logger::debug("[0x01] AES key=" . bin2hex($key) . " iv=" . bin2hex($iv));
+                        Logger::debug("[0x01] AES key=" . bin2hex($key));
                         
-                        $session->setPendingEncryption($key, $iv);
+                        $session->setPendingEncryption($key);
                         $session->enablePendingEncryption();
                         Logger::debug("[0x01] Pending decryption enabled (inbound)");
                         Logger::debug("[0x01] Pending encryption set");
@@ -309,12 +309,12 @@ final class PacketHandler
                     $session->setWaitingHandshakeAck(false);
                     $session->finalizeEncryption();
                     Logger::debug("[0x04] Encryption finalized");
-
-
+                    Logger::debug("[0x04] outEncryption active: " . ($session->isEncryptionEnabled() ? 'YES' : 'NO'));
                     Logger::info("Encryption ENABLED. Handshake connection secure.");
 
                     PlayStatus::sendSuccess($session, $socket);
                     RakNet::flush($session, $socket);
+                    Logger::debug("[ResourcePacks] Sending ResourcePacksInfo...");
                     ResourcePacksInfo::send($session, $socket, [], false);
                     RakNet::flush($session, $socket);
                     $session->setMcpeState(Session::MC_RESOURCE);
@@ -349,6 +349,10 @@ final class PacketHandler
                         default => Logger::debug("Unhandled ResourcePack status: {$status}")
                     };
 
+                    return;
+
+                case ProtocolInfo::CLIENT_CACHE_STATUS_PACKET: // ClientCacheStatus
+                    Logger::debug("[0x81] ClientCacheStatus received (ignored)");
                     return;
 
                 default:

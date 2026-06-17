@@ -10,8 +10,8 @@ final class Experiments
 {
     public static function writeEmpty(): string
     {
-        $p = Binary::writeVarInt(0);
-        $p .= Binary::writeBool(false);
+        $p  = Binary::writeLInt(0);    // count experiments
+        $p .= Binary::writeBool(false); // hasPreviouslyUsedExperiments
         return $p;
     }
 }

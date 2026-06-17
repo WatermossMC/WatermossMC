@@ -71,15 +71,9 @@ final class Crypto
      * @param string $salt
      * @return array{0: string, 1: string}
      */
-    public static function deriveAes(string $sharedSecret, string $salt): array
-    {
-        $hashKey = hash('sha256', $sharedSecret . $salt, true);
-        $hashIv = hash('sha256', $salt . $sharedSecret, true);
-
-        $key = substr($hashKey, 0, 16);
-        $iv = substr($hashIv, 0, 16);
-
-        return [$key, $iv];
+    public static function deriveAes(string $sharedSecret, string $salt): string
+  {
+        return openssl_digest($salt . $sharedSecret, 'sha256', true);
     }
 
 

@@ -6,7 +6,9 @@ namespace WatermossMC\Minecraft\Packets;
 
 use Socket;
 use WatermossMC\Binary\Binary;
+use WatermossMC\Binary\McpeBinary;
 use WatermossMC\Network\Session;
+use WatermossMC\Util\Logger;
 
 final class ResourcePacksInfo extends Packet
 {
@@ -21,21 +23,23 @@ final class ResourcePacksInfo extends Packet
         $p .= Binary::writeBool(false); // forceDisableVibrantVisuals
         
         $p .= Binary::writeUUID('00000000-0000-0000-0000-000000000000'); // worldTemplateId
-        $p .= Binary::writeString(""); // worldTemplateVersion
+        $p .= McpeBinary::writeString(""); // worldTemplateVersion
 
         $p .= Binary::writeLShort(count($packs));
+
+        Logger::debug("[ResourcePacks] Raw payload hex: " . bin2hex($p));
         
         foreach ($packs as $pack) {
             $p .= Binary::writeUUID($pack['uuid']);
-            $p .= Binary::writeString($pack['version']);
-            $p .= Binary::writeLong($pack['size']); // Unsigned Long (8 bytes)
-            $p .= Binary::writeString($pack['key'] ?? "");
-            $p .= Binary::writeString(""); // subPackName
-            $p .= Binary::writeString(""); // contentId
+            $p .= McpeBinary::writeString($pack['version']);
+            $p .= Binary::writeLLong($pack['size']); // Unsigned Long (8 bytes)
+            $p .= McpeBinary::writeString($pack['key'] ?? "");
+            $p .= McpeBinary::writeString(""); // subPackName
+            $p .= McpeBinary::writeString(""); // contentId
             $p .= Binary::writeBool(false);    // hasScripts
             $p .= Binary::writeBool(false);    // isAddonPack
             $p .= Binary::writeBool(false);    // isRtxCapable
-            $p .= Binary::writeString(""); // cdnUrl
+            $p .= McpeBinary::writeString(""); // cdnUrl
         }
 
         self::sendBatch(ProtocolInfo::RESOURCE_PACKS_INFO_PACKET, $p, $s, $sock);
