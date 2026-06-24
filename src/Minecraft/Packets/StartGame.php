@@ -6,125 +6,175 @@ namespace WatermossMC\Minecraft\Packets;
 
 use Socket;
 use WatermossMC\Binary\Binary;
+use WatermossMC\Binary\McpeBinary;
+use WatermossMC\Minecraft\Data\BlockNames;
 use WatermossMC\Minecraft\NBT\NBT;
 use WatermossMC\Minecraft\Packets\Types\Experiments;
 use WatermossMC\Network\Session;
 use WatermossMC\Util\Config;
+use WatermossMC\Util\Logger;
 
 final class StartGame extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-        $worldName = Config::getString('level_name', 'PHP World');
-        $seed = Config::getInt('level_seed', 12345);
+        $worldName  = Config::getString('level_name', 'PHP World');
+        $seed       = Config::getInt('level_seed', 12345);
         $gameModeId = 0;
 
         $position = $s->getPosition();
         $rotation = $s->getRotation();
 
-        $payload = '';
-        $payload .= Binary::writeVarLong(1); // actorUniqueId
-        $payload .= Binary::writeVarLong($s->getRuntimeId()); // actorRuntimeId
-        $payload .= Binary::writeVarInt($gameModeId);
+        $blockPalette = BlockNames::getAll();
 
+        $payload = '';
+
+        // actorUniqueId
+        $payload .= Binary::writeVarLong(1);
+        // actorRuntimeId
+        $payload .= Binary::writeVarLong($s->getRuntimeId());
+        // playerGamemode
+        $payload .= McpeBinary::writeSignedVarInt($gameModeId);
+
+        // playerPosition
         $payload .= Binary::writeFloat($position['x']);
         $payload .= Binary::writeFloat($position['y']);
         $payload .= Binary::writeFloat($position['z']);
 
+        // pitch, yaw (LE float)
         $payload .= Binary::writeFloat($rotation['pitch']);
         $payload .= Binary::writeFloat($rotation['yaw']);
 
-        // LevelSettings
-        $payload .= Binary::writeLong($seed);
-        $payload .= Binary::writeLShort(0); // biome type
-        $payload .= Binary::writeString(''); // biome name
-        $payload .= Binary::writeVarInt(0); // dimension
-        $payload .= Binary::writeVarInt(0); // generator
-        $payload .= Binary::writeVarInt($gameModeId);
-        $payload .= Binary::writeBool(false); // hardcore
-        $payload .= Binary::writeVarInt(1); // difficulty
-        $payload .= Binary::writeVarInt(0); // spawn x
-        $payload .= Binary::writeVarInt(64); // spawn y
-        $payload .= Binary::writeVarInt(0); // spawn z
-        $payload .= Binary::writeBool(true); // achievements disabled
-        $payload .= Binary::writeVarInt(0); // editor world type
-        $payload .= Binary::writeBool(false); // created in editor mode
-        $payload .= Binary::writeBool(false); // exported from editor mode
-        $payload .= Binary::writeVarInt(0); // time
-        $payload .= Binary::writeVarInt(0); // edu edition offer
-        $payload .= Binary::writeBool(false); // edu features enabled
-        $payload .= Binary::writeString(''); // edu product UUID
-        $payload .= Binary::writeFloat(0.0); // rain level
-        $payload .= Binary::writeFloat(0.0); // lightning level
-        $payload .= Binary::writeBool(false); // platform locked content confirmed
-        $payload .= Binary::writeBool(true); // multiplayer game
-        $payload .= Binary::writeBool(true); // LAN broadcast
-        $payload .= Binary::writeVarInt(0); // xbox live broadcast mode
-        $payload .= Binary::writeVarInt(0); // platform broadcast mode
-        $payload .= Binary::writeBool(false); // commands enabled
-        $payload .= Binary::writeBool(false); // texture packs required
-        $payload .= Binary::writeVarInt(0); // game rule count
+        // ==================== LevelSettings ====================
+
+        // seed
+        $payload .= Binary::writeLLong($seed);
+
+        // SpawnSettings: biomeType (LE short) + biome name (string) + dimension (signed varint)
+        $payload .= Binary::writeLShort(0);          // biomeType = DEFAULT
+        $payload .= McpeBinary::writeString('');     // biome name
+        $payload .= McpeBinary::writeSignedVarInt(0);// dimension = overworld
+
+        // generator (signed varint): 1 = infinite
+        $payload .= McpeBinary::writeSignedVarInt(1);
+        // worldGamemode
+        $payload .= McpeBinary::writeSignedVarInt($gameModeId);
+        // hardcore
+        $payload .= Binary::writeBool(false);
+        // difficulty
+        $payload .= McpeBinary::writeSignedVarInt(1);
+
+        // spawnPosition: BlockPosition (signed varint x, unsigned varint y, signed varint z)
+        $payload .= McpeBinary::writeSignedVarInt(0);  // x
+        $payload .= Binary::writeVarInt(64);           // y (unsigned)
+        $payload .= McpeBinary::writeSignedVarInt(0);  // z
+
+        $payload .= Binary::writeBool(true);           // hasAchievementsDisabled
+        $payload .= McpeBinary::writeSignedVarInt(0);  // editorWorldType = NON_EDITOR
+        $payload .= Binary::writeBool(false);          // createdInEditorMode
+        $payload .= Binary::writeBool(false);          // exportedFromEditorMode
+        $payload .= McpeBinary::writeSignedVarInt(0);  // time
+        $payload .= McpeBinary::writeSignedVarInt(0);  // eduEditionOffer = NONE
+        $payload .= Binary::writeBool(false);          // hasEduFeaturesEnabled
+        $payload .= McpeBinary::writeString('');       // eduProductUUID
+        $payload .= Binary::writeFloat(0.0);           // rainLevel
+        $payload .= Binary::writeFloat(0.0);           // lightningLevel
+        $payload .= Binary::writeBool(false);          // hasConfirmedPlatformLockedContent
+        $payload .= Binary::writeBool(true);           // isMultiplayerGame
+        $payload .= Binary::writeBool(true);           // hasLANBroadcast
+        $payload .= McpeBinary::writeSignedVarInt(2);  // xboxLiveBroadcastMode = PUBLIC
+        $payload .= McpeBinary::writeSignedVarInt(2);  // platformBroadcastMode = PUBLIC
+        $payload .= Binary::writeBool(true);           // commandsEnabled
+        $payload .= Binary::writeBool(false);          // isTexturePacksRequired
+
+        // gameRules (count = 0)
+        $payload .= Binary::writeVarInt(0);
+
+        // Experiments
         $payload .= Experiments::writeEmpty();
-        $payload .= Binary::writeBool(false); // bonus chest enabled
-        $payload .= Binary::writeBool(false); // start with map enabled
-        $payload .= Binary::writeVarInt(0); // default player permission
-        $payload .= Binary::writeLInt(4); // server chunk tick radius
-        $payload .= Binary::writeBool(false); // locked behavior pack
-        $payload .= Binary::writeBool(false); // locked resource pack
-        $payload .= Binary::writeBool(false); // from locked world template
-        $payload .= Binary::writeBool(false); // use msa gamertags only
-        $payload .= Binary::writeBool(false); // from world template
-        $payload .= Binary::writeBool(false); // world template option locked
-        $payload .= Binary::writeBool(false); // only spawn v1 villagers
-        $payload .= Binary::writeBool(false); // disable persona
-        $payload .= Binary::writeBool(false); // disable custom skins
-        $payload .= Binary::writeBool(false); // mute emote announcements
-        $payload .= Binary::writeString('1.21.124');
-        $payload .= Binary::writeLInt(0); // limited world width
-        $payload .= Binary::writeLInt(0); // limited world length
-        $payload .= Binary::writeBool(true); // is new nether
-        $payload .= Binary::writeString(''); // education URI button
-        $payload .= Binary::writeString(''); // education URI link
-        $payload .= Binary::writeBool(false); // experimental gameplay override absent
-        $payload .= Binary::writeUInt8(0); // chat restriction level
-        $payload .= Binary::writeBool(false); // disable player interactions
-        $payload .= Binary::writeString(''); // server identifier
-        $payload .= Binary::writeString(''); // scenario identifier
-        $payload .= Binary::writeString(''); // world identifier
-        $payload .= Binary::writeString(''); // owner identifier
 
-        $payload .= Binary::writeString($worldName); // levelId
-        $payload .= Binary::writeString($worldName); // worldName
-        $payload .= Binary::writeString(''); // premiumWorldTemplateId
-        $payload .= Binary::writeBool(false); // isTrial
-        $payload .= Binary::writeVarInt(0); // rewind history size
-        $payload .= Binary::writeBool(false); // server authoritative block breaking
-        $payload .= Binary::writeLong(0); // current tick
-        $payload .= Binary::writeVarInt(0); // enchantment seed
+        $payload .= Binary::writeBool(false);          // hasBonusChestEnabled
+        $payload .= Binary::writeBool(false);          // hasStartWithMapEnabled
+        $payload .= McpeBinary::writeSignedVarInt(1);  // defaultPlayerPermission = MEMBER
+        $payload .= Binary::writeLInt(8);              // serverChunkTickRadius (LE signed int)
+        $payload .= Binary::writeBool(false);          // hasLockedBehaviorPack
+        $payload .= Binary::writeBool(false);          // hasLockedResourcePack
+        $payload .= Binary::writeBool(false);          // isFromLockedWorldTemplate
+        $payload .= Binary::writeBool(false);          // useMsaGamertagsOnly
+        $payload .= Binary::writeBool(false);          // isFromWorldTemplate
+        $payload .= Binary::writeBool(false);          // isWorldTemplateOptionLocked
+        $payload .= Binary::writeBool(false);          // onlySpawnV1Villagers
+        $payload .= Binary::writeBool(false);          // disablePersona
+        $payload .= Binary::writeBool(false);          // disableCustomSkins
+        $payload .= Binary::writeBool(false);          // muteEmoteAnnouncements
+        $payload .= McpeBinary::writeString(ProtocolInfo::MINECRAFT_VERSION_NETWORK); // vanillaVersion
+        $payload .= Binary::writeLInt(0);              // limitedWorldWidth (LE signed int)
+        $payload .= Binary::writeLInt(0);              // limitedWorldLength (LE signed int)
+        $payload .= Binary::writeBool(true);           // isNewNether
 
-        $payload .= Binary::writeVarInt(0); // block palette count
-        $payload .= Binary::writeString(''); // multiplayer correlation id
-        $payload .= Binary::writeBool(false); // enable new inventory system
-        $payload .= Binary::writeString('WatermossMC'); // server software version
-        $payload .= NBT::compound([]); // player actor properties
-        $payload .= Binary::writeLong(0); // block palette checksum
+        // eduSharedUriResource: EducationUriResource (always written, empty strings = disabled)
+        $payload .= McpeBinary::writeString('');       // buttonName
+        $payload .= McpeBinary::writeString('');       // linkUri
+
+        // experimentalGameplayOverride (optional bool): false = absent
+        $payload .= Binary::writeBool(false);
+
+        $payload .= Binary::writeUInt8(0);             // chatRestrictionLevel = NONE
+        $payload .= Binary::writeBool(false);          // disablePlayerInteractions
+        $payload .= McpeBinary::writeSignedVarInt(0);  // serverEditorConnectionPolicy
+        $payload .= Binary::writeBool(false);          // allowAnonymousBlockDropsInEditorWorlds
+
+        // ==================== end LevelSettings ====================
+
+        $payload .= McpeBinary::writeString('');           // levelId
+        $payload .= McpeBinary::writeString($worldName);   // worldName
+        $payload .= McpeBinary::writeString('');           // premiumWorldTemplateId
+        $payload .= Binary::writeBool(false);              // isTrial
+
+        // PlayerMovementSettings
+        $payload .= McpeBinary::writeSignedVarInt(0);      // rewindHistorySize
+        $payload .= Binary::writeBool(false);              // serverAuthoritativeBlockBreaking
+
+        $payload .= Binary::writeLLong(0);                 // currentTick (LE uint64)
+        $payload .= McpeBinary::writeSignedVarInt(0);      // enchantmentSeed
+
+        $payload .= Binary::writeVarInt(count($blockPalette));
+
+        foreach ($blockPalette as $blockName) {
+            $payload .= McpeBinary::writeString($blockName);
+            // Sementara kita kirim NBT Compound kosong. 
+            // Jika klien 1.20+ menolak ini, kita harus upgrade ke canonical_block_states.nbt nanti.
+            $payload .= NBT::compound([]); 
+        }
+
+        $payload .= McpeBinary::writeString('');           // multiplayerCorrelationId
+        $payload .= Binary::writeBool(false);              // enableNewInventorySystem
+        $payload .= McpeBinary::writeString('WatermossMC');// serverSoftwareVersion
+        $payload .= NBT::compound([]);                     // playerActorProperties (NBT compound)
+        $payload .= Binary::writeLLong(0);                 // blockPaletteChecksum (LE uint64)
         $payload .= Binary::writeUUID('00000000-0000-0000-0000-000000000000'); // worldTemplateId
-        $payload .= Binary::writeBool(false); // enable client side chunk generation
-        $payload .= Binary::writeBool(false); // block network IDs are hashes
-        $payload .= Binary::writeBool(false); // disable client sounds
-        $payload .= Binary::writeBool(false); // serverJoinInformation absent
+        $payload .= Binary::writeBool(false);              // enableClientSideChunkGeneration
+        $payload .= Binary::writeBool(false);              // blockNetworkIdsAreHashes
+
+        // NetworkPermissions
+        $payload .= Binary::writeBool(false);              // serverAuthSounds
+
+        // isLoggingChat
+        $payload .= Binary::writeBool(false);
+
+        // ServerJoinInformation
+        $payload .= Binary::writeBool(false);
+
+        // ServerTelemetryData
+        $payload .= McpeBinary::writeString(""); // serverId
+        $payload .= McpeBinary::writeString(""); // scenarioId
+        $payload .= McpeBinary::writeString(""); // worldId
+        $payload .= McpeBinary::writeString(""); // ownerId
+
+      $hex = bin2hex($payload);
+Logger::debug("StartGame payload hex: " . $hex);
+
 
         self::sendBatch(ProtocolInfo::START_GAME_PACKET, $payload, $s, $sock);
-    }
-
-    private static function gameModeToId(string $gameMode): int
-    {
-        return match (strtolower($gameMode)) {
-            'creative' => 0,
-            'survival' => 1,
-            'adventure' => 2,
-            'spectator' => 3,
-            default => 1,
-        };
     }
 }

@@ -231,8 +231,10 @@ final class RakNet
         $buf .= self::writeAddress($a, $po);
         $buf .= Binary::writeShort(0);
 
+        $serverPort = Config::getInt('server_port', 19132);
+
         for ($i = 0; $i < 10; $i++) {
-            $buf .= self::writeAddress("255.255.255.255", 19132);
+            $buf .= self::writeAddress("255.255.255.255", $serverPort);
         }
 
         $buf .= Binary::writeLong($time);
@@ -251,7 +253,7 @@ final class RakNet
         $buf .= self::writeAddress($a, $po);
 
         for ($i = 0; $i < 20; $i++) {
-            $buf .= self::writeAddress("255.255.255.255", 19132);
+            $buf .= self::writeAddress("255.255.255.255", $serverPort);
         }
 
         $buf .= Binary::writeLong((int)(microtime(true) * 1000));
@@ -368,7 +370,25 @@ final class RakNet
                 if ($o + 3 > $len) {
                     break;
                 }
-                Binary::readTriad($p, $o);
+                $reliableIndex = Binary::readTriad($p, $o);
+    if (!$session->markReliableReceived($reliableIndex)) {
+        if ($reliability === Reliability::RELIABLE_ORDERED) {
+            if ($o + 4 > $len) {
+                break;
+            }
+            $o += 4;
+        }
+
+        if ($fragmented) {
+            if ($o + 10 > $len) {
+                break;
+            }
+            $o += 10;
+        }
+
+        $o += $frameLength;
+        continue;
+    }
             }
 
 
@@ -459,8 +479,17 @@ final class RakNet
                 continue;
             }
 
+            if ($pid === self::DISCONNECT) {
+                Logger::debug("Client disconnected: {$a}:{$po}");
+                \WatermossMC\Minecraft\PlayerManager::remove($session);
+                $key = "$a:$po";
+                if (isset(self::$sessions[$key])) {
+                    unset(self::$sessions[$key]);
+                }
+                continue;
+            }
+
             if ($pid === 0xFE) {
-                // Just strip the 0xFE wrapper, do not parse compression here!
                 $batchPayload = substr($body, 1);
                 
                 Logger::debug(sprintf(

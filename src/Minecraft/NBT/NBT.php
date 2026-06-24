@@ -64,12 +64,46 @@ final class NBT
             . $payload;
     }
 
+    public static function tagCompound(array $value): array
+    {
+        return [
+            '__nbt_type' => self::TAG_COMPOUND,
+            '__nbt_value' => $value
+        ];
+    }
+
+    public static function tagList(array $value): array
+    {
+        return [
+            '__nbt_type' => self::TAG_LIST,
+            '__nbt_value' => $value
+        ];
+    }
+
     /**
      * @return array{0:int,1:string}
      */
     private static function detectTag(mixed $value): array
     {
-        if (\is_int($value)) {
+        if (
+            is_array($value) &&
+            isset($value['__nbt_type'], $value['__nbt_value'])
+        ) {
+            return match ($value['__nbt_type']) {
+                self::TAG_COMPOUND => [
+                    self::TAG_COMPOUND,
+                    self::writeCompoundPayload($value['__nbt_value'])
+                ],
+
+                self::TAG_LIST => self::writeList($value['__nbt_value']),
+
+                default => throw new \RuntimeException(
+                    'Unsupported explicit NBT tag'
+                )
+            };
+        }
+
+        if (is_int($value)) {
             if ($value < -2147483648 || $value > 2147483647) {
                 return [self::TAG_LONG, self::writeLong($value)];
             }
@@ -77,24 +111,27 @@ final class NBT
             return [self::TAG_INT, self::writeInt($value)];
         }
 
-        if (\is_float($value)) {
+        if (is_float($value)) {
             return [self::TAG_FLOAT, self::writeFloat($value)];
         }
 
-        if (\is_string($value)) {
+        if (is_string($value)) {
             return [self::TAG_STRING, self::writeString($value)];
         }
 
-        if (\is_bool($value)) {
-            return [self::TAG_BYTE, \chr($value ? 1 : 0)];
+        if (is_bool($value)) {
+            return [self::TAG_BYTE, chr($value ? 1 : 0)];
         }
 
-        if (\is_array($value)) {
+        if (is_array($value)) {
             if (self::isList($value)) {
                 return self::writeList($value);
             }
 
-            return [self::TAG_COMPOUND, self::writeCompoundPayload($value)];
+            return [
+                self::TAG_COMPOUND,
+                self::writeCompoundPayload($value)
+            ];
         }
 
         throw new \RuntimeException('Unsupported NBT type');
@@ -119,26 +156,33 @@ final class NBT
      * @return array{0:int,1:string}
      */
     private static function writeList(array $list): array
-    {
-        if ($list === []) {
-            return [
-                self::TAG_LIST,
-                \chr(self::TAG_END) . pack('N', 0),
-            ];
-        }
-
-        [$childTag] = self::detectTag($list[0]);
-
-        $buf = \chr($childTag);
-        $buf .= pack('N', \count($list));
-
-        foreach ($list as $value) {
-            [, $payload] = self::detectTag($value);
-            $buf .= $payload;
-        }
-
-        return [self::TAG_LIST, $buf];
+{
+    if ($list === []) {
+        return [
+            self::TAG_LIST,
+            chr(self::TAG_END) . pack('N', 0)
+        ];
     }
+
+    [$childTag] = self::detectTag($list[0]);
+
+    $buf = chr($childTag);
+    $buf .= pack('N', count($list));
+
+    foreach ($list as $value) {
+        [$tag, $payload] = self::detectTag($value);
+
+        if ($tag !== $childTag) {
+            throw new \RuntimeException(
+                'NBT list contains mixed tag types'
+            );
+        }
+
+        $buf .= $payload;
+    }
+
+    return [self::TAG_LIST, $buf];
+}
 
     private static function writeString(string $v): string
     {

@@ -104,8 +104,10 @@ final class Session
     public const MC_HANDSHAKE = 2;
     public const MC_LOGIN = 3;
     public const MC_RESOURCE = 4;
-    public const MC_PLAY = 5;
-
+    public const MC_PRESPAWN = 5;
+    public const MC_PLAY = 6;
+  
+    private array $receivedReliable = [];
     private int $mcpeState = self::MC_NONE;
 
     /** @var array<int, bool> */
@@ -114,6 +116,8 @@ final class Session
     private static int $nextRuntimeId = 1;
 
     private ?Socket $socket = null;
+
+    private bool $hasWaitingRequestChunkRadiusAck = false;
 
     public function __construct(string $addr, int $port)
     {
@@ -576,5 +580,27 @@ final class Session
     public function getPlayerName(): string
     {
         return $this->username;
+    }
+
+    public function markReliableReceived(int $reliableIndex): bool
+    {
+        if (isset($this->receivedReliable[$reliableIndex])) {
+            return false;
+        }
+        $this->receivedReliable[$reliableIndex] = true;
+        if (count($this->receivedReliable) > 4096) {
+            array_shift($this->receivedReliable);
+        }
+        return true;
+    }
+
+    public function hasWaitingRequestChunkRadiusAck(): bool
+    {
+        return $this->hasWaitingRequestChunkRadiusAck;
+    }
+
+    public function setWaitingRequestChunkRadiusAck(bool $v): void
+    {
+        $this->hasWaitingRequestChunkRadiusAck = $v;
     }
 }

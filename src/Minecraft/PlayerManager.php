@@ -21,6 +21,14 @@ final class PlayerManager
         return self::$players[$s->getUuid()] ?? null;
     }
 
+    public static function remove(Session $s): void
+    {
+        $uuid = $s->getUuid();
+        if (isset(self::$players[$uuid])) {
+            unset(self::$players[$uuid]);
+        }
+    }
+
     /** @return Player[] */
     public static function all(): array
     {

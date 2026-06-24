@@ -23,9 +23,22 @@ use WatermossMC\Minecraft\Packets\{
     ResourcePackStack,
     ResourcePacksInfo,
     ServerToClientHandshake,
+  BiomeDefinitionList,
+  AvailableActorIdentifiers,
+  ItemRegistry,
     SetTime,
     SpawnPosition,
-    StartGame
+    StartGame,
+    UpdateAbilities,
+    UpdateAdventureSettings,
+    UpdateAttributes,
+    SetActorData,
+    InventoryContent,
+    InventorySlot,
+    PlayerHotbar,
+    CreativeContent,
+    CraftingData,
+    AvailableCommands,
 };
 use WatermossMC\Minecraft\PlayerManager;
 use WatermossMC\Network\RakNet;
@@ -151,12 +164,17 @@ final class PacketHandler
                     }
                     $clientProtocol = $loginData['protocol'];
                     Logger::debug("[0x01] Protocol version: {$clientProtocol}");
-					if ($clientProtocol !== ProtocolInfo::CURRENT_PROTOCOL) {
+					if ($clientProtocol < ProtocolInfo::CURRENT_PROTOCOL) {
 					    Logger::error("[0x01] Protocol mismatch. Client: {$clientProtocol}, Expected: " . ProtocolInfo::CURRENT_PROTOCOL);
 					    PlayStatus::sendFailedClient($session, $socket);
 					    Disconnect::send($session, $socket, "Outdated client");
 					    return;
-					}
+					}elseif ($clientProtocol > ProtocolInfo::CURRENT_PROTOCOL) {
+					    Logger::error("[0x01] Protocol mismatch. Client: {$clientProtocol}, Expected: " . ProtocolInfo::CURRENT_PROTOCOL);
+					    PlayStatus::sendFailedClient($session, $socket);
+					    Disconnect::send($session, $socket, "Outdated server");
+					    return;
+          }
 
                     $chainData = $payload['ExtraData'] ?? $payload;
                     $uuid = null;
@@ -336,7 +354,7 @@ final class PacketHandler
                         ResourcePackClientResponse::STATUS_HAVE_ALL_PACKS =>
                             (function () use ($session, $socket): void {
                                 Logger::debug("Client has all packs. Sending stack.");
-                                ResourcePackStack::send($session, $socket, [], []);
+                                ResourcePackStack::send($session, $socket, []);
                                 RakNet::flush($session, $socket);
                             })(),
 
@@ -355,13 +373,22 @@ final class PacketHandler
                     Logger::debug("[0x81] ClientCacheStatus received (ignored)");
                     return;
 
+              case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET: // RequestChunkRadius
+                    Logger::debug("[0x45] RequestChunkRadius received");
+                    self::sendSpawnChunks($session, $socket);
+
+                    PlayStatus::sendPlayerSpawn($session, $socket);
+
+                    RakNet::flush($session, $socket);
+                    return;
+
                 default:
-                    Logger::debug("Unhandled Packet ID: 0x{$pidHex} in state " . $session->getMcpeState());
+                    Logger::warning("Unhandled Packet ID: 0x{$pidHex} in state " . $session->getMcpeState());
                     break;
             }
 
         } catch (Throwable $e) {
-            Logger::error("Packet handling error [PID: 0x" . ($pidHex ?? 'UNKNOWN') . "]: {$e->getMessage()}");
+            Logger::error("Packet handling error [PID: 0x" . ($pidHex ?? '??') . "]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());
             Disconnect::send($session, $socket, "Internal Server Error");
             RakNet::flush($session, $socket);
@@ -381,31 +408,33 @@ final class PacketHandler
             Logger::debug("World loaded from {$worldPath} with seed " . self::$world->seed . ".");
         }
 
-        if (PlayerManager::get($s) === null) {
-            PlayerManager::add($s, $s->getPlayerName());
-        }
+        PlayerManager::add($s, $s->getPlayerName());
 
-        $s->setMcpeState(Session::MC_PLAY);
+        $s->setMcpeState(Session::MC_PRESPAWN);
         $s->setPosition(0.0, 64.0, 0.0);
-
+/**
         StartGame::send($s, $sock);
-        PlayStatus::sendPlayerSpawn($s, $sock);
-        SetTime::send($s, $sock);
-        SpawnPosition::send($s, $sock);
-
-        Logger::debug("Sending chunks...");
-        $chunkCount = 0;
-        for ($x = -2; $x <= 2; $x++) {
-            for ($z = -2; $z <= 2; $z++) {
-                $chunk = self::$world->getChunk($x, $z);
-                LevelChunk::send($s, $sock, $x, $z, $chunk->encode(), $chunk->getSubChunkCount());
-                $chunkCount++;
-            }
-        }
-        Logger::debug("Sent {$chunkCount} chunks.");
-
-        Logger::info("Player " . $s->getPlayerName() . " joined the game successfully!");
+        ItemRegistry::send($s, $sock);
+        AvailableActorIdentifiers::send($s, $sock);
+        BiomeDefinitionList::send($s, $sock);
+        UpdateAttributes::send($s, $sock);
+        AvailableCommands::send($s, $sock);
+        UpdateAbilities::send($s, $sock);
+        UpdateAdventureSettings::send($s, $sock);
+        // MobEffect
+        SetActorData::sendPlayer($s, $sock);
+InventoryContent::sendEmpty($s, $sock, InventoryContent::WINDOW_INVENTORY);
+        InventoryContent::sendEmpty($s, $sock, InventoryContent::WINDOW_ARMOR);
+        InventorySlot::sendEmpty($s, $sock, InventoryContent::WINDOW_INVENTORY, 0);
+        PlayerHotbar::send($s, $sock);
+        CreativeContent::sendEmpty($s, $sock);
+        CraftingData::sendEmpty($s, $sock);
+        PlayerList::sendAdd($s, $sock);*/
         RakNet::flush($s, $sock);
+
+        $s->setWaitingRequestChunkRadiusAck(true);
+
+        Logger::debug("Waiting for chunk radius request");
     }
 
     public static function saveWorld(): void
@@ -456,4 +485,21 @@ final class PacketHandler
 
         return "$h.$p." . $toUrlSafe($sigRaw);
     }
+
+    private static function sendSpawnChunks(Session $s, Socket $sock): void{
+    for($x = -2; $x <= 2; $x++){
+        for($z = -2; $z <= 2; $z++){
+            $chunk = self::$world->getChunk($x, $z);
+
+            LevelChunk::send(
+                $s,
+                $sock,
+                $x,
+                $z,
+                $chunk->encode(),
+                $chunk->getSubChunkCount()
+            );
+        }
+    }
+}
 }

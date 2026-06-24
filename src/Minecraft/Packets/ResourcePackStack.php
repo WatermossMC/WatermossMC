@@ -20,19 +20,11 @@ final class ResourcePackStack extends Packet
         Session $s,
         Socket $sock,
         array $resourcePacks = [],
-        array $behaviorPacks = [],
         bool $mustAccept = false,
-        string $baseGameVersion = "1.21.124",
+        string $baseGameVersion = ProtocolInfo::MINECRAFT_VERSION_NETWORK,
         bool $useVanillaEditorPacks = false
     ): void {
         $p = Binary::writeBool($mustAccept);
-
-        $p .= McpeBinary::writeVarInt(count($behaviorPacks));
-        foreach ($behaviorPacks as $pack) {
-            $p .= McpeBinary::writeString($pack['uuid']);
-            $p .= McpeBinary::writeString($pack['version']);
-            $p .= McpeBinary::writeString($pack['subPackName'] ?? "");
-        }
 
         // Resource packs
         $p .= McpeBinary::writeVarInt(count($resourcePacks));

@@ -109,6 +109,23 @@ final class Binary
         return $buf . \chr($v);
     }
 
+    public static function writeUnsignedVarLong(int $v): string
+    {
+        $buf = '';
+        for ($i = 0; $i < 10; ++$i) {
+            $byte = $v & 0x7F;
+            $v >>= 7;
+            if ($v !== 0) {
+                $byte |= 0x80;
+            }
+            $buf .= \chr($byte);
+            if ($v === 0) {
+                break;
+            }
+        }
+        return $buf;
+    }
+
     public static function writeUUID(string $uuid): string
     {
         $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
