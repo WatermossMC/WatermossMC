@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-use WatermossMC\Minecraft\PacketHandler;
-use WatermossMC\Network\RakNet;
-use WatermossMC\Network\TickLoop;
-use WatermossMC\Util\Config;
-use WatermossMC\Util\Logger;
+use watermossmc\mcpe\network\RakNet;
+use watermossmc\mcpe\network\TickLoop;
+use watermossmc\mcpe\PacketHandler;
+use watermossmc\Server;
+use watermossmc\util\Config;
+use watermossmc\util\Logger;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -37,7 +38,7 @@ set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
 });
 
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
-if (function_exists('pcntl_signal')) {
+if (\function_exists('pcntl_signal')) {
     pcntl_signal(SIGTERM, function () use (&$shutdown): void {
         Logger::info("Received SIGTERM, shutting down gracefully...");
         $shutdown = true;
@@ -54,14 +55,14 @@ if (function_exists('pcntl_signal')) {
 Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
 
 // Create UDP socket
-$socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+$socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     $error = socket_strerror(socket_last_error());
     Logger::error("Failed to create UDP socket: $error");
     exit(1);
 }
 
-socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
+socket_set_option($socket, \SOL_SOCKET, \SO_REUSEADDR, 1);
 socket_set_nonblock($socket);
 
 if (!socket_bind($socket, $config['bind_ip'], $config['bind_port'])) {
@@ -74,20 +75,22 @@ if (!socket_bind($socket, $config['bind_ip'], $config['bind_port'])) {
 RakNet::init();
 Logger::info("RakNet initialized");
 
-// Initialize tick loop with actual logic
+// Initialize server API and tick loop
 $tickLoop = new TickLoop();
-$tickCount = 0;
+$server = new Server(__DIR__, $tickLoop);
+PacketHandler::setServer($server);
 
-$tickLoop->add(function () use (&$tickCount): void {
-    $tickCount++;
-    // Basic heartbeat every 20 ticks (1 second at 20 TPS)
-    if ($tickCount % 20 === 0) {
-        Logger::debug("Server heartbeat - Tick: $tickCount");
+$tickLoop->add(static function () use ($server): void {
+    $server->tick();
+
+    if ($server->getCurrentTick() % 20 === 0) {
+        Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }
 });
 
-Logger::info("Server started successfully. Press Ctrl+C to stop.");
+$server->boot();
 
+Logger::info("Server started successfully. Press Ctrl+C to stop.");
 
 $buffer = '';
 $fromIp = '';
@@ -100,7 +103,7 @@ Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
     // Handle signals (if available)
-    if (function_exists('pcntl_signal_dispatch')) {
+    if (\function_exists('pcntl_signal_dispatch')) {
         pcntl_signal_dispatch();
     }
 
@@ -109,7 +112,7 @@ while (!$shutdown) {
         $socket,
         $buffer,
         65535,
-        MSG_DONTWAIT,
+        \MSG_DONTWAIT,
         $fromIp,
         $fromPort
     )) {
@@ -138,6 +141,6 @@ while (!$shutdown) {
 
 // Cleanup
 Logger::info("Shutting down server...");
-PacketHandler::saveWorld();
+$server->shutdown();
 socket_close($socket);
 Logger::info("Server shutdown complete.");
