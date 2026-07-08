@@ -406,11 +406,7 @@ final class Session
             throw new RuntimeException("Key or IV is null");
         }
         if (\strlen($key) !== 32) {
-<<<<<<< HEAD
-            throw new \RuntimeException("Invalid key length: " . \strlen($key));
-=======
             throw new RuntimeException("Invalid key length: " . \strlen($key));
->>>>>>> 866a1c0 (...)
         }
         $this->inEncryption = new EncryptionContext($key);
         $this->outEncryption = new EncryptionContext($key);
