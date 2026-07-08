@@ -21,11 +21,8 @@
 declare(strict_types=1);
 
 namespace watermossmc\binary;
-<<<<<<< HEAD
-=======
 
 use RuntimeException;
->>>>>>> 866a1c0 (...)
 
 final class McpeBinary
 {
@@ -91,8 +88,6 @@ final class McpeBinary
         return $buf . \chr($v);
     }
 
-<<<<<<< HEAD
-=======
     public static function writeUnsignedVarLong(int $v): string
     {
         $buf = '';
@@ -123,21 +118,17 @@ final class McpeBinary
         return $buf . \chr($v);
     }
 
->>>>>>> 866a1c0 (...)
     public static function writeSignedVarInt(int $value): string
     {
         $v = ($value << 1) ^ ($value >> 31);
         return self::writeVarInt($v);
     }
-<<<<<<< HEAD
-=======
 
     public static function writeUUID(string $uuid): string
     {
         $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
         return strrev(substr($bytes, 0, 8)) . strrev(substr($bytes, 8, 8));
     }
->>>>>>> 866a1c0 (...)
 
     public static function readByte(string $buf, int &$o): int
     {
