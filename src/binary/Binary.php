@@ -1,9 +1,32 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
 
 declare(strict_types=1);
 
 namespace watermossmc\binary;
+<<<<<<< HEAD
+=======
+
+use Ramsey\Uuid\Uuid;
+use RuntimeException;
+>>>>>>> 866a1c0 (...)
 
 final class Binary
 {
@@ -128,7 +151,11 @@ final class Binary
 
     public static function writeUUID(string $uuid): string
     {
+<<<<<<< HEAD
         $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
+=======
+        $bytes = Uuid::fromString($uuid)->getBytes();
+>>>>>>> 866a1c0 (...)
         return strrev(substr($bytes, 0, 8)) . strrev(substr($bytes, 8, 8));
     }
 
@@ -150,7 +177,7 @@ final class Binary
     private static function ensure(string $buf, int $o, int $need): void
     {
         if (\strlen($buf) < $o + $need) {
-            throw new \RuntimeException('Binary buffer underrun');
+            throw new RuntimeException('Binary buffer underrun');
         }
     }
 
@@ -170,7 +197,7 @@ final class Binary
         self::ensure($buf, $o, 2);
         $r = unpack('n', substr($buf, $o, 2));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack short failed');
+            throw new RuntimeException('unpack short failed');
         }
         $o += 2;
         /** @var int $value */
@@ -183,7 +210,7 @@ final class Binary
         self::ensure($buf, $o, 2);
         $r = unpack('v', substr($buf, $o, 2));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack lshort failed');
+            throw new RuntimeException('unpack lshort failed');
         }
         $o += 2;
         /** @var int $value */
@@ -196,7 +223,7 @@ final class Binary
         self::ensure($buf, $o, 4);
         $r = unpack('N', substr($buf, $o, 4));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack int failed');
+            throw new RuntimeException('unpack int failed');
         }
         $o += 4;
         /** @var int $value */
@@ -209,7 +236,7 @@ final class Binary
         self::ensure($buf, $o, 4);
         $r = unpack('V', substr($buf, $o, 4));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack lint failed');
+            throw new RuntimeException('unpack lint failed');
         }
         $o += 4;
         /** @var int $value */
@@ -222,7 +249,7 @@ final class Binary
         self::ensure($buf, $o, 8);
         $r = unpack('J', substr($buf, $o, 8));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack long failed');
+            throw new RuntimeException('unpack long failed');
         }
         $o += 8;
         /** @var int $value */
@@ -247,7 +274,7 @@ final class Binary
         self::ensure($buf, $o, 4);
         $r = unpack('g', substr($buf, $o, 4));
         if ($r === false || !isset($r[1])) {
-            throw new \RuntimeException('unpack float failed');
+            throw new RuntimeException('unpack float failed');
         }
         $o += 4;
         /** @var float $value */
@@ -292,7 +319,7 @@ final class Binary
 
         while (true) {
             if ($o >= $len) {
-                throw new \RuntimeException("VarInt overflow");
+                throw new RuntimeException("VarInt overflow");
             }
 
             $b = \ord($buf[$o++]);
@@ -304,7 +331,7 @@ final class Binary
 
             $shift += 7;
             if ($shift > 35) {
-                throw new \RuntimeException("VarInt too big");
+                throw new RuntimeException("VarInt too big");
             }
         }
 
@@ -327,7 +354,7 @@ final class Binary
 
             $shift += 7;
             if ($shift > 70) {
-                throw new \RuntimeException('VarLong too big');
+                throw new RuntimeException('VarLong too big');
             }
         }
 

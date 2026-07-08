@@ -1,5 +1,26 @@
 <?php
 
+<<<<<<< HEAD
+=======
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
+>>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
@@ -45,6 +66,12 @@ final class Login extends Packet
 
         $io = 0;
         $authLen = Binary::readLInt($conn, $io);
+<<<<<<< HEAD
+=======
+        if ($io + $authLen > \strlen($conn)) {
+            throw new RuntimeException("Auth info buffer underflow");
+        }
+>>>>>>> 866a1c0 (...)
         $authRaw = substr($conn, $io, $authLen);
         $io += $authLen;
 
@@ -55,6 +82,7 @@ final class Login extends Packet
         }
 
         if (!\is_array($authInfo)) {
+<<<<<<< HEAD
             throw new RuntimeException("Login JSON did not decode to an object");
         }
 
@@ -86,11 +114,19 @@ final class Login extends Packet
             }
             Logger::debug("[Login] Certificate-wrapped format detected");
         }
+=======
+            throw new RuntimeException("Login JSON did not decode to an array");
+        }
+
+        $singleToken = $authInfo['Token'] ?? null;
+        $chain = $authInfo['chain'] ?? null;
+>>>>>>> 866a1c0 (...)
 
         /** @var array<string, mixed> $payload */
         $payload = [];
         $identityPublicKey = null;
         $xboxAuthenticated = false;
+<<<<<<< HEAD
         /** @var array<int, string> $chainJwts */
         $chainJwts = [];
 
@@ -122,6 +158,26 @@ final class Login extends Packet
 
         // Client data JWT
         $clientJwtLen = Binary::readLInt($conn, $io);
+=======
+        $chainJwts = [];
+
+        if (\is_string($singleToken)) {
+            $chainJwts = [$singleToken];
+            [$payload, $identityPublicKey, $xboxAuthenticated] = self::processModernToken($singleToken, $requireXboxAuth);
+        } elseif (\is_array($chain) && !empty($chain)) {
+            $chainJwts = array_values(array_filter($chain, 'is_string'));
+            [$payload, $identityPublicKey, $xboxAuthenticated] = self::processLegacyChain($chainJwts, $requireXboxAuth);
+        } else {
+            throw new RuntimeException("Login authentication data missing or malformed");
+        }
+
+        $ecdhPublicKey = self::extractEcdhKey($chainJwts) ?? $identityPublicKey;
+
+        $clientJwtLen = Binary::readLInt($conn, $io);
+        if ($io + $clientJwtLen > \strlen($conn)) {
+            throw new RuntimeException("Client JWT buffer underflow");
+        }
+>>>>>>> 866a1c0 (...)
         $clientJwt = substr($conn, $io, $clientJwtLen);
 
         if ($clientJwt !== '') {
@@ -131,13 +187,17 @@ final class Login extends Packet
                 if ($clientDataRaw !== false) {
                     $clientData = json_decode($clientDataRaw, true);
                     if (\is_array($clientData)) {
+<<<<<<< HEAD
                         /** @var array<string, mixed> $clientData */
+=======
+>>>>>>> 866a1c0 (...)
                         $payload = array_merge($payload, $clientData);
                     }
                 }
             }
         }
 
+<<<<<<< HEAD
         $displayName = isset($payload['displayName']) && \is_string($payload['displayName'])
             ? $payload['displayName']
             : 'unknown';
@@ -148,24 +208,40 @@ final class Login extends Packet
             . ", online-mode: " . ($requireXboxAuth ? 'true' : 'false')
             . ", XboxAuth: " . ($xboxAuthenticated ? 'yes' : 'no') . ")"
         );
+=======
+        $displayName = $payload['displayName'] ?? 'unknown';
+        $xuid = $payload['XUID'] ?? '0';
+        $identity = $payload['identity'] ?? '0';
+
+        Logger::info("Login: {$displayName} (XUID: {$xuid}, UUID: {$identity}, Protocol: {$protocol})");
+>>>>>>> 866a1c0 (...)
 
         return [
             'protocol' => $protocol,
             'chain' => $chainJwts,
             'clientJwt' => $clientJwt,
             'payload' => $payload,
+<<<<<<< HEAD
+=======
+            'displayName' => $displayName,
+            'XUID' => $xuid,
+            'identity' => $identity,
+>>>>>>> 866a1c0 (...)
             'identityPublicKey' => $identityPublicKey,
             'ecdhPublicKey' => $ecdhPublicKey,
             'xboxAuthenticated' => $xboxAuthenticated,
         ];
     }
 
+<<<<<<< HEAD
     /**
      * Processes the modern single-token (OpenID) format.
      * The JWT payload contains cpk (client public key), xid, xname, extraData, etc.
      *
      * @return array{array<string, mixed>, string|null, bool}
      */
+=======
+>>>>>>> 866a1c0 (...)
     private static function processModernToken(string $jwt, bool $requireXboxAuth): array
     {
         $parts = explode('.', $jwt);
@@ -183,6 +259,7 @@ final class Login extends Packet
             throw new RuntimeException("Failed to JSON-decode modern token payload");
         }
 
+<<<<<<< HEAD
         /** @var array<string, mixed> $claims */
 
         // Validate expiry (with 60s clock drift tolerance)
@@ -254,6 +331,37 @@ final class Login extends Packet
     private static function processLegacyChain(array $chain, bool $requireXboxAuth): array
     {
         /** @var array<string, mixed> $payload */
+=======
+        $now = time();
+        if (isset($claims['nbf']) && \is_int($claims['nbf']) && $claims['nbf'] > $now + 60) {
+            throw new RuntimeException("Modern token not yet valid");
+        }
+        if (isset($claims['exp']) && \is_int($claims['exp']) && $claims['exp'] < $now - 60) {
+            throw new RuntimeException("Modern token has expired");
+        }
+
+        $expectedAudience = "api://auth-minecraft-services/multiplayer";
+        if (($claims['aud'] ?? null) !== $expectedAudience && $requireXboxAuth) {
+            throw new RuntimeException("Modern token has invalid audience");
+        }
+
+        $identityPublicKey = $claims['cpk'] ?? null;
+        $payload = $claims['extraData'] ?? [];
+        if (!\is_array($payload)) {
+            $payload = [];
+        }
+
+        // Map claims to normalized payload
+        $payload['displayName'] = $claims['xname'] ?? 'unknown';
+        $payload['XUID'] = $claims['xid'] ?? '0';
+        $payload['identity'] = $claims['mid'] ?? '0';
+
+        return [$payload, $identityPublicKey, isset($claims['xid'])];
+    }
+
+    private static function processLegacyChain(array $chain, bool $requireXboxAuth): array
+    {
+>>>>>>> 866a1c0 (...)
         $payload = [];
         $identityPublicKey = null;
         $xboxAuthenticated = false;
@@ -265,6 +373,7 @@ final class Login extends Packet
             $xboxAuthenticated = true;
         } catch (Throwable $e) {
             if ($requireXboxAuth) {
+<<<<<<< HEAD
                 throw new RuntimeException(
                     "Xbox Live signature verification failed: " . $e->getMessage(),
                     0,
@@ -274,6 +383,11 @@ final class Login extends Packet
 
             Logger::warning("[Login] Xbox Live verification failed (offline mode): " . $e->getMessage());
 
+=======
+                throw new RuntimeException("Xbox Live verification failed: " . $e->getMessage());
+            }
+
+>>>>>>> 866a1c0 (...)
             foreach ($chain as $jwt) {
                 $parts = explode('.', $jwt);
                 if (\count($parts) < 2) {
@@ -287,6 +401,7 @@ final class Login extends Packet
                 if (!\is_array($body)) {
                     continue;
                 }
+<<<<<<< HEAD
                 if (isset($body['identityPublicKey']) && \is_string($body['identityPublicKey'])) {
                     $identityPublicKey = $body['identityPublicKey'];
                 }
@@ -294,10 +409,18 @@ final class Login extends Packet
                     /** @var array<string, mixed> $extra */
                     $extra = $body['extraData'];
                     $payload = array_merge($payload, $extra);
+=======
+                if (isset($body['identityPublicKey'])) {
+                    $identityPublicKey = $body['identityPublicKey'];
+                }
+                if (isset($body['extraData']) && \is_array($body['extraData'])) {
+                    $payload = array_merge($payload, $body['extraData']);
+>>>>>>> 866a1c0 (...)
                 }
             }
         }
 
+<<<<<<< HEAD
         return [$payload, $identityPublicKey, $xboxAuthenticated];
     }
 
@@ -306,22 +429,39 @@ final class Login extends Packet
      *
      * @param array<int, string> $chain
      */
+=======
+        // Ensure normalized fields exist for legacy
+        $payload['displayName'] ??= 'unknown';
+        $payload['XUID'] ??= '0';
+        $payload['identity'] ??= '0';
+
+        return [$payload, $identityPublicKey, $xboxAuthenticated];
+    }
+
+>>>>>>> 866a1c0 (...)
     private static function extractEcdhKey(array $chain): ?string
     {
         $lastJwt = end($chain);
         if (!\is_string($lastJwt)) {
             return null;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 866a1c0 (...)
         $parts = explode('.', $lastJwt);
         if (!isset($parts[0])) {
             return null;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 866a1c0 (...)
         $headerRaw = base64_decode(strtr($parts[0], '-_', '+/'), true);
         if ($headerRaw === false) {
             return null;
         }
+<<<<<<< HEAD
 
         $header = json_decode($headerRaw, true);
         if (!\is_array($header) || !isset($header['x5u']) || !\is_string($header['x5u'])) {
@@ -330,5 +470,9 @@ final class Login extends Packet
 
         Logger::debug("[Login] ECDH key (x5u): " . substr($header['x5u'], 0, 32) . "...");
         return $header['x5u'];
+=======
+        $header = json_decode($headerRaw, true);
+        return $header['x5u'] ?? null;
+>>>>>>> 866a1c0 (...)
     }
 }

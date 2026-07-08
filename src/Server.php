@@ -1,5 +1,26 @@
 <?php
 
+<<<<<<< HEAD
+=======
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
+>>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc;
@@ -42,7 +63,11 @@ final class Server
         self::$instance = $this;
         $this->events = new EventDispatcher();
         $this->plugins = new PluginManager($this, $this->rootPath . '/plugins');
+<<<<<<< HEAD
         $this->commands = new CommandMap($this);
+=======
+        $this->commands = new CommandMap();
+>>>>>>> 866a1c0 (...)
     }
 
     public static function getInstance(): ?Server
@@ -52,8 +77,22 @@ final class Server
 
     public function boot(): void
     {
+<<<<<<< HEAD
         \watermossmc\block\BlockInitializer::init();
         \watermossmc\item\ItemInitializer::init();
+=======
+        block\BlockInitializer::init();
+        item\ItemInitializer::init();
+
+        foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
+            /** @var \watermossmc\command\Command $command */
+            $command = new $commandClass();
+            $this->commands->register($command);
+        }
+
+        \watermossmc\player\OperatorManager::load($this);
+
+>>>>>>> 866a1c0 (...)
         $this->running = true;
         $this->plugins->loadPlugins();
         $this->plugins->enablePlugins();
@@ -64,6 +103,10 @@ final class Server
     {
         $this->running = false;
         $this->dispatch(new ServerStopEvent($this));
+<<<<<<< HEAD
+=======
+        \watermossmc\player\OperatorManager::save($this);
+>>>>>>> 866a1c0 (...)
         $this->saveWorld();
         $this->plugins->disablePlugins();
     }
@@ -71,6 +114,24 @@ final class Server
     public function tick(): void
     {
         $this->currentTick++;
+<<<<<<< HEAD
+=======
+        $this->getWorld()->tickTime();
+
+        $this->getWorld()->getEntityManager()->tick();
+        mcpe\PacketHandler::syncPlayers();
+
+        if ($this->currentTick % 20 === 0) {
+            $time = $this->getWorld()->getDayTime();
+            foreach ($this->getOnlinePlayers() as $player) {
+                $socket = $player->session->getSocket();
+                if ($socket !== null) {
+                    \watermossmc\mcpe\protocol\SetTime::send($player->session, $socket, $time);
+                }
+            }
+        }
+
+>>>>>>> 866a1c0 (...)
         $this->dispatch(new TickEvent($this, $this->currentTick));
     }
 
@@ -129,22 +190,31 @@ final class Server
         return $this->commands;
     }
 
+<<<<<<< HEAD
     public function getPlugin(string $name): ?PluginBase
     {
         return $this->plugins->getPlugin($name);
     }
 
+=======
+>>>>>>> 866a1c0 (...)
     public function dispatchCommand(mixed $sender, string $commandLine): void
     {
         $this->commands->execute($sender, $commandLine);
     }
 
+<<<<<<< HEAD
     /**
      * @return array<string, PluginBase>
      */
     public function getPlugins(): array
     {
         return $this->plugins->getPlugins();
+=======
+    public function getPlugin(string $name): ?PluginBase
+    {
+        return $this->plugins->getPlugin($name);
+>>>>>>> 866a1c0 (...)
     }
 
     public function dispatch(Event $event): Event

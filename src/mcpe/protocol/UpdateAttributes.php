@@ -1,9 +1,31 @@
 <?php
 
+<<<<<<< HEAD
+=======
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
+>>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
+<<<<<<< HEAD
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
@@ -15,6 +37,21 @@ final class UpdateAttributes extends Packet
     {
         $runtimeId = $s->getRuntimeId();
         $attributes = self::getDefaultAttributes();
+=======
+use function count;
+
+use Socket;
+use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+
+final class UpdateAttributes extends Packet
+{
+    public static function send(\watermossmc\player\Player $player, Socket $sock): void
+    {
+        $s = $player->session;
+        $runtimeId = $s->getRuntimeId();
+        $attributes = $player->getAttributeMap()->getAll();
+>>>>>>> 866a1c0 (...)
         $tick = 0;
 
         $payload = '';
@@ -22,11 +59,19 @@ final class UpdateAttributes extends Packet
         $payload .= Binary::writeVarInt(\count($attributes));
 
         foreach ($attributes as $attr) {
+<<<<<<< HEAD
             $payload .= Binary::writeFloat($attr['min']);
             $payload .= Binary::writeFloat($attr['max']);
             $payload .= Binary::writeFloat($attr['current']);
             $payload .= Binary::writeFloat($attr['default']);
             $payload .= McpeBinary::writeString($attr['name']);
+=======
+            $payload .= Binary::writeFloat($attr->getMin());
+            $payload .= Binary::writeFloat($attr->getMax());
+            $payload .= Binary::writeFloat($attr->getValue());
+            $payload .= Binary::writeFloat($attr->getDefault());
+            $payload .= McpeBinary::writeString($attr->getId());
+>>>>>>> 866a1c0 (...)
             $payload .= McpeBinary::writeSignedVarInt(0); // modifier count
         }
 
@@ -34,6 +79,7 @@ final class UpdateAttributes extends Packet
 
         self::sendBatch(ProtocolInfo::UPDATE_ATTRIBUTES_PACKET, $payload, $s, $sock);
     }
+<<<<<<< HEAD
 
     /**
      * Returns the standard player attribute set with sane defaults.
@@ -58,4 +104,6 @@ final class UpdateAttributes extends Packet
             ['name' => 'minecraft:player.experience', 'min' => 0.0,   'max' => 1.0,    'current' => 0.0,   'default' => 0.0],
         ];
     }
+=======
+>>>>>>> 866a1c0 (...)
 }

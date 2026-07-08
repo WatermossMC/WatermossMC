@@ -1,5 +1,23 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 use watermossmc\mcpe\network\RakNet;
@@ -15,7 +33,6 @@ Config::load(__DIR__ . '/server.properties');
 
 Logger::init();
 
-// Configuration
 $config = [
     'bind_ip' => Config::getString('server_ip', '0.0.0.0'),
     'bind_port' => Config::getInt('server_port', 19132),
@@ -37,7 +54,10 @@ set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
     }
 });
 
+<<<<<<< HEAD
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
+=======
+>>>>>>> 866a1c0 (...)
 if (\function_exists('pcntl_signal')) {
     pcntl_signal(SIGTERM, function () use (&$shutdown): void {
         Logger::info("Received SIGTERM, shutting down gracefully...");
@@ -48,13 +68,14 @@ if (\function_exists('pcntl_signal')) {
         Logger::info("Received SIGINT, shutting down gracefully...");
         $shutdown = true;
     });
-} else {
-    Logger::warning('pcntl_signal not available; graceful SIGINT/SIGTERM handling disabled');
 }
 
 Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
 
+<<<<<<< HEAD
 // Create UDP socket
+=======
+>>>>>>> 866a1c0 (...)
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     $error = socket_strerror(socket_last_error());
@@ -102,9 +123,33 @@ $tickInterval = 1_000_000_000 / 20; // 20 TPS
 Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
+<<<<<<< HEAD
     // Handle signals (if available)
+=======
+>>>>>>> 866a1c0 (...)
     if (\function_exists('pcntl_signal_dispatch')) {
         pcntl_signal_dispatch();
+    }
+
+    $read = [STDIN];
+    $write = $except = null;
+    if (stream_select($read, $write, $except, 0, 10000) > 0) {
+        if (in_array(STDIN, $read, true)) {
+            $line = fgets(STDIN);
+            if ($line !== false) {
+                $line = trim($line);
+                if ($line === '') {
+                    continue;
+                }
+
+                // Remove leading slash if present
+                if ($line[0] === '/') {
+                    $line = substr($line, 1);
+                }
+
+                $server->getCommandMap()->execute(null, $line);
+            }
+        }
     }
 
     // Process incoming packets
@@ -124,7 +169,6 @@ while (!$shutdown) {
         $buffer = '';
     }
 
-    // Run tick loop
     $now = hrtime(true);
     if ($now >= $nextTick) {
         try {
@@ -135,7 +179,6 @@ while (!$shutdown) {
         }
     }
 
-    // Small sleep to prevent CPU hogging
     usleep(1000);
 }
 

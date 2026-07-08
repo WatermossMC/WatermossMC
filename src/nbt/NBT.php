@@ -1,8 +1,31 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 namespace watermossmc\nbt;
+<<<<<<< HEAD
+=======
+
+use RuntimeException;
+>>>>>>> 866a1c0 (...)
 
 final class NBT
 {
@@ -21,7 +44,7 @@ final class NBT
     public const TAG_LONG_ARRAY = 12;
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<int|string, mixed> $data
      */
     public static function compound(array $data): string
     {
@@ -29,7 +52,7 @@ final class NBT
         $buf .= self::writeString('');
 
         foreach ($data as $name => $value) {
-            $buf .= self::writeNamedTag($name, $value);
+            $buf .= self::writeNamedTag((string)$name, $value);
         }
 
         return $buf . \chr(self::TAG_END);
@@ -45,11 +68,15 @@ final class NBT
         [$tag, $name, $value] = self::readNamedTag($data, $offset);
 
         if ($tag !== self::TAG_COMPOUND) {
-            throw new \RuntimeException('NBT root tag must be a compound');
+            throw new RuntimeException('NBT root tag must be a compound');
         }
 
         if (!\is_array($value)) {
+<<<<<<< HEAD
             throw new \RuntimeException('NBT root value must be a compound');
+=======
+            throw new RuntimeException('NBT root value must be a compound');
+>>>>>>> 866a1c0 (...)
         }
 
         return $value;
@@ -105,7 +132,11 @@ final class NBT
 
                 self::TAG_LIST => self::writeList($value['__nbt_value']),
 
+<<<<<<< HEAD
                 default => throw new \RuntimeException(
+=======
+                default => throw new RuntimeException(
+>>>>>>> 866a1c0 (...)
                     'Unsupported explicit NBT tag'
                 )
             };
@@ -142,7 +173,7 @@ final class NBT
             ];
         }
 
-        throw new \RuntimeException('Unsupported NBT type');
+        throw new RuntimeException('Unsupported NBT type');
     }
 
     /**
@@ -153,7 +184,7 @@ final class NBT
         $buf = '';
 
         foreach ($data as $name => $value) {
-            $buf .= self::writeNamedTag($name, $value);
+            $buf .= self::writeNamedTag((string)$name, $value);
         }
 
         return $buf . \chr(self::TAG_END);
@@ -181,7 +212,11 @@ final class NBT
             [$tag, $payload] = self::detectTag($value);
 
             if ($tag !== $childTag) {
+<<<<<<< HEAD
                 throw new \RuntimeException(
+=======
+                throw new RuntimeException(
+>>>>>>> 866a1c0 (...)
                     'NBT list contains mixed tag types'
                 );
             }
@@ -255,7 +290,7 @@ final class NBT
             self::TAG_COMPOUND => self::readCompound($buf, $o),
             self::TAG_INT_ARRAY => self::readIntArray($buf, $o),
             self::TAG_LONG_ARRAY => self::readLongArray($buf, $o),
-            default => throw new \RuntimeException('Unsupported NBT payload type: ' . $tag),
+            default => throw new RuntimeException('Unsupported NBT payload type: ' . $tag),
         };
     }
 
@@ -281,7 +316,7 @@ final class NBT
         self::ensure($buf, $o, 2);
         $value = unpack('n', substr($buf, $o, 2));
         if ($value === false) {
-            throw new \RuntimeException('Failed to unpack short');
+            throw new RuntimeException('Failed to unpack short');
         }
         $o += 2;
         return $value[1];
@@ -292,7 +327,7 @@ final class NBT
         self::ensure($buf, $o, 4);
         $value = unpack('N', substr($buf, $o, 4));
         if ($value === false) {
-            throw new \RuntimeException('Failed to unpack int');
+            throw new RuntimeException('Failed to unpack int');
         }
         $o += 4;
         return $value[1];
@@ -303,7 +338,7 @@ final class NBT
         self::ensure($buf, $o, 8);
         $value = unpack('N2', substr($buf, $o, 8));
         if ($value === false) {
-            throw new \RuntimeException('Failed to unpack long');
+            throw new RuntimeException('Failed to unpack long');
         }
         $o += 8;
         return ($value[1] << 32) | $value[2];
@@ -314,7 +349,7 @@ final class NBT
         self::ensure($buf, $o, 4);
         $value = unpack('G', substr($buf, $o, 4));
         if ($value === false) {
-            throw new \RuntimeException('Failed to unpack float');
+            throw new RuntimeException('Failed to unpack float');
         }
         $o += 4;
         return $value[1];
@@ -329,7 +364,7 @@ final class NBT
         }
         $value = unpack('d', $data);
         if ($value === false) {
-            throw new \RuntimeException('Failed to unpack double');
+            throw new RuntimeException('Failed to unpack double');
         }
         $o += 8;
         return $value[1];
@@ -422,7 +457,11 @@ final class NBT
     private static function ensure(string $buf, int $offset, int $length): void
     {
         if (\strlen($buf) < $offset + $length) {
+<<<<<<< HEAD
             throw new \RuntimeException('NBT buffer underrun');
+=======
+            throw new RuntimeException('NBT buffer underrun');
+>>>>>>> 866a1c0 (...)
         }
     }
 

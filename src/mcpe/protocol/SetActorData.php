@@ -1,16 +1,42 @@
 <?php
 
+<<<<<<< HEAD
+=======
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
+>>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
 use Socket;
 use watermossmc\binary\Binary;
+<<<<<<< HEAD
 use watermossmc\binary\McpeBinary;
+=======
+use watermossmc\entity\Entity;
+>>>>>>> 866a1c0 (...)
 use watermossmc\mcpe\network\Session;
 
 final class SetActorData extends Packet
 {
+<<<<<<< HEAD
     // Metadata keys
     public const DATA_FLAGS = 0;
     public const DATA_NAMETAG = 4;
@@ -75,6 +101,16 @@ final class SetActorData extends Packet
         }
 
         // PropertySyncData: intProperties count + floatProperties count (both 0)
+=======
+    public static function send(Entity $entity, Session $s, Socket $sock, int $tick = 0): void
+    {
+        $payload = '';
+        $payload .= Binary::writeUnsignedVarLong($entity->getRuntimeId()); // actorRuntimeId
+
+        $payload .= $entity->getEntityData()->encodeMetadata();
+
+        // PropertySyncData
+>>>>>>> 866a1c0 (...)
         $payload .= Binary::writeVarInt(0);
         $payload .= Binary::writeVarInt(0);
 

@@ -1,11 +1,40 @@
 <?php
 
+<<<<<<< HEAD
+=======
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
+>>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc\world;
 
 use RuntimeException;
+<<<<<<< HEAD
 use watermossmc\nbt\NBT;
+=======
+use watermossmc\block\Block;
+use watermossmc\entity\EntityManager;
+use watermossmc\nbt\NBT;
+use watermossmc\util\Config;
+use watermossmc\util\Location;
+>>>>>>> 866a1c0 (...)
 
 final class World
 {
@@ -30,6 +59,45 @@ final class World
 
     private int $dayTime = 0;
 
+<<<<<<< HEAD
+=======
+    private EntityManager $entities;
+
+    public function getTime(): int
+    {
+        return $this->time;
+    }
+
+    public function setTime(int $time): void
+    {
+        $this->time = $time;
+        $this->dayTime = $time % 24000;
+    }
+
+    public function getDayTime(): int
+    {
+        return $this->dayTime;
+    }
+
+    public function setDayTime(int $dayTime): void
+    {
+        $this->dayTime = $dayTime;
+        $days = (int) floor($this->time / 24000);
+        $this->time = ($days * 24000) + $dayTime;
+    }
+
+    public function tickTime(): void
+    {
+        $this->time++;
+        $this->dayTime = $this->time % 24000;
+    }
+
+    public function getGameType(): int
+    {
+        return $this->gameType;
+    }
+
+>>>>>>> 866a1c0 (...)
     /** @var array{x: int, y: int, z: int} */
     private array $spawn = [
         'x' => 0,
@@ -43,9 +111,22 @@ final class World
         $this->seed = $seed;
         $this->rootPath = rtrim($rootPath, '/\\');
 
+<<<<<<< HEAD
         $this->ensureDirectories();
     }
 
+=======
+        $this->entities = new EntityManager($this);
+
+        $this->ensureDirectories();
+    }
+
+    public function getEntityManager(): EntityManager
+    {
+        return $this->entities;
+    }
+
+>>>>>>> 866a1c0 (...)
     public static function load(string $rootPath, string $name, int $seed): self
     {
         $world = new self($name, $seed, $rootPath);
@@ -166,7 +247,11 @@ final class World
         $localZ = $this->blockToLocal($z);
 
         for ($y = 127; $y >= 0; $y--) {
+<<<<<<< HEAD
             if ($chunk->getBlock($localX, $y, $localZ) !== \watermossmc\block\Block::AIR) {
+=======
+            if ($chunk->getBlock($localX, $y, $localZ) !== Block::AIR) {
+>>>>>>> 866a1c0 (...)
                 return $y;
             }
         }
@@ -181,7 +266,11 @@ final class World
         return $chunk->getBlock($this->blockToLocal($x), $y, $this->blockToLocal($z));
     }
 
+<<<<<<< HEAD
     public function getBlockAtLocation(\watermossmc\util\Location $location): int
+=======
+    public function getBlockAtLocation(Location $location): int
+>>>>>>> 866a1c0 (...)
     {
         [$x, $y, $z] = $location->blockToInteger();
         return $this->getBlockAt($x, $y, $z);
@@ -193,7 +282,11 @@ final class World
         $chunk->setBlock($this->blockToLocal($x), $y, $this->blockToLocal($z), $blockId);
     }
 
+<<<<<<< HEAD
     public function setBlockAtLocation(\watermossmc\util\Location $location, int $blockId): void
+=======
+    public function setBlockAtLocation(Location $location, int $blockId): void
+>>>>>>> 866a1c0 (...)
     {
         [$x, $y, $z] = $location->blockToInteger();
         $this->setBlockAt($x, $y, $z, $blockId);
@@ -209,6 +302,14 @@ final class World
         return $this->seed;
     }
 
+<<<<<<< HEAD
+=======
+    public function getChunkViewDistance(): int
+    {
+        return Config::getInt("chunk-view-radius", 19);
+    }
+
+>>>>>>> 866a1c0 (...)
     private function setSafeSpawnPosition(): void
     {
         $best = ['x' => 0, 'z' => 0, 'score' => \PHP_INT_MAX];
@@ -380,6 +481,7 @@ final class World
                     $surfaceY = $this->spawn['y'] - 1;
                 }
 
+<<<<<<< HEAD
                 $chunk->setBlock($cx, 0, $cz, \watermossmc\block\Block::BEDROCK);
 
                 for ($y = 1; $y <= $surfaceY; $y++) {
@@ -387,6 +489,15 @@ final class World
                         $y === $surfaceY => \watermossmc\block\Block::GRASS,
                         $y >= $surfaceY - 3 => \watermossmc\block\Block::DIRT,
                         default => \watermossmc\block\Block::STONE,
+=======
+                $chunk->setBlock($cx, 0, $cz, Block::BEDROCK);
+
+                for ($y = 1; $y <= $surfaceY; $y++) {
+                    $blockId = match (true) {
+                        $y === $surfaceY => Block::GRASS,
+                        $y >= $surfaceY - 3 => Block::DIRT,
+                        default => Block::STONE,
+>>>>>>> 866a1c0 (...)
                     };
 
                     $chunk->setBlock($cx, $y, $cz, $blockId);

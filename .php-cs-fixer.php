@@ -22,10 +22,11 @@ return (new Config())
     ->setUsingCache(true)
     ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
     ->setFinder($finder)
+    ->setParallelConfig(new \PhpCsFixer\Runner\Parallel\ParallelConfig(8))
     ->setRules([
         '@PSR12' => true,
-        '@PHP82Migration' => true,
-        '@PHP80Migration:risky' => true,
+        '@PHP8x1Migration' => true,
+        '@PHP8x1Migration:risky' => true,
 
         'declare_strict_types' => true,
         'strict_comparison' => true,
@@ -34,14 +35,37 @@ return (new Config())
         'array_syntax' => ['syntax' => 'short'],
         'list_syntax' => ['syntax' => 'short'],
         'nullable_type_declaration_for_default_null_value' => true,
-        'native_function_invocation' => [
-            'include' => ['@compiler_optimized'],
-            'scope' => 'all',
-        ],
+        'native_function_invocation' => false,
 
         'ordered_imports' => [
-            'sort_algorithm' => 'alpha',
-            'imports_order' => ['class', 'function', 'const'],
+            'sort_algorithm' => 'alpha'
+        ],
+        'fully_qualified_strict_types' => false,
+        'global_namespace_import' => [
+            'import_classes' => true,
+            'import_constants' => false,
+            'import_functions' => false,
+        ],
+        'header_comment' => [
+            'comment_type' => 'comment',
+            'header' => <<<TEXT
+__        __    _                                    __  __  ____ 
+\ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |    
+  \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___ 
+   \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+
+WatermossMC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+@author WatermossMC Team
+@link https://github.com/watermossmc/WatermossMC
+TEXT,
+            'location' => 'after_open',
         ],
         'no_unused_imports' => true,
 
@@ -58,6 +82,7 @@ return (new Config())
                 'method' => 'one',
                 'property' => 'one',
                 'const' => 'none',
+                'trait_import' => 'none',
             ],
         ],
         'method_argument_space' => [
@@ -68,7 +93,7 @@ return (new Config())
         'single_quote' => false,
         'escape_implicit_backslashes' => false,
 
-        'native_constant_invocation' => true,
+        'native_constant_invocation' => false,
         'modernize_strpos' => true,
         'ternary_to_null_coalescing' => true,
 

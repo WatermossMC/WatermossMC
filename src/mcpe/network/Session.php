@@ -1,9 +1,31 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\network;
 
+use function count;
+
+use LogicException;
+use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
 use watermossmc\mcpe\protocol\NetworkSettings;
@@ -122,6 +144,11 @@ final class Session
 
     private bool $hasWaitingRequestChunkRadiusAck = false;
 
+<<<<<<< HEAD
+=======
+    private bool $cacheEnabled = false;
+
+>>>>>>> 866a1c0 (...)
     public function __construct(string $addr, int $port)
     {
         $this->address = $addr;
@@ -175,7 +202,7 @@ final class Session
     public function getHandshakeJwt(): string
     {
         if ($this->handshakeJwt === null) {
-            throw new \LogicException("Handshake JWT not set");
+            throw new LogicException("Handshake JWT not set");
         }
         return $this->handshakeJwt;
     }
@@ -354,7 +381,7 @@ final class Session
     public function getClientPublicKey(): string
     {
         return $this->clientPublicKey
-            ?? throw new \RuntimeException("Client public key not set");
+            ?? throw new RuntimeException("Client public key not set");
     }
 
     /**
@@ -376,10 +403,14 @@ final class Session
     public function enableEncryption(?string $key): void
     {
         if ($key === null) {
-            throw new \RuntimeException("Key or IV is null");
+            throw new RuntimeException("Key or IV is null");
         }
         if (\strlen($key) !== 32) {
+<<<<<<< HEAD
             throw new \RuntimeException("Invalid key length: " . \strlen($key));
+=======
+            throw new RuntimeException("Invalid key length: " . \strlen($key));
+>>>>>>> 866a1c0 (...)
         }
         $this->inEncryption = new EncryptionContext($key);
         $this->outEncryption = new EncryptionContext($key);
@@ -416,7 +447,11 @@ final class Session
                 Logger::debug("Inbound raw hex=" . bin2hex(substr($data, 0, min(32, \strlen($data)))));
                 $data = $this->decrypt($data);
                 Logger::debug("Inbound decrypt succeeded, payload head=0x" . dechex(\ord($data[0] ?? "\0")) . " len=" . \strlen($data));
+<<<<<<< HEAD
             } catch (\RuntimeException $e) {
+=======
+            } catch (RuntimeException $e) {
+>>>>>>> 866a1c0 (...)
                 // Decryption failed: abort processing so caller can handle failure.
                 Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
                 throw $e;
@@ -425,7 +460,7 @@ final class Session
 
         if ($this->shouldDecompressInbound()) {
             if ($data === '') {
-                throw new \RuntimeException("Empty packet, cannot read compression ID");
+                throw new RuntimeException("Empty packet, cannot read compression ID");
             }
 
             $compressionId = \ord($data[0]);
@@ -434,13 +469,13 @@ final class Session
             if ($compressionId === 0x00) {
                 $decoded = @gzinflate($compressedPayload);
                 if ($decoded === false) {
-                    throw new \RuntimeException("Raw deflate decode failed");
+                    throw new RuntimeException("Raw deflate decode failed");
                 }
                 $data = $decoded;
             } elseif ($compressionId === 0xFF) {
                 $data = $compressedPayload; // No compression
             } else {
-                throw new \RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
+                throw new RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
             }
         }
 
@@ -452,7 +487,7 @@ final class Session
         if ($this->shouldCompressOutbound()) {
             $compressed = gzdeflate($data, 7);
             if ($compressed === false) {
-                throw new \RuntimeException('gzdeflate failed');
+                throw new RuntimeException('gzdeflate failed');
             }
             $data = "\x00" . $compressed;
         }
@@ -492,7 +527,7 @@ final class Session
     public function enablePendingEncryption(): void
     {
         if ($this->pendingKey === null) {
-            throw new \LogicException("No pending encryption keys available");
+            throw new LogicException("No pending encryption keys available");
         }
 
         // Prepare to decrypt incoming packets from client immediately,
@@ -507,7 +542,7 @@ final class Session
     public function finalizeEncryption(): void
     {
         if ($this->pendingKey === null) {
-            throw new \LogicException('No pending encryption to finalize');
+            throw new LogicException('No pending encryption to finalize');
         }
 
         // Enable outbound encryption now that handshake exchange is complete.
@@ -611,4 +646,17 @@ final class Session
     {
         $this->hasWaitingRequestChunkRadiusAck = $v;
     }
+<<<<<<< HEAD
+=======
+
+    public function isCacheEnabled(): bool
+    {
+        return $this->cacheEnabled;
+    }
+
+    public function setCacheEnabled(bool $v): void
+    {
+        $this->cacheEnabled = $v;
+    }
+>>>>>>> 866a1c0 (...)
 }

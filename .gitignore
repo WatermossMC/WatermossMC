@@ -2,3 +2,7 @@
 vendor/*
 world/*
 plugins/*
+<<<<<<< HEAD
+=======
+*ref/*
+>>>>>>> 866a1c0 (...)
