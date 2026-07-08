@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,30 +18,14 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
 use Socket;
 use watermossmc\binary\Binary;
-<<<<<<< HEAD
-use watermossmc\mcpe\network\Session;
-
-final class AddPlayer extends Packet
-{
-    public static function send(Session $s, Socket $sock): void
-    {
-        $pos = $s->getPosition();
-        $rot = $s->getRotation();
-
-        $p = Binary::writeByte(0x0c);
-        $p .= Binary::writeUUID($s->getUuid());
-        $p .= Binary::writeString($s->getUsername());
-        $p .= Binary::writeVarLong($s->getRuntimeId());
-        $p .= Binary::writeString("");
-=======
 use watermossmc\binary\McpeBinary;
+use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\network\Session;
 use watermossmc\player\Player;
 
@@ -59,7 +41,6 @@ final class AddPlayer extends Packet
         $p .= McpeBinary::writeString($target->getUsername());
         $p .= Binary::writeVarLong($target->getRuntimeId());
         $p .= McpeBinary::writeString("");
->>>>>>> 866a1c0 (...)
 
         $p .= Binary::writeFloat($pos['x']);
         $p .= Binary::writeFloat($pos['y']);
@@ -74,11 +55,7 @@ final class AddPlayer extends Packet
         $p .= Binary::writeFloat($rot['yaw']);
 
         $p .= Binary::writeVarInt(0); // air item stack wrapper
-<<<<<<< HEAD
-        $p .= Binary::writeVarInt($s->getGameMode());
-=======
         $p .= McpeBinary::writeSignedVarInt($target->getGameMode());
->>>>>>> 866a1c0 (...)
 
         $p .= Binary::writeVarInt(0); // metadata count
         $p .= Binary::writeVarInt(0); // synced int properties
@@ -89,11 +66,7 @@ final class AddPlayer extends Packet
         $p .= Binary::writeByte(0); // command permission
         $p .= Binary::writeByte(0); // ability layer count
         $p .= Binary::writeVarInt(0); // link count
-<<<<<<< HEAD
-        $p .= Binary::writeString(""); // device id
-=======
         $p .= McpeBinary::writeString(""); // device id
->>>>>>> 866a1c0 (...)
         $p .= Binary::writeLInt(0); // build platform
         self::sendBatch(ProtocolInfo::ADD_PLAYER_PACKET, $p, $s, $sock);
     }

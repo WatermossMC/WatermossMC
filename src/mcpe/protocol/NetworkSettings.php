@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -37,13 +34,12 @@ final class NetworkSettings extends Packet
     public static function send(Session $s, Socket $sock): void
     {
         $p = McpeBinary::writeLShort(self::COMPRESS_EVERYTHING);
-        $p .= McpeBinary::writeLShort(0); // 0 = Zlib, 1 = Snappy, 255 = None
+        $p .= McpeBinary::writeLShort(0);
+        // 0 = Zlib, 1 = Snappy, 255 = None
         $p .= McpeBinary::writeBool(false);
         $p .= McpeBinary::writeByte(0);
         $p .= McpeBinary::writeFloat(0.0);
-
         $sendSeq = self::sendBatch(ProtocolInfo::NETWORK_SETTINGS_PACKET, $p, $s, $sock);
-
         $s->markNetworkSettingsReliableSeq($sendSeq);
     }
 }

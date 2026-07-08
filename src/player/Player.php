@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,22 +18,15 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\player;
 
-<<<<<<< HEAD
-use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\protocol\Disconnect;
-use watermossmc\mcpe\protocol\Text;
-
-final class Player
-=======
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Disconnect;
 use watermossmc\mcpe\protocol\MobEffect;
 use watermossmc\mcpe\protocol\Text;
 use watermossmc\Server;
@@ -43,7 +34,6 @@ use watermossmc\util\Location;
 use watermossmc\util\Permission;
 
 final class Player extends Entity
->>>>>>> 866a1c0 (...)
 {
     public Session $session;
 
@@ -51,7 +41,6 @@ final class Player extends Entity
 
     public string $username;
 
-<<<<<<< HEAD
     public int $runtimeId;
 
     public float $x = 0;
@@ -63,34 +52,22 @@ final class Player extends Entity
     public float $yaw = 0;
 
     public float $pitch = 0;
-=======
-    public PlayerInventory $inventory;
->>>>>>> 866a1c0 (...)
 
     public float $headYaw = 0;
 
     public bool $onGround = true;
 
-<<<<<<< HEAD
     private \watermossmc\Server $server;
-=======
-    private int $gameMode = 0;
-
-    private int $role = Permission::ROLE_MEMBER;
->>>>>>> 866a1c0 (...)
 
     /** @var array<string, float|int|bool>|null */
     public ?array $pendingMove = null;
 
-<<<<<<< HEAD
-    public function __construct(Session $s, string $username, \watermossmc\Server $server)
-    {
-        $this->session = $s;
-        $this->uuid = $s->getUuid();
-        $this->username = $username;
-        $this->runtimeId = $s->getRuntimeId();
-        $this->server = $server;
-=======
+    public PlayerInventory $inventory;
+
+    private int $gameMode = 0;
+
+    private int $role = Permission::ROLE_MEMBER;
+
     public function __construct(Session $s, string $username, Server $server)
     {
         parent::__construct($s->getRuntimeId(), $s->getUuid(), $server->getWorld());
@@ -98,10 +75,8 @@ final class Player extends Entity
         $this->uuid = $s->getUuid();
         $this->username = $username;
         $this->inventory = new PlayerInventory();
-
         $factory = \watermossmc\entity\AttributeFactory::getInstance();
         $map = $this->getAttributeMap();
-
         $map->add($factory->mustGet('minecraft:health'));
         $map->add($factory->mustGet('minecraft:follow_range'));
         $map->add($factory->mustGet('minecraft:knockback_resistance'));
@@ -114,18 +89,10 @@ final class Player extends Entity
         $map->add($factory->mustGet('minecraft:player.exhaustion'));
         $map->add($factory->mustGet('minecraft:player.level'));
         $map->add($factory->mustGet('minecraft:player.experience'));
-
         // Load role from OperatorManager
         $this->role = \watermossmc\player\OperatorManager::getPermissionLevel($username);
-
         // Initialize default player properties
         $this->getEntityData()->setString(EntityMetadataProperties::NAMETAG, $username);
-    }
-
-    public function getUsername(): string
-    {
-        return $this->username;
->>>>>>> 866a1c0 (...)
     }
 
     public function getName(): string
@@ -138,7 +105,6 @@ final class Player extends Entity
         return $this->uuid;
     }
 
-<<<<<<< HEAD
     public function getRuntimeId(): int
     {
         return $this->runtimeId;
@@ -146,20 +112,48 @@ final class Player extends Entity
 
     public function getPosition(): \watermossmc\util\Location
     {
-        return new \watermossmc\util\Location(
-            $this->server->getWorld(),
-            $this->x,
-            $this->y,
-            $this->z,
-            $this->yaw,
-            $this->pitch
-        );
+        return new \watermossmc\util\Location($this->server->getWorld(), $this->x, $this->y, $this->z, $this->yaw, $this->pitch);
     }
 
-    public function getLocation(): \watermossmc\util\Location
+    public function getLocation(): Location
     {
-        return $this->getPosition();
-=======
+        return parent::getLocation();
+    }
+
+    public function teleport(float $x, float $y, float $z, ?float $yaw = null, ?float $pitch = null): void
+    {
+        $this->setPosition($x, $y, $z);
+        $this->setRotation($yaw ?? $this->yaw, $pitch ?? $this->pitch);
+        $this->session->setPosition($x, $y, $z);
+    }
+
+    public function sendMessage(string $message, int $type = Text::TYPE_RAW): bool
+    {
+        $socket = $this->session->getSocket();
+        if ($socket === null || !$this->session->isPlaying()) {
+            return false;
+        }
+        Text::send($this->session, $socket, $message, $type);
+        return true;
+    }
+
+    public function kick(string $reason = "Disconnected"): bool
+    {
+        $socket = $this->session->getSocket();
+        if ($socket === null) {
+            $this->session->close(false);
+            return false;
+        }
+        Disconnect::send($this->session, $socket, $reason);
+        $this->session->close(false);
+        return true;
+    }
+
+    public function getUsername(): string
+    {
+        return $this->username;
+    }
+
     public function getGameMode(): int
     {
         return $this->gameMode;
@@ -185,55 +179,9 @@ final class Player extends Entity
         parent::tick();
     }
 
-    public function getLocation(): Location
-    {
-        return parent::getLocation();
->>>>>>> 866a1c0 (...)
-    }
-
-    public function teleport(float $x, float $y, float $z, ?float $yaw = null, ?float $pitch = null): void
-    {
-<<<<<<< HEAD
-        $this->x = $x;
-        $this->y = $y;
-        $this->z = $z;
-        $this->yaw = $yaw ?? $this->yaw;
-        $this->pitch = $pitch ?? $this->pitch;
-=======
-        $this->setPosition($x, $y, $z);
-        $this->setRotation($yaw ?? $this->yaw, $pitch ?? $this->pitch);
->>>>>>> 866a1c0 (...)
-        $this->session->setPosition($x, $y, $z);
-    }
-
-    public function sendMessage(string $message, int $type = Text::TYPE_RAW): bool
-    {
-        $socket = $this->session->getSocket();
-        if ($socket === null || !$this->session->isPlaying()) {
-            return false;
-        }
-
-        Text::send($this->session, $socket, $message, $type);
-        return true;
-    }
-
-<<<<<<< HEAD
-    public function kick(string $reason = "Disconnected"): bool
-    {
-        $socket = $this->session->getSocket();
-        if ($socket === null) {
-            $this->session->close(false);
-            return false;
-        }
-
-        Disconnect::send($this->session, $socket, $reason);
-        $this->session->close(false);
-        return true;
-=======
     public function applyEffect(int $effectId, int $amplifier = 0, bool $particles = true, int $duration = 0, bool $ambient = true): void
     {
         $this->addEffect($effectId, $amplifier, $particles, $duration, $ambient);
-
         $socket = $this->session->getSocket();
         if ($socket !== null) {
             MobEffect::add($this->session, $socket, $effectId, $amplifier, $particles, $duration, $ambient);
@@ -243,11 +191,9 @@ final class Player extends Entity
     public function removeEffect(int $effectId): void
     {
         parent::removeEffect($effectId);
-
         $socket = $this->session->getSocket();
         if ($socket !== null) {
             MobEffect::remove($this->session, $socket, $effectId);
         }
->>>>>>> 866a1c0 (...)
     }
 }

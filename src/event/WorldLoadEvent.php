@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\event;
 
@@ -30,8 +27,5 @@ use watermossmc\world\World;
 
 final class WorldLoadEvent extends Event
 {
-    public function __construct(
-        public readonly Server $server,
-        public readonly World $world
-    ) {}
+    public function __construct(public readonly Server $server, public readonly World $world) {}
 }

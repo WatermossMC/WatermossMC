@@ -1,6 +1,6 @@
 {
     "name": "watermossmc/server",
-    "description": "Minimal PHP Bedrock Server",
+    "description": "Minecraft Bedrock Server Software",
     "type": "project",
     "require": {
         "php": "^8.1",

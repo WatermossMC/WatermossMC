@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,47 +18,30 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
 use Socket;
 use watermossmc\binary\Binary;
-<<<<<<< HEAD
-=======
 use watermossmc\mcpe\network\RakNet;
->>>>>>> 866a1c0 (...)
 use watermossmc\mcpe\network\Session;
 use watermossmc\util\Logger;
 
 final class RequestNetworkSettings extends Packet
 {
-<<<<<<< HEAD
-    public static function read(string $payload, int &$o, Session $s, Socket $sock): void
-    {
-        $protocol = Binary::readInt($payload, $o);
-
-        Logger::debug("RequestNetworkSettings protocol={$protocol}");
-=======
     public static function read(string $payload, int &$o, Session $s, Socket $sock): bool
     {
         $protocol = Binary::readInt($payload, $o);
-
         if ($protocol !== ProtocolInfo::CURRENT_PROTOCOL) {
             Logger::error("[RequestNetworkSettings] Protocol mismatch. Client: {$protocol}, Server: " . ProtocolInfo::CURRENT_PROTOCOL);
-
             PlayStatus::sendFailedClient($s, $sock);
-
             $msg = $protocol < ProtocolInfo::CURRENT_PROTOCOL ? "Outdated client" : "Outdated server";
             Disconnect::send($s, $sock, $msg);
-
             RakNet::flush($s, $sock);
             return false;
         }
-
         Logger::debug("[RequestNetworkSettings] Protocol version verified: {$protocol}");
         return true;
->>>>>>> 866a1c0 (...)
     }
 }

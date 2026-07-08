@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,38 +18,22 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\item;
 
-<<<<<<< HEAD
-=======
 use watermossmc\player\Player;
 
->>>>>>> 866a1c0 (...)
 abstract class Item
 {
-    public function __construct(
-        public readonly int $id,
-        public readonly string $name,
-        public readonly string $type = 'generic'
-    ) {}
+    public function __construct(public readonly int $id, public readonly string $name, public readonly string $type = 'generic') {}
 
-<<<<<<< HEAD
-    public function onUse(\watermossmc\player\Player $player): void
-=======
     public function onUse(Player $player): void
->>>>>>> 866a1c0 (...)
     {
         // Default: do nothing
     }
 
-<<<<<<< HEAD
-    public function onInteract(int $x, int $y, int $z, \watermossmc\player\Player $player): void
-=======
     public function onInteract(int $x, int $y, int $z, Player $player): void
->>>>>>> 866a1c0 (...)
     {
         // Default: do nothing
     }

@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,27 +18,19 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\player;
 
 use watermossmc\mcpe\network\Session;
-<<<<<<< HEAD
-=======
 use watermossmc\Server;
->>>>>>> 866a1c0 (...)
 
 final class PlayerManager
 {
     /** @var Player[] */
     private static array $players = [];
 
-<<<<<<< HEAD
-    public static function add(Session $s, string $username, \watermossmc\Server $server): Player
-=======
     public static function add(Session $s, string $username, Server $server): Player
->>>>>>> 866a1c0 (...)
     {
         return self::$players[$s->getUuid()] = new Player($s, $username, $server);
     }
@@ -57,7 +47,6 @@ final class PlayerManager
                 return $player;
             }
         }
-
         return null;
     }
 

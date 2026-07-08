@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\plugin;
 
@@ -31,11 +28,7 @@ use watermossmc\util\Logger;
 
 abstract class PluginBase
 {
-    public function __construct(
-        private readonly Server $server,
-        private readonly PluginDescription $description,
-        private readonly string $dataFolder
-    ) {}
+    public function __construct(private readonly Server $server, private readonly PluginDescription $description, private readonly string $dataFolder) {}
 
     public function onLoad(): void {}
 

@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\network;
 
@@ -58,7 +55,6 @@ final class TickLoop
     {
         $intervalTicks = max(1, $intervalTicks);
         $initialDelay = max(1, $initialDelay);
-
         return $this->schedule($initialDelay, $intervalTicks, true, $task);
     }
 
@@ -75,18 +71,14 @@ final class TickLoop
     public function runOnce(): void
     {
         $this->currentTick++;
-
         foreach ($this->tasks as $task) {
             $task();
         }
-
         foreach ($this->scheduledTasks as $taskId => $task) {
             if ($task["nextRun"] > $this->currentTick) {
                 continue;
             }
-
             $task["callback"]($this->currentTick);
-
             if ($task["repeating"]) {
                 $this->scheduledTasks[$taskId]["nextRun"] = $this->currentTick + $task["delay"];
             } else {
@@ -101,13 +93,7 @@ final class TickLoop
     private function schedule(int $initialDelay, int $delay, bool $repeating, callable $task): int
     {
         $taskId = $this->nextTaskId++;
-        $this->scheduledTasks[$taskId] = [
-            "callback" => $task,
-            "nextRun" => $this->currentTick + $initialDelay,
-            "delay" => $delay,
-            "repeating" => $repeating,
-        ];
-
+        $this->scheduledTasks[$taskId] = ["callback" => $task, "nextRun" => $this->currentTick + $initialDelay, "delay" => $delay, "repeating" => $repeating];
         return $taskId;
     }
 }

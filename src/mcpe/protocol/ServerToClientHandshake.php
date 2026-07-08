@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -34,7 +31,6 @@ final class ServerToClientHandshake extends Packet
     public static function send(Session $session, Socket $sock, string $jwt): void
     {
         $p = McpeBinary::writeString($jwt);
-
         self::sendBatch(ProtocolInfo::SERVER_TO_CLIENT_HANDSHAKE_PACKET, $p, $session, $sock);
     }
 }

@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\types;
 
@@ -31,8 +28,10 @@ final class Experiments
 {
     public static function writeEmpty(): string
     {
-        $p = Binary::writeLInt(0);    // count experiments
-        $p .= Binary::writeBool(false); // hasPreviouslyUsedExperiments
+        $p = Binary::writeLInt(0);
+        // count experiments
+        $p .= Binary::writeBool(false);
+        // hasPreviouslyUsedExperiments
         return $p;
     }
 }

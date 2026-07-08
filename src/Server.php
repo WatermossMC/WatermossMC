@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc;
 
@@ -56,18 +53,12 @@ final class Server
 
     private bool $running = false;
 
-    public function __construct(
-        private readonly string $rootPath,
-        private readonly TickLoop $tickLoop
-    ) {
+    public function __construct(private readonly string $rootPath, private readonly TickLoop $tickLoop)
+    {
         self::$instance = $this;
         $this->events = new EventDispatcher();
         $this->plugins = new PluginManager($this, $this->rootPath . '/plugins');
-<<<<<<< HEAD
-        $this->commands = new CommandMap($this);
-=======
         $this->commands = new CommandMap();
->>>>>>> 866a1c0 (...)
     }
 
     public static function getInstance(): ?Server
@@ -77,22 +68,14 @@ final class Server
 
     public function boot(): void
     {
-<<<<<<< HEAD
-        \watermossmc\block\BlockInitializer::init();
-        \watermossmc\item\ItemInitializer::init();
-=======
         block\BlockInitializer::init();
         item\ItemInitializer::init();
-
         foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();
             $this->commands->register($command);
         }
-
         \watermossmc\player\OperatorManager::load($this);
-
->>>>>>> 866a1c0 (...)
         $this->running = true;
         $this->plugins->loadPlugins();
         $this->plugins->enablePlugins();
@@ -103,10 +86,7 @@ final class Server
     {
         $this->running = false;
         $this->dispatch(new ServerStopEvent($this));
-<<<<<<< HEAD
-=======
         \watermossmc\player\OperatorManager::save($this);
->>>>>>> 866a1c0 (...)
         $this->saveWorld();
         $this->plugins->disablePlugins();
     }
@@ -114,13 +94,9 @@ final class Server
     public function tick(): void
     {
         $this->currentTick++;
-<<<<<<< HEAD
-=======
         $this->getWorld()->tickTime();
-
         $this->getWorld()->getEntityManager()->tick();
         mcpe\PacketHandler::syncPlayers();
-
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
@@ -130,8 +106,6 @@ final class Server
                 }
             }
         }
-
->>>>>>> 866a1c0 (...)
         $this->dispatch(new TickEvent($this, $this->currentTick));
     }
 
@@ -190,31 +164,22 @@ final class Server
         return $this->commands;
     }
 
-<<<<<<< HEAD
     public function getPlugin(string $name): ?PluginBase
     {
         return $this->plugins->getPlugin($name);
     }
 
-=======
->>>>>>> 866a1c0 (...)
     public function dispatchCommand(mixed $sender, string $commandLine): void
     {
         $this->commands->execute($sender, $commandLine);
     }
 
-<<<<<<< HEAD
     /**
      * @return array<string, PluginBase>
      */
     public function getPlugins(): array
     {
         return $this->plugins->getPlugins();
-=======
-    public function getPlugin(string $name): ?PluginBase
-    {
-        return $this->plugins->getPlugin($name);
->>>>>>> 866a1c0 (...)
     }
 
     public function dispatch(Event $event): Event
@@ -236,14 +201,11 @@ final class Server
         if ($this->world !== null) {
             return $this->world;
         }
-
         $worldName = Config::getString('level_name', 'world');
         $worldFolder = Config::getString('world_folder', $worldName);
         $worldPath = $this->rootPath . '/' . $worldFolder;
-
         $this->world = World::load($worldPath, $worldName, Config::getInt('level_seed', 12345));
         $this->dispatch(new WorldLoadEvent($this, $this->world));
-
         return $this->world;
     }
 
@@ -256,7 +218,6 @@ final class Server
     {
         $this->saveWorld();
         $this->world = null;
-
         return $this->getWorld();
     }
 
@@ -291,7 +252,6 @@ final class Server
                 $sent++;
             }
         }
-
         return $sent;
     }
 
@@ -341,14 +301,7 @@ final class Server
      */
     public function getStatus(): array
     {
-        return [
-            "name" => $this->getName(),
-            "motd" => $this->getMotd(),
-            "onlinePlayers" => $this->getOnlinePlayerCount(),
-            "maxPlayers" => $this->getMaxPlayers(),
-            "tick" => $this->currentTick,
-            "running" => $this->running,
-        ];
+        return ["name" => $this->getName(), "motd" => $this->getMotd(), "onlinePlayers" => $this->getOnlinePlayerCount(), "maxPlayers" => $this->getMaxPlayers(), "tick" => $this->currentTick, "running" => $this->running];
     }
 
     public function isRunning(): bool

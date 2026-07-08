@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\crypto;
 
@@ -47,58 +44,40 @@ final class XboxAuth
     {
         // The first JWT must be signed by the Mojang root key.
         $currentKeyPem = Crypto::bedrockIdentityKeyToPem(self::MOJANG_PUBLIC_KEY);
-
         /** @var array<string, mixed> $data */
         $data = [];
         $identityPublicKey = null;
-
         foreach ($chain as $index => $jwt) {
             if (!\is_string($jwt)) {
                 throw new RuntimeException("Chain entry #{$index} is not a string");
             }
-
             $parts = explode('.', $jwt);
             if (\count($parts) !== 3) {
                 throw new RuntimeException("Malformed JWT at chain entry #{$index}");
             }
-
             [$headB64, $payloadB64, $sigB64] = $parts;
-
             $headerJson = self::urlSafeB64Decode($headB64);
             $payloadJson = self::urlSafeB64Decode($payloadB64);
-
             $header = json_decode($headerJson, true);
             $payload = json_decode($payloadJson, true);
-
             if (!\is_array($header) || !\is_array($payload)) {
                 throw new RuntimeException("Failed to decode JWT JSON at chain entry #{$index}");
             }
-
             /** @var array<string, mixed> $header */
             /** @var array<string, mixed> $payload */
-
             $sigRaw = self::urlSafeB64Decode($sigB64);
-
             // Validate raw signature length: P-384 produces 96 bytes (2 × 48).
             if (\strlen($sigRaw) !== 96) {
-                throw new RuntimeException(
-                    "Unexpected signature length " . \strlen($sigRaw) . " at chain entry #{$index} (expected 96 for P-384)"
-                );
+                throw new RuntimeException("Unexpected signature length " . \strlen($sigRaw) . " at chain entry #{$index} (expected 96 for P-384)");
             }
-
             $sigDer = self::signatureRawToDer($sigRaw);
-            $contentToVerify = "$headB64.$payloadB64";
-
+            $contentToVerify = "{$headB64}.{$payloadB64}";
             // openssl_verify returns 1 (valid), 0 (invalid), or -1 (error).
             $verifyResult = openssl_verify($contentToVerify, $sigDer, $currentKeyPem, \OPENSSL_ALGO_SHA384);
             if ($verifyResult !== 1) {
                 $opensslErr = openssl_error_string();
-                throw new RuntimeException(
-                    "Signature verification failed at chain entry #{$index}"
-                    . ($opensslErr !== false ? ": $opensslErr" : "")
-                );
+                throw new RuntimeException("Signature verification failed at chain entry #{$index}" . ($opensslErr !== false ? ": {$opensslErr}" : ""));
             }
-
             // After verifying, advance the trust chain:
             // The next link must be signed by THIS link's identityPublicKey.
             if (isset($payload['identityPublicKey']) && \is_string($payload['identityPublicKey'])) {
@@ -106,13 +85,11 @@ final class XboxAuth
                 // Update the key used to verify the NEXT link in the chain.
                 $currentKeyPem = Crypto::bedrockIdentityKeyToPem($identityPublicKey);
             }
-
             if (isset($payload['extraData']) && \is_array($payload['extraData'])) {
                 /** @var array<string, mixed> $extraData */
                 $extraData = $payload['extraData'];
                 $data = array_merge($data, $extraData);
             }
-
             // Validate time claims if present.
             $now = time();
             if (isset($payload['nbf']) && \is_int($payload['nbf']) && $payload['nbf'] > $now + 60) {
@@ -122,15 +99,10 @@ final class XboxAuth
                 throw new RuntimeException("JWT chain entry #{$index} has expired (exp)");
             }
         }
-
         if ($identityPublicKey === null) {
             throw new RuntimeException("Identity public key missing from chain");
         }
-
-        return [
-            'data' => $data,
-            'identityPublicKey' => $identityPublicKey,
-        ];
+        return ['data' => $data, 'identityPublicKey' => $identityPublicKey];
     }
 
     /**
@@ -144,12 +116,10 @@ final class XboxAuth
         if (\count($parts) < 2) {
             return [];
         }
-
         $decoded = json_decode(self::urlSafeB64Decode($parts[1]), true);
         if (!\is_array($decoded)) {
             return [];
         }
-
         /** @var array<string, mixed> $decoded */
         return $decoded;
     }
@@ -160,7 +130,6 @@ final class XboxAuth
         if ($remainder !== 0) {
             $input .= str_repeat('=', 4 - $remainder);
         }
-
         $decoded = base64_decode(strtr($input, '-_', '+/'), true);
         return \is_string($decoded) ? $decoded : '';
     }
@@ -174,26 +143,20 @@ final class XboxAuth
         $half = intdiv(\strlen($raw), 2);
         $r = substr($raw, 0, $half);
         $s = substr($raw, $half);
-
         // Strip leading zero bytes, but keep at least one byte.
         $r = ltrim($r, "\x00");
         $s = ltrim($s, "\x00");
-
         // Prefix with 0x00 if high bit is set (to keep the value positive in DER).
-        if ($r === '' || (\ord($r[0]) & 0x80)) {
+        if ($r === '' || \ord($r[0]) & 0x80) {
             $r = "\x00" . $r;
         }
-        if ($s === '' || (\ord($s[0]) & 0x80)) {
+        if ($s === '' || \ord($s[0]) & 0x80) {
             $s = "\x00" . $s;
         }
-
         $rLen = \strlen($r);
         $sLen = \strlen($s);
         // Sequence length = INTEGER(r) + INTEGER(s) = (2 + rLen) + (2 + sLen)
         $seqLen = 4 + $rLen + $sLen;
-
-        return "\x30" . \chr($seqLen)
-            . "\x02" . \chr($rLen) . $r
-            . "\x02" . \chr($sLen) . $s;
+        return "0" . \chr($seqLen) . "\x02" . \chr($rLen) . $r . "\x02" . \chr($sLen) . $s;
     }
 }

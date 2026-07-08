@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -31,30 +28,14 @@ use watermossmc\mcpe\network\Session;
 
 final class UpdateAdventureSettings extends Packet
 {
-    public static function send(
-        Session $s,
-        Socket $sock,
-<<<<<<< HEAD
-        bool $noAttackingMobs = false,
-        bool $noAttackingPlayers = false,
-        bool $worldImmutable = false,
-        bool $showNameTags = true,
-        bool $autoJump = true
-=======
-        bool $noAttackingMobs,
-        bool $noAttackingPlayers,
-        bool $worldImmutable,
-        bool $showNameTags,
-        bool $autoJump
->>>>>>> 866a1c0 (...)
-    ): void {
+    public static function send(Session $s, Socket $sock, bool $noAttackingMobs, bool $noAttackingPlayers, bool $worldImmutable, bool $showNameTags, bool $autoJump): void
+    {
         $payload = '';
         $payload .= Binary::writeBool($noAttackingMobs);
         $payload .= Binary::writeBool($noAttackingPlayers);
         $payload .= Binary::writeBool($worldImmutable);
         $payload .= Binary::writeBool($showNameTags);
         $payload .= Binary::writeBool($autoJump);
-
         self::sendBatch(ProtocolInfo::UPDATE_ADVENTURE_SETTINGS_PACKET, $payload, $s, $sock);
     }
 }

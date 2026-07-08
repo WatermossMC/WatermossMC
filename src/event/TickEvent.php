@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\event;
 
@@ -29,8 +26,5 @@ use watermossmc\Server;
 
 final class TickEvent extends Event
 {
-    public function __construct(
-        public readonly Server $server,
-        public readonly int $tick
-    ) {}
+    public function __construct(public readonly Server $server, public readonly int $tick) {}
 }

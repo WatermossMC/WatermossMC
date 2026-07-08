@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,27 +18,19 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
 use watermossmc\player\Player;
-<<<<<<< HEAD
-=======
 use watermossmc\player\PlayerManager;
->>>>>>> 866a1c0 (...)
 
 final class TeleportCommand extends Command
 {
     public function __construct()
     {
-        parent::__construct(
-            'tp',
-            'Teleports a player',
-            '/tp <player>'
-        );
+        parent::__construct('tp', 'Teleports a player', '/tp <player>');
     }
 
     public function execute(mixed $sender, array $args): void
@@ -49,27 +39,14 @@ final class TeleportCommand extends Command
             $this->sendMessage($sender, "Usage: /tp <player>");
             return;
         }
-
         $targetName = $args[0];
-<<<<<<< HEAD
-        $target = \watermossmc\player\PlayerManager::getByName($targetName);
-=======
         $target = PlayerManager::getByName($targetName);
->>>>>>> 866a1c0 (...)
-
         if ($target === null) {
             $this->sendMessage($sender, "Player not found.");
             return;
         }
-
         if ($sender instanceof Player) {
-            $sender->teleport(
-                $target->x,
-                $target->y,
-                $target->z,
-                $target->yaw,
-                $target->pitch
-            );
+            $sender->teleport($target->x, $target->y, $target->z, $target->yaw, $target->pitch);
             $this->sendMessage($sender, "Teleported to {$target->getName()}.");
             $this->sendMessage($target, "You were teleported by " . $sender->getName() . ".");
         } else {

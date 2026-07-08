@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -42,21 +39,22 @@ final class ItemRegistry extends Packet
     public static function send(Session $s, Socket $sock): void
     {
         $items = ItemTypeList::getEntries();
-
         $payload = '';
         $payload .= Binary::writeVarInt(\count($items));
-
         foreach ($items as $item) {
-            $payload .= McpeBinary::writeString($item['stringId']);       // string id
-            $payload .= Binary::writeLShort($item['numericId']);          // numeric id (LE signed short)
-            $payload .= Binary::writeBool($item['componentBased']);       // is component based
-            $payload .= McpeBinary::writeSignedVarInt($item['version']);  // version
-            $payload .= NBT::compound([]);                                // component NBT (empty compound)
+            $payload .= McpeBinary::writeString($item['stringId']);
+            // string id
+            $payload .= Binary::writeLShort($item['numericId']);
+            // numeric id (LE signed short)
+            $payload .= Binary::writeBool($item['componentBased']);
+            // is component based
+            $payload .= McpeBinary::writeSignedVarInt($item['version']);
+            // version
+            $payload .= NBT::compound([]);
+            // component NBT (empty compound)
         }
-
         $hex = bin2hex($payload);
         Logger::debug("ItemRegistry payload hex: " . $hex);
-
         self::sendBatch(ProtocolInfo::ITEM_REGISTRY_PACKET, $payload, $s, $sock);
     }
 }

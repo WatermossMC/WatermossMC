@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -41,15 +38,10 @@ final class ResourcePackClientResponse extends Packet
     {
         $status = Binary::readByte($p, $o);
         $count = Binary::readLShort($p, $o);
-
         $packs = [];
         for ($i = 0; $i < $count; $i++) {
             $packs[] = Binary::readString($p, $o);
         }
-
-        return [
-            'status' => $status,
-            'packs' => $packs,
-        ];
+        return ['status' => $status, 'packs' => $packs];
     }
 }

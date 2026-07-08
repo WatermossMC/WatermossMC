@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -30,21 +27,21 @@ final class ProtocolInfo
     public const CURRENT_PROTOCOL = 1001;
     public const MINECRAFT_VERSION = 'v26.30';
     public const MINECRAFT_VERSION_NETWORK = '1.26.30';
-    public const LOGIN_PACKET = 0x01;
-    public const PLAY_STATUS_PACKET = 0x02;
-    public const SERVER_TO_CLIENT_HANDSHAKE_PACKET = 0x03;
-    public const CLIENT_TO_SERVER_HANDSHAKE_PACKET = 0x04;
-    public const DISCONNECT_PACKET = 0x05;
-    public const RESOURCE_PACKS_INFO_PACKET = 0x06;
-    public const RESOURCE_PACK_STACK_PACKET = 0x07;
-    public const RESOURCE_PACK_CLIENT_RESPONSE_PACKET = 0x08;
-    public const TEXT_PACKET = 0x09;
-    public const SET_TIME_PACKET = 0x0a;
-    public const START_GAME_PACKET = 0x0b;
-    public const ADD_PLAYER_PACKET = 0x0c;
-    public const ADD_ACTOR_PACKET = 0x0d;
-    public const REMOVE_ACTOR_PACKET = 0x0e;
-    public const ADD_ITEM_ACTOR_PACKET = 0x0f;
+    public const LOGIN_PACKET = 0x1;
+    public const PLAY_STATUS_PACKET = 0x2;
+    public const SERVER_TO_CLIENT_HANDSHAKE_PACKET = 0x3;
+    public const CLIENT_TO_SERVER_HANDSHAKE_PACKET = 0x4;
+    public const DISCONNECT_PACKET = 0x5;
+    public const RESOURCE_PACKS_INFO_PACKET = 0x6;
+    public const RESOURCE_PACK_STACK_PACKET = 0x7;
+    public const RESOURCE_PACK_CLIENT_RESPONSE_PACKET = 0x8;
+    public const TEXT_PACKET = 0x9;
+    public const SET_TIME_PACKET = 0xa;
+    public const START_GAME_PACKET = 0xb;
+    public const ADD_PLAYER_PACKET = 0xc;
+    public const ADD_ACTOR_PACKET = 0xd;
+    public const REMOVE_ACTOR_PACKET = 0xe;
+    public const ADD_ITEM_ACTOR_PACKET = 0xf;
     public const SERVER_PLAYER_POST_MOVE_POSITION_PACKET = 0x10;
     public const TAKE_ITEM_ACTOR_PACKET = 0x11;
     public const MOVE_ACTOR_ABSOLUTE_PACKET = 0x12;

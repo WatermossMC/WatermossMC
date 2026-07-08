@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\plugin;
 
@@ -35,21 +32,16 @@ final class PluginManager
     /** @var array<string, PluginBase> */
     private array $plugins = [];
 
-    public function __construct(
-        private readonly Server $server,
-        private readonly string $pluginPath
-    ) {}
+    public function __construct(private readonly Server $server, private readonly string $pluginPath) {}
 
     public function loadPlugins(): void
     {
         $this->ensurePluginDirectory();
-
         $directories = glob($this->pluginPath . '/*', \GLOB_ONLYDIR);
         if ($directories === false) {
             Logger::warning('Unable to scan plugin directory: ' . $this->pluginPath);
             return;
         }
-
         foreach ($directories as $directory) {
             $this->loadPlugin($directory);
         }
@@ -98,38 +90,29 @@ final class PluginManager
         if (!is_file($manifestPath)) {
             return;
         }
-
         try {
             $description = $this->readDescription($manifestPath);
             $mainFile = $directory . '/src/' . str_replace('\\', '/', $description->main) . '.php';
-
             if (!is_file($mainFile)) {
                 $mainFile = $directory . '/' . str_replace('\\', '/', $description->main) . '.php';
             }
-
             if (!is_file($mainFile)) {
                 throw new RuntimeException('Main class file not found for ' . $description->main);
             }
-
             require_once $mainFile;
-
             if (!class_exists($description->main)) {
                 throw new RuntimeException('Main class not found: ' . $description->main);
             }
-
             if (!is_subclass_of($description->main, PluginBase::class)) {
                 throw new RuntimeException('Main class must extend ' . PluginBase::class);
             }
-
             $dataFolder = $directory . '/data';
             if (!is_dir($dataFolder) && !mkdir($dataFolder, 0o777, true) && !is_dir($dataFolder)) {
                 throw new RuntimeException('Unable to create data folder: ' . $dataFolder);
             }
-
             /** @var PluginBase $plugin */
             $plugin = new $description->main($this->server, $description, $dataFolder);
             $plugin->onLoad();
-
             $this->plugins[strtolower($description->name)] = $plugin;
             Logger::info('Loaded plugin ' . $description->name . ' v' . $description->version);
         } catch (Throwable $e) {
@@ -143,12 +126,10 @@ final class PluginManager
         if ($json === false) {
             throw new RuntimeException('Unable to read plugin manifest');
         }
-
         $data = json_decode($json, true);
         if (!\is_array($data)) {
             throw new RuntimeException('Invalid plugin manifest JSON');
         }
-
         return PluginDescription::fromArray($data, $manifestPath);
     }
 

@@ -18,14 +18,11 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\nbt;
-<<<<<<< HEAD
-=======
 
 use RuntimeException;
->>>>>>> 866a1c0 (...)
 
 final class NBT
 {
@@ -50,11 +47,9 @@ final class NBT
     {
         $buf = \chr(self::TAG_COMPOUND);
         $buf .= self::writeString('');
-
         foreach ($data as $name => $value) {
-            $buf .= self::writeNamedTag((string)$name, $value);
+            $buf .= self::writeNamedTag((string) $name, $value);
         }
-
         return $buf . \chr(self::TAG_END);
     }
 
@@ -66,29 +61,19 @@ final class NBT
     {
         $offset = 0;
         [$tag, $name, $value] = self::readNamedTag($data, $offset);
-
         if ($tag !== self::TAG_COMPOUND) {
             throw new RuntimeException('NBT root tag must be a compound');
         }
-
         if (!\is_array($value)) {
-<<<<<<< HEAD
-            throw new \RuntimeException('NBT root value must be a compound');
-=======
             throw new RuntimeException('NBT root value must be a compound');
->>>>>>> 866a1c0 (...)
         }
-
         return $value;
     }
 
     private static function writeNamedTag(string $name, mixed $value): string
     {
         [$tag, $payload] = self::detectTag($value);
-
-        return \chr($tag)
-            . self::writeString($name)
-            . $payload;
+        return \chr($tag) . self::writeString($name) . $payload;
     }
 
     /**
@@ -97,10 +82,7 @@ final class NBT
      */
     public static function tagCompound(array $value): array
     {
-        return [
-            '__nbt_type' => self::TAG_COMPOUND,
-            '__nbt_value' => $value,
-        ];
+        return ['__nbt_type' => self::TAG_COMPOUND, '__nbt_value' => $value];
     }
 
     /**
@@ -109,10 +91,7 @@ final class NBT
      */
     public static function tagList(array $value): array
     {
-        return [
-            '__nbt_type' => self::TAG_LIST,
-            '__nbt_value' => $value,
-        ];
+        return ['__nbt_type' => self::TAG_LIST, '__nbt_value' => $value];
     }
 
     /**
@@ -120,59 +99,34 @@ final class NBT
      */
     private static function detectTag(mixed $value): array
     {
-        if (
-            \is_array($value) &&
-            isset($value['__nbt_type'], $value['__nbt_value'])
-        ) {
+        if (\is_array($value) && isset($value['__nbt_type'], $value['__nbt_value'])) {
             return match ($value['__nbt_type']) {
-                self::TAG_COMPOUND => [
-                    self::TAG_COMPOUND,
-                    self::writeCompoundPayload($value['__nbt_value']),
-                ],
-
+                self::TAG_COMPOUND => [self::TAG_COMPOUND, self::writeCompoundPayload($value['__nbt_value'])],
                 self::TAG_LIST => self::writeList($value['__nbt_value']),
-
-<<<<<<< HEAD
-                default => throw new \RuntimeException(
-=======
-                default => throw new RuntimeException(
->>>>>>> 866a1c0 (...)
-                    'Unsupported explicit NBT tag'
-                )
+                default => throw new RuntimeException('Unsupported explicit NBT tag'),
             };
         }
-
         if (\is_int($value)) {
             if ($value < -2147483648 || $value > 2147483647) {
                 return [self::TAG_LONG, self::writeLong($value)];
             }
-
             return [self::TAG_INT, self::writeInt($value)];
         }
-
         if (\is_float($value)) {
             return [self::TAG_FLOAT, self::writeFloat($value)];
         }
-
         if (\is_string($value)) {
             return [self::TAG_STRING, self::writeString($value)];
         }
-
         if (\is_bool($value)) {
             return [self::TAG_BYTE, \chr($value ? 1 : 0)];
         }
-
         if (\is_array($value)) {
             if (self::isList($value)) {
                 return self::writeList($value);
             }
-
-            return [
-                self::TAG_COMPOUND,
-                self::writeCompoundPayload($value),
-            ];
+            return [self::TAG_COMPOUND, self::writeCompoundPayload($value)];
         }
-
         throw new RuntimeException('Unsupported NBT type');
     }
 
@@ -182,11 +136,9 @@ final class NBT
     private static function writeCompoundPayload(array $data): string
     {
         $buf = '';
-
         foreach ($data as $name => $value) {
-            $buf .= self::writeNamedTag((string)$name, $value);
+            $buf .= self::writeNamedTag((string) $name, $value);
         }
-
         return $buf . \chr(self::TAG_END);
     }
 
@@ -197,33 +149,18 @@ final class NBT
     private static function writeList(array $list): array
     {
         if ($list === []) {
-            return [
-                self::TAG_LIST,
-                \chr(self::TAG_END) . pack('N', 0),
-            ];
+            return [self::TAG_LIST, \chr(self::TAG_END) . pack('N', 0)];
         }
-
         [$childTag] = self::detectTag($list[0]);
-
         $buf = \chr($childTag);
         $buf .= pack('N', \count($list));
-
         foreach ($list as $value) {
             [$tag, $payload] = self::detectTag($value);
-
             if ($tag !== $childTag) {
-<<<<<<< HEAD
-                throw new \RuntimeException(
-=======
-                throw new RuntimeException(
->>>>>>> 866a1c0 (...)
-                    'NBT list contains mixed tag types'
-                );
+                throw new RuntimeException('NBT list contains mixed tag types');
             }
-
             $buf .= $payload;
         }
-
         return [self::TAG_LIST, $buf];
     }
 
@@ -239,8 +176,8 @@ final class NBT
 
     private static function writeLong(int $v): string
     {
-        $hi = ($v >> 32) & 0xFFFFFFFF;
-        $lo = $v & 0xFFFFFFFF;
+        $hi = $v >> 32 & 0xffffffff;
+        $lo = $v & 0xffffffff;
         return pack('N2', $hi, $lo);
     }
 
@@ -264,14 +201,11 @@ final class NBT
     private static function readNamedTag(string $buf, int &$o): array
     {
         $tag = self::readByte($buf, $o);
-
         if ($tag === self::TAG_END) {
             return [self::TAG_END, '', null];
         }
-
         $name = self::readString($buf, $o);
         $payload = self::readPayload($tag, $buf, $o);
-
         return [$tag, $name, $payload];
     }
 
@@ -298,10 +232,8 @@ final class NBT
     {
         $length = self::readShort($buf, $o);
         self::ensure($buf, $o, $length);
-
         $value = substr($buf, $o, $length);
         $o += $length;
-
         return $value;
     }
 
@@ -341,7 +273,7 @@ final class NBT
             throw new RuntimeException('Failed to unpack long');
         }
         $o += 8;
-        return ($value[1] << 32) | $value[2];
+        return $value[1] << 32 | $value[2];
     }
 
     private static function readFloat(string $buf, int &$o): float
@@ -377,10 +309,8 @@ final class NBT
     {
         $length = self::readInt($buf, $o);
         self::ensure($buf, $o, $length);
-
         $data = substr($buf, $o, $length);
         $o += $length;
-
         return array_map('ord', str_split($data));
     }
 
@@ -391,11 +321,9 @@ final class NBT
     {
         $length = self::readInt($buf, $o);
         $result = [];
-
         for ($i = 0; $i < $length; $i++) {
             $result[] = self::readInt($buf, $o);
         }
-
         return $result;
     }
 
@@ -406,11 +334,9 @@ final class NBT
     {
         $length = self::readInt($buf, $o);
         $result = [];
-
         for ($i = 0; $i < $length; $i++) {
             $result[] = self::readLong($buf, $o);
         }
-
         return $result;
     }
 
@@ -421,7 +347,6 @@ final class NBT
     {
         $childTag = self::readByte($buf, $o);
         $length = self::readInt($buf, $o);
-
         $result = [];
         for ($i = 0; $i < $length; $i++) {
             if ($childTag === self::TAG_COMPOUND) {
@@ -430,7 +355,6 @@ final class NBT
                 $result[] = self::readPayload($childTag, $buf, $o);
             }
         }
-
         return $result;
     }
 
@@ -440,28 +364,21 @@ final class NBT
     private static function readCompound(string $buf, int &$o): array
     {
         $result = [];
-
         while (true) {
             $tag = self::readByte($buf, $o);
             if ($tag === self::TAG_END) {
                 break;
             }
-
             $name = self::readString($buf, $o);
             $result[$name] = self::readPayload($tag, $buf, $o);
         }
-
         return $result;
     }
 
     private static function ensure(string $buf, int $offset, int $length): void
     {
         if (\strlen($buf) < $offset + $length) {
-<<<<<<< HEAD
-            throw new \RuntimeException('NBT buffer underrun');
-=======
             throw new RuntimeException('NBT buffer underrun');
->>>>>>> 866a1c0 (...)
         }
     }
 

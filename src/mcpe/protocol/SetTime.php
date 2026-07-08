@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -31,15 +28,9 @@ use watermossmc\mcpe\network\Session;
 
 final class SetTime extends Packet
 {
-<<<<<<< HEAD
-    public static function send(Session $s, Socket $sock): void
-    {
-        $p = Binary::writeInt(6000);
-=======
     public static function send(Session $s, Socket $sock, int $time): void
     {
         $p = Binary::writeInt($time);
->>>>>>> 866a1c0 (...)
         self::sendBatch(ProtocolInfo::SET_TIME_PACKET, $p, $s, $sock);
     }
 }

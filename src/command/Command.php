@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,29 +18,16 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\command;
 
 use watermossmc\player\Player;
-<<<<<<< HEAD
-=======
 use watermossmc\util\Permission;
->>>>>>> 866a1c0 (...)
 
 abstract class Command
 {
-    public function __construct(
-        public readonly string $name,
-        public readonly string $description,
-        public readonly string $usage,
-<<<<<<< HEAD
-        public readonly int $permissionLevel = 0
-=======
-        public readonly int $requiredRole = Permission::ROLE_MEMBER
->>>>>>> 866a1c0 (...)
-    ) {}
+    public function __construct(public readonly string $name, public readonly string $description, public readonly string $usage, public readonly int $requiredRole = Permission::ROLE_MEMBER) {}
 
     /**
      * @param Player|null $sender Null if the command was executed from console.
@@ -55,8 +40,7 @@ abstract class Command
         if ($sender instanceof Player) {
             $sender->sendMessage($message);
         } else {
-            echo "[$sender] $message
-";
+            echo "[{$sender}] {$message}\n";
         }
     }
 }

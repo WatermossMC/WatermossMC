@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,24 +18,10 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
-<<<<<<< HEAD
-use Socket;
-use watermossmc\binary\Binary;
-use watermossmc\binary\McpeBinary;
-use watermossmc\mcpe\network\Session;
-
-final class UpdateAttributes extends Packet
-{
-    public static function send(Session $s, Socket $sock): void
-    {
-        $runtimeId = $s->getRuntimeId();
-        $attributes = self::getDefaultAttributes();
-=======
 use function count;
 
 use Socket;
@@ -51,35 +35,22 @@ final class UpdateAttributes extends Packet
         $s = $player->session;
         $runtimeId = $s->getRuntimeId();
         $attributes = $player->getAttributeMap()->getAll();
->>>>>>> 866a1c0 (...)
         $tick = 0;
-
         $payload = '';
         $payload .= Binary::writeVarLong($runtimeId);
         $payload .= Binary::writeVarInt(\count($attributes));
-
         foreach ($attributes as $attr) {
-<<<<<<< HEAD
-            $payload .= Binary::writeFloat($attr['min']);
-            $payload .= Binary::writeFloat($attr['max']);
-            $payload .= Binary::writeFloat($attr['current']);
-            $payload .= Binary::writeFloat($attr['default']);
-            $payload .= McpeBinary::writeString($attr['name']);
-=======
             $payload .= Binary::writeFloat($attr->getMin());
             $payload .= Binary::writeFloat($attr->getMax());
             $payload .= Binary::writeFloat($attr->getValue());
             $payload .= Binary::writeFloat($attr->getDefault());
             $payload .= McpeBinary::writeString($attr->getId());
->>>>>>> 866a1c0 (...)
-            $payload .= McpeBinary::writeSignedVarInt(0); // modifier count
+            $payload .= McpeBinary::writeSignedVarInt(0);
+            // modifier count
         }
-
         $payload .= Binary::writeVarLong($tick);
-
         self::sendBatch(ProtocolInfo::UPDATE_ATTRIBUTES_PACKET, $payload, $s, $sock);
     }
-<<<<<<< HEAD
 
     /**
      * Returns the standard player attribute set with sane defaults.
@@ -89,21 +60,6 @@ final class UpdateAttributes extends Packet
      */
     private static function getDefaultAttributes(): array
     {
-        return [
-            ['name' => 'minecraft:health',           'min' => 0.0,   'max' => 20.0,   'current' => 20.0,  'default' => 20.0],
-            ['name' => 'minecraft:follow_range',      'min' => 0.0,   'max' => 2048.0, 'current' => 32.0,  'default' => 32.0],
-            ['name' => 'minecraft:knockback_resistance', 'min' => 0.0, 'max' => 1.0,   'current' => 0.0,   'default' => 0.0],
-            ['name' => 'minecraft:movement',          'min' => 0.0,   'max' => 3.4028235E38, 'current' => 0.1, 'default' => 0.1],
-            ['name' => 'minecraft:attack_damage',     'min' => 0.0,   'max' => 3.4028235E38, 'current' => 1.0, 'default' => 1.0],
-            ['name' => 'minecraft:absorption',        'min' => 0.0,   'max' => 3.4028235E38, 'current' => 0.0, 'default' => 0.0],
-            ['name' => 'minecraft:luck',              'min' => -1024.0, 'max' => 1024.0, 'current' => 0.0, 'default' => 0.0],
-            ['name' => 'minecraft:player.hunger',     'min' => 0.0,   'max' => 20.0,   'current' => 20.0,  'default' => 20.0],
-            ['name' => 'minecraft:player.saturation', 'min' => 0.0,   'max' => 20.0,   'current' => 20.0,  'default' => 20.0],
-            ['name' => 'minecraft:player.exhaustion', 'min' => 0.0,   'max' => 5.0,    'current' => 0.0,   'default' => 0.0],
-            ['name' => 'minecraft:player.level',      'min' => 0.0,   'max' => 24791.0,'current' => 0.0,   'default' => 0.0],
-            ['name' => 'minecraft:player.experience', 'min' => 0.0,   'max' => 1.0,    'current' => 0.0,   'default' => 0.0],
-        ];
+        return [['name' => 'minecraft:health', 'min' => 0.0, 'max' => 20.0, 'current' => 20.0, 'default' => 20.0], ['name' => 'minecraft:follow_range', 'min' => 0.0, 'max' => 2048.0, 'current' => 32.0, 'default' => 32.0], ['name' => 'minecraft:knockback_resistance', 'min' => 0.0, 'max' => 1.0, 'current' => 0.0, 'default' => 0.0], ['name' => 'minecraft:movement', 'min' => 0.0, 'max' => 3.4028235E+38, 'current' => 0.1, 'default' => 0.1], ['name' => 'minecraft:attack_damage', 'min' => 0.0, 'max' => 3.4028235E+38, 'current' => 1.0, 'default' => 1.0], ['name' => 'minecraft:absorption', 'min' => 0.0, 'max' => 3.4028235E+38, 'current' => 0.0, 'default' => 0.0], ['name' => 'minecraft:luck', 'min' => -1024.0, 'max' => 1024.0, 'current' => 0.0, 'default' => 0.0], ['name' => 'minecraft:player.hunger', 'min' => 0.0, 'max' => 20.0, 'current' => 20.0, 'default' => 20.0], ['name' => 'minecraft:player.saturation', 'min' => 0.0, 'max' => 20.0, 'current' => 20.0, 'default' => 20.0], ['name' => 'minecraft:player.exhaustion', 'min' => 0.0, 'max' => 5.0, 'current' => 0.0, 'default' => 0.0], ['name' => 'minecraft:player.level', 'min' => 0.0, 'max' => 24791.0, 'current' => 0.0, 'default' => 0.0], ['name' => 'minecraft:player.experience', 'min' => 0.0, 'max' => 1.0, 'current' => 0.0, 'default' => 0.0]];
     }
-=======
->>>>>>> 866a1c0 (...)
 }

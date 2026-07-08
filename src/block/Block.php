@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,16 +18,12 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\block;
 
-<<<<<<< HEAD
-=======
 use watermossmc\player\Player;
 
->>>>>>> 866a1c0 (...)
 abstract class Block
 {
     public const AIR = 0;
@@ -38,10 +32,7 @@ abstract class Block
     public const DIRT = 3;
     public const BEDROCK = 7;
 
-    public function __construct(
-        public readonly int $id,
-        public readonly string $name
-    ) {}
+    public function __construct(public readonly int $id, public readonly string $name) {}
 
     public function onPlace(int $x, int $y, int $z): void
     {
@@ -53,11 +44,7 @@ abstract class Block
         // Default: do nothing
     }
 
-<<<<<<< HEAD
-    public function onInteract(int $x, int $y, int $z, \watermossmc\player\Player $player): void
-=======
     public function onInteract(int $x, int $y, int $z, Player $player): void
->>>>>>> 866a1c0 (...)
     {
         // Default: do nothing
     }

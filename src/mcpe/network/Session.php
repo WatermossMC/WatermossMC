@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\network;
 
@@ -33,6 +33,18 @@ use watermossmc\util\Logger;
 
 final class Session
 {
+    public const RN_CONNECTING = 0;
+    public const RN_CONNECTED = 1;
+    public const RN_DISCONNECTING = 2;
+    public const RN_DISCONNECTED = 3;
+    public const MC_NONE = 0;
+    public const MC_NETWORK = 1;
+    public const MC_HANDSHAKE = 2;
+    public const MC_LOGIN = 3;
+    public const MC_RESOURCE = 4;
+    public const MC_PRESPAWN = 5;
+    public const MC_PLAY = 6;
+
     public int $sendSequence = 0;
 
     public int $orderedIndex = 0;
@@ -115,20 +127,7 @@ final class Session
 
     private int $runtimeId;
 
-    public const RN_CONNECTING = 0;
-    public const RN_CONNECTED = 1;
-    public const RN_DISCONNECTING = 2;
-    public const RN_DISCONNECTED = 3;
-
     private int $raknetState = self::RN_CONNECTING;
-
-    public const MC_NONE = 0;
-    public const MC_NETWORK = 1;
-    public const MC_HANDSHAKE = 2;
-    public const MC_LOGIN = 3;
-    public const MC_RESOURCE = 4;
-    public const MC_PRESPAWN = 5;
-    public const MC_PLAY = 6;
 
     /** @var array<int, bool> */
     private array $receivedReliable = [];
@@ -144,11 +143,8 @@ final class Session
 
     private bool $hasWaitingRequestChunkRadiusAck = false;
 
-<<<<<<< HEAD
-=======
     private bool $cacheEnabled = false;
 
->>>>>>> 866a1c0 (...)
     public function __construct(string $addr, int $port)
     {
         $this->address = $addr;
@@ -173,7 +169,6 @@ final class Session
         if (isset($this->received[$seq])) {
             return false;
         }
-
         $this->received[$seq] = true;
         if (\count($this->received) > 4096) {
             array_shift($this->received);
@@ -254,11 +249,7 @@ final class Session
      */
     public function getPosition(): array
     {
-        return [
-            'x' => $this->x,
-            'y' => $this->y,
-            'z' => $this->z,
-        ];
+        return ['x' => $this->x, 'y' => $this->y, 'z' => $this->z];
     }
 
     public function getUuid(): string
@@ -291,10 +282,7 @@ final class Session
      */
     public function getRotation(): array
     {
-        return [
-            'yaw' => 0.0,
-            'pitch' => 0.0,
-        ];
+        return ['yaw' => 0.0, 'pitch' => 0.0];
     }
 
     public function enableOutboundCompression(int $algo): void
@@ -345,26 +333,14 @@ final class Session
         if ($this->raknetState === self::RN_DISCONNECTED) {
             return;
         }
-
         $this->raknetState = self::RN_DISCONNECTING;
-
         $this->reliableQueue = [];
         $this->outgoingFrames = [];
         $this->orderedSeq = [];
-
         if ($notify && $this->socket !== null) {
             $pk = "\x15";
-
-            @socket_sendto(
-                $this->socket,
-                $pk,
-                1,
-                0,
-                $this->address,
-                $this->port
-            );
+            @socket_sendto($this->socket, $pk, 1, 0, $this->address, $this->port);
         }
-
         $this->raknetState = self::RN_DISCONNECTED;
     }
 
@@ -380,8 +356,7 @@ final class Session
 
     public function getClientPublicKey(): string
     {
-        return $this->clientPublicKey
-            ?? throw new RuntimeException("Client public key not set");
+        return $this->clientPublicKey ?? throw new RuntimeException("Client public key not set");
     }
 
     /**
@@ -442,39 +417,32 @@ final class Session
                 Logger::debug("Inbound decrypt attempt: raw first=0x" . dechex($first) . " len=" . \strlen($data));
                 Logger::debug("Inbound raw hex=" . bin2hex(substr($data, 0, min(32, \strlen($data)))));
                 $data = $this->decrypt($data);
-                Logger::debug("Inbound decrypt succeeded, payload head=0x" . dechex(\ord($data[0] ?? "\0")) . " len=" . \strlen($data));
-<<<<<<< HEAD
-            } catch (\RuntimeException $e) {
-=======
+                Logger::debug("Inbound decrypt succeeded, payload head=0x" . dechex(\ord($data[0] ?? "\x00")) . " len=" . \strlen($data));
             } catch (RuntimeException $e) {
->>>>>>> 866a1c0 (...)
                 // Decryption failed: abort processing so caller can handle failure.
                 Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
                 throw $e;
             }
         }
-
         if ($this->shouldDecompressInbound()) {
             if ($data === '') {
                 throw new RuntimeException("Empty packet, cannot read compression ID");
             }
-
             $compressionId = \ord($data[0]);
             $compressedPayload = substr($data, 1);
-
-            if ($compressionId === 0x00) {
+            if ($compressionId === 0x0) {
                 $decoded = @gzinflate($compressedPayload);
                 if ($decoded === false) {
                     throw new RuntimeException("Raw deflate decode failed");
                 }
                 $data = $decoded;
-            } elseif ($compressionId === 0xFF) {
-                $data = $compressedPayload; // No compression
+            } elseif ($compressionId === 0xff) {
+                $data = $compressedPayload;
+                // No compression
             } else {
                 throw new RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
             }
         }
-
         return $data;
     }
 
@@ -487,12 +455,10 @@ final class Session
             }
             $data = "\x00" . $compressed;
         }
-
         if ($this->isEncryptionEnabled()) {
             $data = $this->encrypt($data);
         }
-
-        return "\xFE" . $data;
+        return "\xfe" . $data;
     }
 
     public function setHandshakeDone(): void
@@ -525,13 +491,11 @@ final class Session
         if ($this->pendingKey === null) {
             throw new LogicException("No pending encryption keys available");
         }
-
         // Prepare to decrypt incoming packets from client immediately,
         // but do not enable outbound encryption until handshake finalization.
         if ($this->inEncryption === null) {
             $this->inEncryption = new EncryptionContext($this->pendingKey);
         }
-
         Logger::debug("Pending decryption activated (inbound only)");
     }
 
@@ -540,12 +504,9 @@ final class Session
         if ($this->pendingKey === null) {
             throw new LogicException('No pending encryption to finalize');
         }
-
         // Enable outbound encryption now that handshake exchange is complete.
         $this->outEncryption = new EncryptionContext($this->pendingKey);
-
         $this->pendingKey = null;
-
         $this->handshakeDone = true;
     }
 
@@ -579,15 +540,10 @@ final class Session
         return $this->orderedIndex++;
     }
 
-    public function storeFragment(
-        int $fragmentId,
-        int $fragmentCount,
-        int $fragmentIndex,
-        string $payload
-    ): bool {
+    public function storeFragment(int $fragmentId, int $fragmentCount, int $fragmentIndex, string $payload): bool
+    {
         $this->fragments[$fragmentId]['count'] ??= $fragmentCount;
         $this->fragments[$fragmentId]['parts'][$fragmentIndex] = $payload;
-
         return \count($this->fragments[$fragmentId]['parts']) >= $fragmentCount;
     }
 
@@ -606,9 +562,7 @@ final class Session
 
     public function isAckForNetworkSettings(int $seq): bool
     {
-        return $this->networkSettingsSent
-            && $this->networkSettingsReliableSeq !== null
-            && $seq === $this->networkSettingsReliableSeq;
+        return $this->networkSettingsSent && $this->networkSettingsReliableSeq !== null && $seq === $this->networkSettingsReliableSeq;
     }
 
     public function clearNetworkSettingsReliableSeq(): void
@@ -642,8 +596,6 @@ final class Session
     {
         $this->hasWaitingRequestChunkRadiusAck = $v;
     }
-<<<<<<< HEAD
-=======
 
     public function isCacheEnabled(): bool
     {
@@ -654,5 +606,4 @@ final class Session
     {
         $this->cacheEnabled = $v;
     }
->>>>>>> 866a1c0 (...)
 }

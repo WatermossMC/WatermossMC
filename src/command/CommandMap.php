@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,34 +18,21 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\command;
 
-<<<<<<< HEAD
-use watermossmc\player\Player;
-use watermossmc\Server;
-use watermossmc\util\Logger;
-=======
 use Throwable;
 use watermossmc\player\Player;
 use watermossmc\util\Logger;
 use watermossmc\util\Permission;
->>>>>>> 866a1c0 (...)
 
 final class CommandMap
 {
     /** @var array<string, Command> */
     private array $commands = [];
 
-<<<<<<< HEAD
-    public function __construct(
-        private readonly Server $server
-    ) {}
-=======
     public function __construct() {}
->>>>>>> 866a1c0 (...)
 
     public function register(Command $command): void
     {
@@ -67,48 +52,32 @@ final class CommandMap
     {
         $parts = explode(' ', trim($commandLine));
         $commandName = strtolower(array_shift($parts) ?? '');
-
         if ($commandName === '') {
             return;
         }
-
         $command = $this->commands[$commandName] ?? null;
-
         if ($command === null) {
             if ($sender instanceof Player) {
                 $sender->sendMessage("Unknown command. Type /help for help.");
             } else {
-<<<<<<< HEAD
-                echo "Unknown command: $commandName
-";
-=======
-                echo "Unknown command: $commandName\n";
+                echo "Unknown command: {$commandName}\n";
             }
             return;
         }
-
         // Permission Check
-        $senderRole = ($sender instanceof Player) ? $sender->getRole() : Permission::ROLE_OPERATOR;
+        $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
         if ($senderRole < $command->requiredRole) {
             if ($sender instanceof Player) {
                 $sender->sendMessage("You do not have permission to execute this command.");
             } else {
                 echo "Insufficient permission level.\n";
->>>>>>> 866a1c0 (...)
             }
             return;
         }
-
         try {
             $command->execute($sender, $parts);
-<<<<<<< HEAD
-        } catch (\Throwable $e) {
-=======
-
-
         } catch (Throwable $e) {
->>>>>>> 866a1c0 (...)
-            Logger::error("Error executing command /$commandName: " . $e->getMessage());
+            Logger::error("Error executing command /{$commandName}: " . $e->getMessage());
             if ($sender instanceof Player) {
                 $sender->sendMessage("An internal error occurred while executing this command.");
             }

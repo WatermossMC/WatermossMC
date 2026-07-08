@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -42,7 +39,6 @@ final class UpdatePosition extends Packet
         $payload .= pack("g", $p->yaw);
         $payload .= pack("g", 0.0);
         $payload .= Binary::writeBool($p->onGround);
-
         self::sendBatch(ProtocolInfo::MOVE_PLAYER_PACKET, $payload, $s, $sock);
     }
 }

@@ -18,15 +18,12 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\binary;
-<<<<<<< HEAD
-=======
 
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
->>>>>>> 866a1c0 (...)
 
 final class Binary
 {
@@ -47,7 +44,7 @@ final class Binary
 
     public static function writeLShort(int $v): string
     {
-        return pack('v', $v & 0xFFFF);
+        return pack('v', $v & 0xffff);
     }
 
     public static function writeInt(int $v): string
@@ -72,9 +69,7 @@ final class Binary
 
     public static function writeTriad(int $v): string
     {
-        return \chr($v & 0xFF)
-             . \chr(($v >> 8) & 0xFF)
-             . \chr(($v >> 16) & 0xFF);
+        return \chr($v & 0xff) . \chr($v >> 8 & 0xff) . \chr($v >> 16 & 0xff);
     }
 
     public static function writeFloat(float $v): string
@@ -109,13 +104,11 @@ final class Binary
     public static function writeVarInt(int $value): string
     {
         $buf = '';
-        $v = $value & 0xFFFFFFFF;
-
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
+        $v = $value & 0xffffffff;
+        while (($v & ~0x7f) !== 0) {
+            $buf .= \chr($v & 0x7f | 0x80);
             $v >>= 7;
         }
-
         return $buf . \chr($v);
     }
 
@@ -123,12 +116,10 @@ final class Binary
     {
         $buf = '';
         $v = $value;
-
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
+        while (($v & ~0x7f) !== 0) {
+            $buf .= \chr($v & 0x7f | 0x80);
             $v >>= 7;
         }
-
         return $buf . \chr($v);
     }
 
@@ -136,7 +127,7 @@ final class Binary
     {
         $buf = '';
         for ($i = 0; $i < 10; ++$i) {
-            $byte = $v & 0x7F;
+            $byte = $v & 0x7f;
             $v >>= 7;
             if ($v !== 0) {
                 $byte |= 0x80;
@@ -151,22 +142,18 @@ final class Binary
 
     public static function writeUUID(string $uuid): string
     {
-<<<<<<< HEAD
-        $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
-=======
         $bytes = Uuid::fromString($uuid)->getBytes();
->>>>>>> 866a1c0 (...)
         return strrev(substr($bytes, 0, 8)) . strrev(substr($bytes, 8, 8));
     }
 
     public static function writeUShortBE(int $v): string
     {
-        return pack('n', $v & 0xFFFF);
+        return pack('n', $v & 0xffff);
     }
 
     public static function writeUInt8(int $v): string
     {
-        return \chr($v & 0xFF);
+        return \chr($v & 0xff);
     }
 
     public static function writeFloatBE(float $v): string
@@ -260,13 +247,11 @@ final class Binary
     public static function readTriad(string $buf, int &$o): int
     {
         self::ensure($buf, $o, 3);
-
         $b0 = \ord($buf[$o]);
         $b1 = \ord($buf[$o + 1]);
         $b2 = \ord($buf[$o + 2]);
-
         $o += 3;
-        return $b0 | ($b1 << 8) | ($b2 << 16);
+        return $b0 | $b1 << 8 | $b2 << 16;
     }
 
     public static function readFloat(string $buf, int &$o): float
@@ -298,16 +283,13 @@ final class Binary
     {
         $bytes = intdiv($bits + 7, 8);
         self::ensure($buf, $o, $bytes);
-
         $data = substr($buf, $o, $bytes);
         $o += $bytes;
-
         $flags = [];
         for ($i = 0; $i < $bits; $i++) {
             $byte = \ord($data[$i >> 3]);
-            $flags[$i] = (($byte >> ($i & 7)) & 1) === 1;
+            $flags[$i] = ($byte >> ($i & 7) & 1) === 1;
         }
-
         return $flags;
     }
 
@@ -316,25 +298,20 @@ final class Binary
         $value = 0;
         $shift = 0;
         $len = \strlen($buf);
-
         while (true) {
             if ($o >= $len) {
                 throw new RuntimeException("VarInt overflow");
             }
-
             $b = \ord($buf[$o++]);
-            $value |= ($b & 0x7F) << $shift;
-
+            $value |= ($b & 0x7f) << $shift;
             if (($b & 0x80) === 0) {
                 break;
             }
-
             $shift += 7;
             if ($shift > 35) {
                 throw new RuntimeException("VarInt too big");
             }
         }
-
         return $value;
     }
 
@@ -342,22 +319,18 @@ final class Binary
     {
         $value = 0;
         $shift = 0;
-
         while (true) {
             self::ensure($buf, $o, 1);
             $b = \ord($buf[$o++]);
-
-            $value |= ($b & 0x7F) << $shift;
+            $value |= ($b & 0x7f) << $shift;
             if (($b & 0x80) === 0) {
                 break;
             }
-
             $shift += 7;
             if ($shift > 70) {
                 throw new RuntimeException('VarLong too big');
             }
         }
-
         return $value;
     }
 
@@ -366,10 +339,7 @@ final class Binary
      */
     public static function readVector2(string $buf, int &$o): array
     {
-        return [
-            self::readFloat($buf, $o),
-            self::readFloat($buf, $o),
-        ];
+        return [self::readFloat($buf, $o), self::readFloat($buf, $o)];
     }
 
     /**
@@ -377,11 +347,7 @@ final class Binary
      */
     public static function readVector3(string $buf, int &$o): array
     {
-        return [
-            self::readFloat($buf, $o),
-            self::readFloat($buf, $o),
-            self::readFloat($buf, $o),
-        ];
+        return [self::readFloat($buf, $o), self::readFloat($buf, $o), self::readFloat($buf, $o)];
     }
 
     public static function skipItemInteractionData(string $buf, int &$o): void {}

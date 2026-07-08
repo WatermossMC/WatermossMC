@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -34,12 +31,16 @@ final class CraftingData extends Packet
     public static function sendEmpty(Session $s, Socket $sock): void
     {
         $payload = '';
-        $payload .= Binary::writeVarInt(0); // recipesWithTypeIds count
-        $payload .= Binary::writeVarInt(0); // potionTypeRecipes count
-        $payload .= Binary::writeVarInt(0); // potionContainerRecipes count
-        $payload .= Binary::writeVarInt(0); // materialReducerRecipes count
-        $payload .= Binary::writeBool(true); // cleanRecipes
-
+        $payload .= Binary::writeVarInt(0);
+        // recipesWithTypeIds count
+        $payload .= Binary::writeVarInt(0);
+        // potionTypeRecipes count
+        $payload .= Binary::writeVarInt(0);
+        // potionContainerRecipes count
+        $payload .= Binary::writeVarInt(0);
+        // materialReducerRecipes count
+        $payload .= Binary::writeBool(true);
+        // cleanRecipes
         self::sendBatch(ProtocolInfo::CRAFTING_DATA_PACKET, $payload, $s, $sock);
     }
 }

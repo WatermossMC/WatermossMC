@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\network;
 
@@ -26,33 +26,30 @@ use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\mcpe\PacketHandler;
 use watermossmc\mcpe\protocol\ProtocolInfo;
-<<<<<<< HEAD
-=======
 use watermossmc\player\PlayerManager;
->>>>>>> 866a1c0 (...)
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
 use watermossmc\util\Motd;
 
 final class RakNet
 {
-    public const MAGIC = "\x00\xff\xff\x00\xfe\xfe\xfe\xfe\xfd\xfd\xfd\xfd\x12\x34\x56\x78";
-    public const CONNECTED_PING = 0x00;
-    public const CONNECTED_PONG = 0x03;
-    public const UNCONNECTED_PING = 0x01;
-    public const UNCONNECTED_PONG = 0x1C;
-    public const OPEN_CONNECTION_REQUEST_1 = 0x05;
-    public const OPEN_CONNECTION_REPLY_1 = 0x06;
-    public const OPEN_CONNECTION_REQUEST_2 = 0x07;
-    public const OPEN_CONNECTION_REPLY_2 = 0x08;
-    public const CONNECTION_REQUEST = 0x09;
+    public const MAGIC = "\x00\xff\xff\x00\xfe\xfe\xfe\xfe\xfd\xfd\xfd\xfd\x124Vx";
+    public const CONNECTED_PING = 0x0;
+    public const CONNECTED_PONG = 0x3;
+    public const UNCONNECTED_PING = 0x1;
+    public const UNCONNECTED_PONG = 0x1c;
+    public const OPEN_CONNECTION_REQUEST_1 = 0x5;
+    public const OPEN_CONNECTION_REPLY_1 = 0x6;
+    public const OPEN_CONNECTION_REQUEST_2 = 0x7;
+    public const OPEN_CONNECTION_REPLY_2 = 0x8;
+    public const CONNECTION_REQUEST = 0x9;
     public const CONNECTION_REQUEST_ACCEPTED = 0x10;
     public const NEW_INCOMING_CONNECTION = 0x13;
     public const DISCONNECT = 0x15;
     public const FRAME_SET_MIN = 0x80;
-    public const FRAME_SET_MAX = 0x8D;
-    public const ACK = 0xC0;
-    public const NACK = 0xA0;
+    public const FRAME_SET_MAX = 0x8d;
+    public const ACK = 0xc0;
+    public const NACK = 0xa0;
 
     /** @var Session[] */
     private static array $sessions = [];
@@ -69,22 +66,12 @@ final class RakNet
         if ($packet === '') {
             return;
         }
-
         $pid = \ord($packet[0]);
-
-        Logger::debug(\sprintf(
-            "UDP recv len=%d first=0x%02X from %s:%d",
-            \strlen($packet),
-            \ord($packet[0]),
-            $addr,
-            $port
-        ));
-
+        Logger::debug(\sprintf("UDP recv len=%d first=0x%02X from %s:%d", \strlen($packet), \ord($packet[0]), $addr, $port));
         if ($pid >= self::FRAME_SET_MIN && $pid <= self::FRAME_SET_MAX) {
             self::handleFrameSet($packet, $addr, $port, $socket);
             return;
         }
-
         match ($pid) {
             self::UNCONNECTED_PING => self::handlePing($packet, $addr, $port, $socket),
             self::OPEN_CONNECTION_REQUEST_1 => self::handleOpen1($packet, $addr, $port, $socket),
@@ -92,32 +79,27 @@ final class RakNet
             self::CONNECTION_REQUEST => self::handleConnectionRequest($packet, $addr, $port, $socket),
             self::ACK => self::handleAck($packet, $addr, $port),
             self::NACK => self::handleNack($packet, $addr, $port, $socket),
-            default => null
+            default => null,
         };
     }
 
     private static function session(string $addr, int $port, ?Socket $sock = null): Session
     {
-        $key = "$addr:$port";
-
+        $key = "{$addr}:{$port}";
         if (!isset(self::$sessions[$key])) {
             $s = new Session($addr, $port);
             self::$sessions[$key] = $s;
         }
-
         $session = self::$sessions[$key];
-
         if ($sock !== null) {
             $session->attachSocket($sock);
         }
-
         return $session;
     }
 
     private static function readAddress(string $p, int &$o): void
     {
         $type = Binary::readByte($p, $o);
-
         if ($type === 4) {
             $o += 4;
             Binary::readShort($p, $o);
@@ -130,13 +112,11 @@ final class RakNet
     private static function writeAddress(string $ip, int $port): string
     {
         $parts = explode('.', $ip);
-
         $buf = Binary::writeByte(4);
         foreach ($parts as $p) {
-            $buf .= Binary::writeByte(((int)$p) ^ 0xFF);
+            $buf .= Binary::writeByte((int) $p ^ 0xff);
         }
         $buf .= Binary::writeShort($port);
-
         return $buf;
     }
 
@@ -147,25 +127,13 @@ final class RakNet
         if (substr($p, $o, 16) !== self::MAGIC) {
             return;
         }
-
         $gameModeName = Config::getString('gamemode', 'Survival');
         $gameModeId = Config::getInt('game_mode_id', self::gameModeToId($gameModeName));
-
         $buf = Binary::writeByte(self::UNCONNECTED_PONG);
         $buf .= Binary::writeLong($time);
         $buf .= Binary::writeLong(self::$serverId);
         $buf .= self::MAGIC;
-
-        $motd = (new Motd())
-            ->motd(Config::getString('motd', 'WatermossMC'))
-            ->worldName(Config::getString('level_name', 'RakNet PHP Server'))
-            ->protocol(ProtocolInfo::CURRENT_PROTOCOL)
-            ->version(Config::getString('version_name', '1.21.124'))
-            ->players(\count(self::$sessions), Config::getInt('max_players', 20))
-            ->gameMode($gameModeName, $gameModeId)
-            ->port(Config::getInt('server_port', 19132))
-            ->build(self::$serverId);
-
+        $motd = (new Motd())->motd(Config::getString('motd', 'WatermossMC'))->worldName(Config::getString('level_name', 'RakNet PHP Server'))->protocol(ProtocolInfo::CURRENT_PROTOCOL)->version(Config::getString('version_name', '1.21.124'))->players(\count(self::$sessions), Config::getInt('max_players', 20))->gameMode($gameModeName, $gameModeId)->port(Config::getInt('server_port', 19132))->build(self::$serverId);
         $buf .= Binary::writeString($motd);
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
     }
@@ -184,57 +152,44 @@ final class RakNet
     private static function handleOpen1(string $p, string $a, int $po, Socket $s): void
     {
         $o = 1;
-
         if (substr($p, $o, 16) !== self::MAGIC) {
             return;
         }
         $o += 16;
-
         $protocol = Binary::readByte($p, $o);
         $mtu = \strlen($p);
-
         Logger::debug("OPEN_CONNECTION_REQUEST_1 mtu={$mtu} protocol={$protocol}");
-
         $session = self::session($a, $po);
         $session->mtu = $mtu;
         $session->setRakNetState(Session::RN_CONNECTING);
-
         $buf = Binary::writeByte(self::OPEN_CONNECTION_REPLY_1);
         $buf .= self::MAGIC;
         $buf .= Binary::writeLong(self::$serverId);
         $buf .= Binary::writeByte(0);
         $buf .= Binary::writeShort($mtu);
-
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
     }
 
     private static function handleOpen2(string $p, string $a, int $po, Socket $s): void
     {
         $o = 1;
-
         if (substr($p, $o, 16) !== self::MAGIC) {
             return;
         }
         $o += 16;
-
         self::readAddress($p, $o);
-
         $mtu = Binary::readShort($p, $o);
         $clientGuid = Binary::readLong($p, $o);
-
         Logger::debug("OPEN_CONNECTION_REQUEST_2 mtu={$mtu} guid={$clientGuid}");
-
         $session = self::session($a, $po);
         $session->guid = $clientGuid;
         $session->mtu = $mtu;
-
         $buf = Binary::writeByte(self::OPEN_CONNECTION_REPLY_2);
         $buf .= self::MAGIC;
         $buf .= Binary::writeLong(self::$serverId);
         $buf .= self::writeAddress($a, $po);
         $buf .= Binary::writeShort($mtu);
         $buf .= Binary::writeByte(0);
-
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $po);
     }
 
@@ -245,109 +200,63 @@ final class RakNet
         $clientGuid = Binary::readLong($p, $o);
         $time = Binary::readLong($p, $o);
         $useSecurity = Binary::readByte($p, $o);
-
         $session = self::session($a, $po);
         $session->guid = $clientGuid;
-
         $buf = Binary::writeByte(self::CONNECTION_REQUEST_ACCEPTED);
         $buf .= self::writeAddress($a, $po);
         $buf .= Binary::writeShort(0);
-
         $serverPort = Config::getInt('server_port', 19132);
-
         for ($i = 0; $i < 10; $i++) {
             $buf .= self::writeAddress("255.255.255.255", $serverPort);
         }
-
         $buf .= Binary::writeLong($time);
         $buf .= Binary::writeLong(time());
-
         Logger::debug("CONNECTION_REQUEST_ACCEPTED packet");
-
-        self::sendReliable(
-            $session,
-            $buf,
-            Reliability::RELIABLE,
-            $sock
-        );
-
+        self::sendReliable($session, $buf, Reliability::RELIABLE, $sock);
         $buf = Binary::writeByte(self::NEW_INCOMING_CONNECTION);
         $buf .= self::writeAddress($a, $po);
-
         for ($i = 0; $i < 20; $i++) {
             $buf .= self::writeAddress("255.255.255.255", $serverPort);
         }
-
-        $buf .= Binary::writeLong((int)(microtime(true) * 1000));
-        $buf .= Binary::writeLong((int)(microtime(true) * 1000));
-
-        self::sendReliable(
-            $session,
-            $buf,
-            Reliability::RELIABLE,
-            $sock
-        );
-
+        $buf .= Binary::writeLong((int) (microtime(true) * 1000));
+        $buf .= Binary::writeLong((int) (microtime(true) * 1000));
+        self::sendReliable($session, $buf, Reliability::RELIABLE, $sock);
         Logger::debug("NEW_INCOMING_CONNECTION SENT");
         $session->setRakNetState(Session::RN_CONNECTED);
         $session->setMcpeState(Session::MC_NONE);
-
         self::flush($session, $sock);
     }
 
-    private static function sendReliable(
-        Session $s,
-        string $payload,
-        int $reliability,
-        Socket $sock,
-        int $channel = 0
-    ): void {
+    private static function sendReliable(Session $s, string $payload, int $reliability, Socket $sock, int $channel = 0): void
+    {
         $frameSetSeq = $s->frameSeq++;
         $reliableSeq = $s->reliableSeq++;
-
         if (!isset($s->orderedSeq[$channel])) {
             $s->orderedSeq[$channel] = 0;
         }
-
-
         $buf = Binary::writeByte(self::FRAME_SET_MIN);
         $buf .= Binary::writeTriad($frameSetSeq);
-
-
-        $flags = ($reliability << 5) & 0xE0;
+        $flags = $reliability << 5 & 0xe0;
         $buf .= Binary::writeByte($flags);
         $buf .= Binary::writeShort(\strlen($payload) * 8);
         $buf .= Binary::writeTriad($reliableSeq);
-
-
         if ($reliability === Reliability::RELIABLE_ORDERED) {
             $buf .= Binary::writeTriad($s->orderedSeq[$channel]++);
             $buf .= Binary::writeByte($channel);
         }
-
         $buf .= $payload;
-
         $s->reliableQueue[$reliableSeq] = $buf;
-
         $s->sendQueue[] = $buf;
     }
 
-    private static function sendUnreliable(
-        Session $s,
-        string $payload,
-        Socket $sock,
-        int $channel = 0
-    ): void {
+    private static function sendUnreliable(Session $s, string $payload, Socket $sock, int $channel = 0): void
+    {
         $frameSetSeq = $s->frameSeq++;
-
         $buf = Binary::writeByte(self::FRAME_SET_MIN);
         $buf .= Binary::writeTriad($frameSetSeq);
-
-        $buf .= Binary::writeByte(0x00);
+        $buf .= Binary::writeByte(0x0);
         $buf .= Binary::writeShort(\strlen($payload) * 8);
-
         $buf .= $payload;
-
         $s->sendQueue[] = $buf;
     }
 
@@ -356,38 +265,28 @@ final class RakNet
         $session = self::session($a, $po);
         $o = 1;
         $len = \strlen($p);
-
         if ($o + 3 > $len) {
             return;
         }
-
         $seq = Binary::readTriad($p, $o);
         if (!$session->markReceived($seq)) {
             self::sendAck($seq, $a, $po, $sock);
-            Logger::debug("ACK sent seq=$seq to $a:$po (duplicate, skipped)");
+            Logger::debug("ACK sent seq={$seq} to {$a}:{$po} (duplicate, skipped)");
             return;
         }
-
-        Logger::debug("FrameSet recv seq=$seq from {$a}:{$po}");
-
+        Logger::debug("FrameSet recv seq={$seq} from {$a}:{$po}");
         while (true) {
-
             if ($o + 3 > $len) {
                 break;
             }
-
             $flags = \ord($p[$o++]);
             $reliability = $flags >> 5;
             $fragmented = ($flags & 0x10) !== 0;
-
             if ($o + 2 > $len) {
                 break;
             }
-
             $lengthBits = Binary::readShort($p, $o);
             $frameLength = intdiv($lengthBits + 7, 8);
-
-
             if ($reliability !== 0) {
                 if ($o + 3 > $len) {
                     break;
@@ -400,20 +299,16 @@ final class RakNet
                         }
                         $o += 4;
                     }
-
                     if ($fragmented) {
                         if ($o + 10 > $len) {
                             break;
                         }
                         $o += 10;
                     }
-
                     $o += $frameLength;
                     continue;
                 }
             }
-
-
             if ($reliability === Reliability::RELIABLE_ORDERED) {
                 if ($o + 4 > $len) {
                     break;
@@ -421,7 +316,6 @@ final class RakNet
                 Binary::readTriad($p, $o);
                 $o++;
             }
-
             $splitId = 0;
             $splitIndex = 0;
             $splitCount = 0;
@@ -433,14 +327,11 @@ final class RakNet
                 $splitId = Binary::readShort($p, $o);
                 $splitIndex = Binary::readInt($p, $o);
             }
-
             if ($o + $frameLength > $len) {
                 break;
             }
-
             $body = substr($p, $o, $frameLength);
             $o += $frameLength;
-
             if ($fragmented) {
                 if (isset($session->completedSplits[$splitId])) {
                     $body = null;
@@ -448,15 +339,11 @@ final class RakNet
                     if (!isset($session->splitQueue[$splitId])) {
                         $session->splitQueue[$splitId] = array_fill(0, $splitCount, null);
                     }
-
                     $session->splitQueue[$splitId][$splitIndex] = $body;
-
                     $receivedCount = \count(array_filter($session->splitQueue[$splitId], fn ($v) => $v !== null));
-
                     if ($receivedCount === $splitCount) {
                         $body = implode('', $session->splitQueue[$splitId]);
                         unset($session->splitQueue[$splitId]);
-
                         $session->completedSplits[$splitId] = true;
                         Logger::debug("Split Packet Reassembled! Total len=" . \strlen($body));
                     } else {
@@ -464,72 +351,47 @@ final class RakNet
                     }
                 }
             }
-
             if ($body === null || $body === '') {
                 continue;
             }
-
             $pid = \ord($body[0]);
-
-            Logger::debug(\sprintf(
-                "Connected frame PID=0x%02X len=%d reliability=%d",
-                $pid,
-                \strlen($body),
-                $reliability
-            ));
-
+            Logger::debug(\sprintf("Connected frame PID=0x%02X len=%d reliability=%d", $pid, \strlen($body), $reliability));
             if ($pid === self::CONNECTION_REQUEST) {
                 self::handleConnectionRequest($body, $a, $po, $sock);
                 continue;
             }
-
             if ($pid === self::NEW_INCOMING_CONNECTION) {
                 Logger::debug("NEW_INCOMING_CONNECTION received (client)");
                 $session->setRakNetState(Session::RN_CONNECTED);
                 continue;
             }
-
             if ($pid === self::CONNECTED_PING) {
                 $o2 = 1;
                 $time = Binary::readLong($body, $o2);
-
                 $pong = Binary::writeByte(self::CONNECTED_PONG);
                 $pong .= Binary::writeLong($time);
-                $pong .= Binary::writeLong((int)(microtime(true) * 1000));
-
+                $pong .= Binary::writeLong((int) (microtime(true) * 1000));
                 self::sendUnreliable($session, $pong, $sock);
                 continue;
             }
-
             if ($pid === self::DISCONNECT) {
                 Logger::debug("Client disconnected: {$a}:{$po}");
-<<<<<<< HEAD
-                \watermossmc\player\PlayerManager::remove($session);
-=======
                 PlayerManager::remove($session);
->>>>>>> 866a1c0 (...)
-                $key = "$a:$po";
+                $key = "{$a}:{$po}";
                 if (isset(self::$sessions[$key])) {
                     unset(self::$sessions[$key]);
                 }
                 continue;
             }
-
-            if ($pid === 0xFE) {
+            if ($pid === 0xfe) {
                 $batchPayload = substr($body, 1);
-
-                Logger::debug(\sprintf(
-                    "MCPE batch received, raw len=%d",
-                    \strlen($batchPayload)
-                ));
-
+                Logger::debug(\sprintf("MCPE batch received, raw len=%d", \strlen($batchPayload)));
                 PacketHandler::handleBatch($batchPayload, $session, $sock);
                 continue;
             }
         }
-
         self::sendAck($seq, $a, $po, $sock);
-        Logger::debug("ACK sent seq=$seq to $a:$po");
+        Logger::debug("ACK sent seq={$seq} to {$a}:{$po}");
     }
 
     private static function sendAck(int $seq, string $a, int $p, Socket $s): void
@@ -538,7 +400,6 @@ final class RakNet
         $buf .= Binary::writeShort(1);
         $buf .= Binary::writeByte(1);
         $buf .= Binary::writeTriad($seq);
-
         socket_sendto($s, $buf, \strlen($buf), 0, $a, $p);
     }
 
@@ -547,17 +408,14 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-
         for ($i = 0; $i < $count; $i++) {
             $isRange = \ord($p[$o++]);
-
             if ($isRange === 1) {
                 $seq = Binary::readTriad($p, $o);
                 self::handleAckSeq($session, $seq);
             } else {
                 $start = Binary::readTriad($p, $o);
                 $end = Binary::readTriad($p, $o);
-
                 for ($seq = $start; $seq <= $end; $seq++) {
                     self::handleAckSeq($session, $seq);
                 }
@@ -575,37 +433,19 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-
         for ($i = 0; $i < $count; $i++) {
             $isSingle = \ord($p[$o++]);
-
             if ($isSingle === 1) {
                 $seq = Binary::readTriad($p, $o);
-
                 if (isset($session->reliableQueue[$seq])) {
-                    socket_sendto(
-                        $sock,
-                        $session->reliableQueue[$seq],
-                        \strlen($session->reliableQueue[$seq]),
-                        0,
-                        $a,
-                        $po
-                    );
+                    socket_sendto($sock, $session->reliableQueue[$seq], \strlen($session->reliableQueue[$seq]), 0, $a, $po);
                 }
             } else {
                 $start = Binary::readTriad($p, $o);
                 $end = Binary::readTriad($p, $o);
-
                 for ($s = $start; $s <= $end; $s++) {
                     if (isset($session->reliableQueue[$s])) {
-                        socket_sendto(
-                            $sock,
-                            $session->reliableQueue[$s],
-                            \strlen($session->reliableQueue[$s]),
-                            0,
-                            $a,
-                            $po
-                        );
+                        socket_sendto($sock, $session->reliableQueue[$s], \strlen($session->reliableQueue[$s]), 0, $a, $po);
                     }
                 }
             }
@@ -617,18 +457,9 @@ final class RakNet
         if (!isset($session->sendQueue) || empty($session->sendQueue)) {
             return;
         }
-
         foreach ($session->sendQueue as $buffer) {
-            @socket_sendto(
-                $sock,
-                $buffer,
-                \strlen($buffer),
-                0,
-                $session->address,
-                $session->port
-            );
+            @socket_sendto($sock, $buffer, \strlen($buffer), 0, $session->address, $session->port);
         }
-
         $session->sendQueue = [];
     }
 }

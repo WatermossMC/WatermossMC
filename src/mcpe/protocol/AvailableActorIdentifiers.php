@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,16 +18,12 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
 use Socket;
-<<<<<<< HEAD
-=======
 use watermossmc\mcpe\cache\StaticPacketCache;
->>>>>>> 866a1c0 (...)
 use watermossmc\mcpe\network\Session;
 use watermossmc\util\Logger;
 
@@ -37,29 +31,18 @@ final class AvailableActorIdentifiers extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-<<<<<<< HEAD
-        $path = \dirname(__DIR__, 3) . '/resources/entity_identifiers.nbt';
-        $payload = @file_get_contents($path);
-
-        if ($payload === false) {
-            Logger::error("entity_identifiers.nbt not found!");
-=======
         $payload = StaticPacketCache::getInstance()->get('available_actor_identifiers', function () {
             $path = \dirname(__DIR__, 3) . '/resources/entity_identifiers.nbt';
             $data = @file_get_contents($path);
-
             if ($data === false) {
                 Logger::error("entity_identifiers.nbt not found!");
                 return '';
             }
             return $data;
         });
-
         if ($payload === '') {
->>>>>>> 866a1c0 (...)
             return;
         }
-
         self::sendBatch(ProtocolInfo::AVAILABLE_ACTOR_IDENTIFIERS_PACKET, $payload, $s, $sock);
     }
 }

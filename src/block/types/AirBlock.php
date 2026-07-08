@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\block\types;
 
@@ -38,6 +35,6 @@ final class AirBlock extends Block
 
     public function onInteract(int $x, int $y, int $z, Player $player): void
     {
-        Logger::debug("Player {$player->username} interacted with Air at $x, $y, $z");
+        Logger::debug("Player {$player->username} interacted with Air at {$x}, {$y}, {$z}");
     }
 }

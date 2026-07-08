@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -29,91 +26,17 @@ use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\data\BiomeDefinitions;
-<<<<<<< HEAD
-=======
 use watermossmc\mcpe\cache\StaticPacketCache;
->>>>>>> 866a1c0 (...)
 use watermossmc\mcpe\network\Session;
 
 final class BiomeDefinitionList extends Packet
 {
     public static function send(Session $s, Socket $sock): void
     {
-<<<<<<< HEAD
-        /** @var array<string, int> $lookup */
-        $lookup = [];
-        $strings = [];
-
-        $intern = static function (string $str) use (&$lookup, &$strings): int {
-            if (isset($lookup[$str])) {
-                return $lookup[$str];
-            }
-            $idx = \count($strings);
-            $lookup[$str] = $idx;
-            $strings[] = $str;
-            return $idx;
-        };
-
-        $biomes = BiomeDefinitions::getAll();
-
-        $definitions = [];
-        foreach ($biomes as $biome) {
-            $tagIndexes = null;
-            if (!empty($biome['tags'])) {
-                $tagIndexes = array_map($intern, $biome['tags']);
-            }
-
-            $definitions[] = [
-                'nameIndex' => $intern($biome['nameString']),
-                'packetId' => $biome['packetId'],
-                'temperature' => $biome['temperature'],
-                'downfall' => $biome['downfall'],
-                'foliageSnow' => $biome['foliageSnow'],
-                'depth' => $biome['depth'],
-                'scale' => $biome['scale'],
-                'mapWaterColor' => $biome['mapWaterColor'],
-                'hasRain' => $biome['hasRain'],
-                'tagIndexes' => $tagIndexes,
-            ];
-        }
-
-        $payload = '';
-
-        $payload .= Binary::writeVarInt(\count($definitions));
-        foreach ($definitions as $def) {
-            $payload .= Binary::writeLShort($def['nameIndex']);
-            $payload .= Binary::writeLShort($def['packetId']);
-            $payload .= Binary::writeLFloat($def['temperature']);
-            $payload .= Binary::writeLFloat($def['downfall']);
-            $payload .= Binary::writeLFloat($def['foliageSnow']);
-            $payload .= Binary::writeLFloat($def['depth']);
-            $payload .= Binary::writeLFloat($def['scale']);
-            $payload .= Binary::writeLInt($def['mapWaterColor']);
-            $payload .= Binary::writeBool($def['hasRain']);
-
-            if ($def['tagIndexes'] === null) {
-                $payload .= Binary::writeBool(false);
-            } else {
-                $payload .= Binary::writeBool(true);
-                $payload .= Binary::writeVarInt(\count($def['tagIndexes']));
-                foreach ($def['tagIndexes'] as $tagIdx) {
-                    $payload .= Binary::writeLShort($tagIdx);
-                }
-            }
-
-            $payload .= Binary::writeBool(false);
-        }
-
-        $payload .= Binary::writeVarInt(\count($strings));
-        foreach ($strings as $str) {
-            $payload .= McpeBinary::writeString($str);
-        }
-=======
         $payload = StaticPacketCache::getInstance()->get('biome_definition_list', function () {
             /** @var array<string, int> $lookup */
             $lookup = [];
             $strings = [];
-
             $intern = static function (string $str) use (&$lookup, &$strings): int {
                 if (isset($lookup[$str])) {
                     return $lookup[$str];
@@ -123,32 +46,16 @@ final class BiomeDefinitionList extends Packet
                 $strings[] = $str;
                 return $idx;
             };
-
             $biomes = BiomeDefinitions::getAll();
-
             $definitions = [];
             foreach ($biomes as $biome) {
                 $tagIndexes = null;
                 if (!empty($biome['tags'])) {
                     $tagIndexes = array_map($intern, $biome['tags']);
                 }
-
-                $definitions[] = [
-                    'nameIndex' => $intern($biome['nameString']),
-                    'packetId' => $biome['packetId'],
-                    'temperature' => $biome['temperature'],
-                    'downfall' => $biome['downfall'],
-                    'foliageSnow' => $biome['foliageSnow'],
-                    'depth' => $biome['depth'],
-                    'scale' => $biome['scale'],
-                    'mapWaterColor' => $biome['mapWaterColor'],
-                    'hasRain' => $biome['hasRain'],
-                    'tagIndexes' => $tagIndexes,
-                ];
+                $definitions[] = ['nameIndex' => $intern($biome['nameString']), 'packetId' => $biome['packetId'], 'temperature' => $biome['temperature'], 'downfall' => $biome['downfall'], 'foliageSnow' => $biome['foliageSnow'], 'depth' => $biome['depth'], 'scale' => $biome['scale'], 'mapWaterColor' => $biome['mapWaterColor'], 'hasRain' => $biome['hasRain'], 'tagIndexes' => $tagIndexes];
             }
-
             $res = '';
-
             $res .= Binary::writeVarInt(\count($definitions));
             foreach ($definitions as $def) {
                 $res .= Binary::writeLShort($def['nameIndex']);
@@ -160,7 +67,6 @@ final class BiomeDefinitionList extends Packet
                 $res .= Binary::writeLFloat($def['scale']);
                 $res .= Binary::writeLInt($def['mapWaterColor']);
                 $res .= Binary::writeBool($def['hasRain']);
-
                 if ($def['tagIndexes'] === null) {
                     $res .= Binary::writeBool(false);
                 } else {
@@ -170,19 +76,14 @@ final class BiomeDefinitionList extends Packet
                         $res .= Binary::writeLShort($tagIdx);
                     }
                 }
-
                 $res .= Binary::writeBool(false);
             }
-
             $res .= Binary::writeVarInt(\count($strings));
             foreach ($strings as $str) {
                 $res .= McpeBinary::writeString($str);
             }
-
             return $res;
         });
->>>>>>> 866a1c0 (...)
-
         self::sendBatch(ProtocolInfo::BIOME_DEFINITION_LIST_PACKET, $payload, $s, $sock);
     }
 }

@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,8 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -33,11 +30,9 @@ final class ClientToServerHandshake extends Packet
     {
         $length = \strlen($buf) - $o;
         Logger::debug("[0x04] ClientToServerHandshake payload length={$length}");
-
         if ($length <= 0) {
             return;
         }
-
         // Consume any remaining handshake payload without failing the connection.
         // The packet format may vary between protocol versions, so read any remaining bytes safely.
         $remaining = \strlen($buf) - $o;

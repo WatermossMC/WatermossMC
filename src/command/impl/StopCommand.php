@@ -1,7 +1,5 @@
 <?php
 
-<<<<<<< HEAD
-=======
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -20,27 +18,19 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
->>>>>>> 866a1c0 (...)
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
 use watermossmc\player\Player;
-<<<<<<< HEAD
-=======
 use watermossmc\Server;
->>>>>>> 866a1c0 (...)
 
 final class StopCommand extends Command
 {
     public function __construct()
     {
-        parent::__construct(
-            'stop',
-            'Stops the server',
-            '/stop'
-        );
+        parent::__construct('stop', 'Stops the server', '/stop');
     }
 
     public function execute(mixed $sender, array $args): void
@@ -49,14 +39,8 @@ final class StopCommand extends Command
             $this->sendMessage($sender, "You do not have permission to stop the server.");
             return;
         }
-
         $this->sendMessage($sender, "Stopping server...");
-
-<<<<<<< HEAD
-        $server = \watermossmc\Server::getInstance();
-=======
         $server = Server::getInstance();
->>>>>>> 866a1c0 (...)
         if ($server !== null) {
             $server->shutdown();
         }
