@@ -37,8 +37,7 @@ final class AddPlayer extends Packet
         $pos = $target->getPosition();
         $rot = $target->getRotation();
 
-        $p = Binary::writeByte(0x0c);
-        $p .= Binary::writeUUID($target->getUuid());
+        $p = Binary::writeUUID($target->getUuid());
         $p .= McpeBinary::writeString($target->getUsername());
         $p .= Binary::writeVarLong($target->getRuntimeId());
         $p .= McpeBinary::writeString("");
