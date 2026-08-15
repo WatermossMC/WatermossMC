@@ -60,17 +60,12 @@ final class StartGame extends Packet
         // LevelSettings
         $payload .= McpeBinary::writeLLong($seed);
         // seed
-        // SpawnSettings
-        $payload .= McpeBinary::writeLShort(0);
-        // biomeType = DEFAULT
-        $payload .= McpeBinary::writeString('');
-        // biome name
-        $payload .= McpeBinary::writeSignedVarInt(0);
-        // dimension = overworld
-        $payload .= McpeBinary::writeSignedVarInt(1);
-        // generator
-        $payload .= McpeBinary::writeSignedVarInt($world->getGameType());
-        // worldGamemode
+        // SpawnSettings (biomeType, biomeName, dimension)
+        $payload .= McpeBinary::writeLShort(0); // biomeType = DEFAULT (0)
+        $payload .= McpeBinary::writeString(''); // biome name
+        $payload .= McpeBinary::writeSignedVarInt(0); // dimension = overworld (0)
+        $payload .= McpeBinary::writeSignedVarInt(1); // generator = 1
+        $payload .= McpeBinary::writeSignedVarInt($world->getGameType()); // worldGamemode
         $payload .= McpeBinary::writeBool(false);
         // hardcore
         $payload .= McpeBinary::writeSignedVarInt(1);
@@ -129,9 +124,9 @@ final class StartGame extends Packet
         // hasStartWithMapEnabled
         $payload .= McpeBinary::writeSignedVarInt(0);
         // defaultPlayerPermission
-        $payload .= McpeBinary::writeLInt(4);
+        $payload .= McpeBinary::writeByte(1);
         // serverChunkTickRadius
-        $payload .= McpeBinary::writeBool(false);
+        $payload .= McpeBinary::writeLInt(4);
         // hasLockedBehaviorPack
         $payload .= McpeBinary::writeBool(false);
         // hasLockedResourcePack
@@ -151,20 +146,21 @@ final class StartGame extends Packet
         // disableCustomSkins
         $payload .= McpeBinary::writeBool(false);
         // muteEmoteAnnouncements
-        $payload .= McpeBinary::writeString("1.20.0");
+        $payload .= McpeBinary::writeString(ProtocolInfo::MINECRAFT_VERSION_NETWORK);
         // vanillaVersion
-        $payload .= McpeBinary::writeLInt(0);
+        $payload .= McpeBinary::writeString(ProtocolInfo::MINECRAFT_VERSION_NETWORK);
         // limitedWorldWidth
         $payload .= McpeBinary::writeLInt(0);
         // limitedWorldLength
-        $payload .= McpeBinary::writeBool(true);
+        $payload .= McpeBinary::writeLInt(0);
         // isNewNether
+        $payload .= McpeBinary::writeBool(true);
         // Optional EduSharedUriResource
         $payload .= McpeBinary::writeBool(false);
         // Optional experimentalGameplayOverride
         $payload .= McpeBinary::writeBool(false);
-        $payload .= McpeBinary::writeByte(0);
         // chatRestrictionLevel
+        $payload .= McpeBinary::writeByte(0);
         $payload .= McpeBinary::writeBool(false);
         // disablePlayerInteractions
         $payload .= McpeBinary::writeSignedVarInt(0);

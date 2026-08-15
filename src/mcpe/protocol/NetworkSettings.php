@@ -31,14 +31,14 @@ final class NetworkSettings extends Packet
     public const COMPRESS_NOTHING = 0;
     public const COMPRESS_EVERYTHING = 1;
 
-    public static function send(Session $s, Socket $sock): void
+    public static function send(Session $s, Socket $sock, int $compressionThreshold = 512, int $compressionAlgorithm = 0): void
     {
-        $p = McpeBinary::writeLShort(self::COMPRESS_EVERYTHING);
-        $p .= McpeBinary::writeLShort(0);
-        // 0 = Zlib, 1 = Snappy, 255 = None
-        $p .= McpeBinary::writeBool(false);
-        $p .= McpeBinary::writeByte(0);
-        $p .= McpeBinary::writeFloat(0.0);
+        $p = McpeBinary::writeLShort($compressionThreshold);
+        $p .= McpeBinary::writeLShort($compressionAlgorithm);
+        // 0 = Zlib, 1 = Snappy, etc.
+        $p .= McpeBinary::writeBool(false); // enableClientThrottling
+        $p .= McpeBinary::writeByte(0); // clientThrottleThreshold
+        $p .= McpeBinary::writeFloat(0.0); // clientThrottleScalar
         $sendSeq = self::sendBatch(ProtocolInfo::NETWORK_SETTINGS_PACKET, $p, $s, $sock);
         $s->markNetworkSettingsReliableSeq($sendSeq);
     }

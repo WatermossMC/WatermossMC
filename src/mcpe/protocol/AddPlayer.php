@@ -26,7 +26,6 @@ use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\network\Session;
 use watermossmc\player\Player;
 
 final class AddPlayer extends Packet
