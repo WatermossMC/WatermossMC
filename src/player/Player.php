@@ -27,11 +27,18 @@ use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
+<<<<<<< HEAD
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
 use watermossmc\network\mcpe\protocol\clientbound\Respawn;
 use watermossmc\network\mcpe\protocol\clientbound\Text;
 use watermossmc\network\Session;
+=======
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\clientbound\Disconnect;
+use watermossmc\mcpe\protocol\clientbound\MobEffect;
+use watermossmc\mcpe\protocol\clientbound\Text;
+>>>>>>> 8b12078 (...)
 use watermossmc\Server;
 use watermossmc\util\Permission;
 

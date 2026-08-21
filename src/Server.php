@@ -116,6 +116,7 @@ final class Server
         $this->currentTick++;
         $this->getWorld()->tickTime();
         $this->getWorld()->getEntityManager()->tick();
+<<<<<<< HEAD
         PacketDispatcher::syncPlayers();
 
         $autoSave = Config::getBool('auto-save', true) && SaveCommand::isSavingEnabled();
@@ -127,12 +128,19 @@ final class Server
             $this->broadcastMessage('§a[Server] Save complete.');
         }
 
+=======
+        mcpe\PacketDispatcher::syncPlayers();
+>>>>>>> 8b12078 (...)
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
                 $socket = $player->session->getSocket();
                 if ($socket !== null) {
+<<<<<<< HEAD
                     SetTime::send($player->session, $socket, $time);
+=======
+                    \watermossmc\mcpe\protocol\clientbound\SetTime::send($player->session, $socket, $time);
+>>>>>>> 8b12078 (...)
                 }
             }
         }

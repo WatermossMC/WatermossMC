@@ -28,7 +28,11 @@ use LogicException;
 use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
+<<<<<<< HEAD:src/network/Session.php
 use watermossmc\network\mcpe\protocol\handshake\NetworkSettings;
+=======
+use watermossmc\mcpe\protocol\handshake\NetworkSettings;
+>>>>>>> 8b12078 (...):src/mcpe/network/Session.php
 use watermossmc\util\Logger;
 
 final class Session
@@ -661,4 +665,7 @@ final class Session
 	    return time() - $this->lastSeen >= $timeout;
     }
 }
+<<<<<<< HEAD:src/network/Session.php
 >>>>>>> c945639 (...):src/mcpe/network/Session.php
+=======
+>>>>>>> 8b12078 (...):src/mcpe/network/Session.php

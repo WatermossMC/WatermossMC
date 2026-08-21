@@ -20,9 +20,15 @@
 
 declare(strict_types=1);
 
+<<<<<<< HEAD
 use watermossmc\network\mcpe\PacketDispatcher;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\TickLoop;
+=======
+use watermossmc\mcpe\network\RakNet;
+use watermossmc\mcpe\network\TickLoop;
+use watermossmc\mcpe\PacketDispatcher;
+>>>>>>> 8b12078 (...)
 use watermossmc\Server;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
