@@ -228,6 +228,7 @@ final class StartGame extends Packet
         // worldId
         $payload .= McpeBinary::writeString("");
         // ownerId
+      bin2hex($payload)
         self::sendBatch(ProtocolInfo::START_GAME_PACKET, $payload, $s, $sock);
     }
 }

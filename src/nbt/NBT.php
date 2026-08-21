@@ -38,7 +38,6 @@ final class NBT
     public const TAG_LIST = 9;
     public const TAG_COMPOUND = 10;
     public const TAG_INT_ARRAY = 11;
-    public const TAG_LONG_ARRAY = 12;
 
     /**
      * @param array<int|string, mixed> $data

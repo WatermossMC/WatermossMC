@@ -26,200 +26,463 @@ use RuntimeException;
 
 final class McpeBinary
 {
-    public static function writeByte(int $v): string
+
+    public static function writeByte(int $value): string
     {
-        return \chr($v & 0xFF);
+        return chr($value & 0xFF);
     }
 
-    public static function writeBool(bool $v): string
+    public static function writeBool(bool $value): string
     {
-        return \chr($v ? 1 : 0);
+        return self::writeByte($value ? 1 : 0);
     }
 
-    /** MCPE ushort = LITTLE endian */
-    public static function writeLShort(int $v): string
+    public static function writeShort(int $value): string
     {
-        return pack('v', $v & 0xFFFF);
+        return pack('n', $value & 0xFFFF);
     }
 
-    /** MCPE int32 = BIG endian (YES, THIS IS CORRECT) */
-    public static function writeInt(int $v): string
+    public static function writeLShort(int $value): string
     {
-        return pack('N', $v);
+        return pack('v', $value & 0xFFFF);
     }
 
-    public static function writeLInt(int $v): string
+    public static function writeInt(int $value): string
     {
-        return pack('V', $v);
+        return pack('N', $value & 0xFFFFFFFF);
     }
 
-    /** MCPE float = LITTLE endian */
-    public static function writeFloat(float $v): string
+    public static function writeLInt(int $value): string
     {
-        return pack('g', $v);
+        return pack('V', $value & 0xFFFFFFFF);
     }
 
-    /** MCPE long = LITTLE endian */
-    public static function writeLLong(int $v): string
+    public static function writeLong(int $value): string
     {
-        return pack('P', $v);
+        return pack('J', $value);
     }
 
-    public static function writeString(string $v): string
+    public static function writeLLong(int $value): string
     {
-        return self::writeVarInt(\strlen($v)) . $v;
+        return pack('q', $value);
     }
 
-    public static function writeStringInt(string $v): string
+    public static function writeFloat(float $value): string
     {
-        return self::writeInt(\strlen($v)) . $v;
+        return pack('g', $value);
+    }
+
+    public static function writeBFloat(float $value): string
+    {
+        return pack('G', $value);
+    }
+
+    public static function writeDouble(float $value): string
+    {
+        return pack('e', $value);
+    }
+
+    public static function writeBDouble(float $value): string
+    {
+        return pack('E', $value);
+    }
+
+    public static function writeString(string $value): string
+    {
+        return self::writeVarInt(strlen($value)) . $value;
+    }
+
+    public static function writeStringInt(string $value): string
+    {
+        return self::writeLInt(strlen($value)) . $value;
     }
 
     public static function writeVarInt(int $value): string
     {
-        $buf = '';
-        $v = $value & 0xFFFFFFFF;
+        $value &= 0xFFFFFFFF;
 
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
-            $v >>= 7;
-        }
+        $buffer = '';
 
-        return $buf . \chr($v);
-    }
+        do {
+            $byte = $value & 0x7F;
+            $value >>= 7;
 
-    public static function writeUnsignedVarLong(int $v): string
-    {
-        $buf = '';
-        for ($i = 0; $i < 10; ++$i) {
-            $byte = $v & 0x7F;
-            $v >>= 7;
-            if ($v !== 0) {
+            if ($value !== 0) {
                 $byte |= 0x80;
             }
-            $buf .= \chr($byte);
-            if ($v === 0) {
-                break;
-            }
-        }
-        return $buf;
-    }
 
-    public static function writeSignedVarLong(int $value): string
-    {
-        $buf = '';
-        $v = $value;
+            $buffer .= chr($byte);
+        } while ($value !== 0);
 
-        while (($v & ~0x7F) !== 0) {
-            $buf .= \chr(($v & 0x7F) | 0x80);
-            $v >>= 7;
-        }
-
-        return $buf . \chr($v);
+        return $buffer;
     }
 
     public static function writeSignedVarInt(int $value): string
     {
-        $v = ($value << 1) ^ ($value >> 31);
-        return self::writeVarInt($v);
+        $encoded = ($value << 1) ^ ($value >> 31);
+
+        return self::writeVarInt($encoded);
+    }
+
+    public static function writeUnsignedVarLong(int $value): string
+    {
+        $buffer = '';
+
+        for ($i = 0; $i < 10; ++$i) {
+            $byte = $value & 0x7F;
+            $value >>= 7;
+
+            if ($value !== 0) {
+                $byte |= 0x80;
+            }
+
+            $buffer .= chr($byte);
+
+            if ($value === 0) {
+                return $buffer;
+            }
+        }
+
+        throw new RuntimeException('Unsigned VarLong overflow');
+    }
+
+    public static function writeSignedVarLong(int $value): string
+    {
+        $encoded = ($value << 1) ^ ($value >> 63);
+
+        return self::writeUnsignedVarLong($encoded);
     }
 
     public static function writeUUID(string $uuid): string
     {
         $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
-        return strrev(substr($bytes, 0, 8)) . strrev(substr($bytes, 8, 8));
+
+        return strrev(substr($bytes, 0, 8))
+            . strrev(substr($bytes, 8, 8));
     }
 
-    public static function readByte(string $buf, int &$o): int
-    {
-        return \ord($buf[$o++]);
-    }
-
-    public static function readBool(string $buf, int &$o): bool
-    {
-        return self::readByte($buf, $o) !== 0;
-    }
-
-    public static function readLShort(string $buf, int &$o): int
-    {
-        $r = unpack('v', substr($buf, $o, 2));
-        if ($r === false || !isset($r[1])) {
-            throw new RuntimeException('unpack failed');
+    private static function requireBytes(
+        string $buffer,
+        int $offset,
+        int $length
+    ): void {
+        if ($length < 0 || $offset < 0 || $offset + $length > strlen($buffer)) {
+            throw new RuntimeException(
+                "Unexpected end of buffer: need {$length} byte(s)"
+            );
         }
-        $o += 2;
-        /** @var int $value */
-        $value = $r[1];
+    }
+
+    public static function readByte(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 1);
+
+        return ord($buffer[$offset++]);
+    }
+
+    public static function readBool(string $buffer, int &$offset): bool
+    {
+        return self::readByte($buffer, $offset) !== 0;
+    }
+
+    public static function readShort(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 2);
+
+        $result = unpack('n', substr($buffer, $offset, 2));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack short');
+        }
+
+        $offset += 2;
+
+        return $result[1];
+    }
+
+    public static function readLShort(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 2);
+
+        $result = unpack('v', substr($buffer, $offset, 2));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack little-endian short');
+        }
+
+        $offset += 2;
+
+        return $result[1];
+    }
+
+    public static function readInt(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 4);
+
+        $result = unpack('N', substr($buffer, $offset, 4));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack int');
+        }
+
+        $offset += 4;
+
+        return $result[1];
+    }
+
+    public static function readLInt(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 4);
+
+        $result = unpack('V', substr($buffer, $offset, 4));
+
+        if ($result === false) {
+            throw new RuntimeException(
+                'Failed to unpack little-endian int'
+            );
+        }
+
+        $offset += 4;
+
+        return $result[1];
+    }
+
+    public static function readLong(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 8);
+
+        $result = unpack('J', substr($buffer, $offset, 8));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack long');
+        }
+
+        $offset += 8;
+
+        return $result[1];
+    }
+
+    public static function readLLong(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 8);
+
+        $result = unpack('q', substr($buffer, $offset, 8));
+
+        if ($result === false) {
+            throw new RuntimeException(
+                'Failed to unpack little-endian long'
+            );
+        }
+
+        $offset += 8;
+
+        return $result[1];
+    }
+
+    public static function readFloat(string $buffer, int &$offset): float
+    {
+        self::requireBytes($buffer, $offset, 4);
+
+        $result = unpack('g', substr($buffer, $offset, 4));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack float');
+        }
+
+        $offset += 4;
+
+        return $result[1];
+    }
+
+    public static function readBFloat(string $buffer, int &$offset): float
+    {
+        self::requireBytes($buffer, $offset, 4);
+
+        $result = unpack('G', substr($buffer, $offset, 4));
+
+        if ($result === false) {
+            throw new RuntimeException(
+                'Failed to unpack big-endian float'
+            );
+        }
+
+        $offset += 4;
+
+        return $result[1];
+    }
+
+    public static function readDouble(string $buffer, int &$offset): float
+    {
+        self::requireBytes($buffer, $offset, 8);
+
+        $result = unpack('e', substr($buffer, $offset, 8));
+
+        if ($result === false) {
+            throw new RuntimeException('Failed to unpack double');
+        }
+
+        $offset += 8;
+
+        return $result[1];
+    }
+
+    public static function readBDouble(string $buffer, int &$offset): float
+    {
+        self::requireBytes($buffer, $offset, 8);
+
+        $result = unpack('E', substr($buffer, $offset, 8));
+
+        if ($result === false) {
+            throw new RuntimeException(
+                'Failed to unpack big-endian double'
+            );
+        }
+
+        $offset += 8;
+
+        return $result[1];
+    }
+
+    public static function readString(string $buffer, int &$offset): string
+    {
+        $length = self::readVarInt($buffer, $offset);
+
+        if ($length < 0) {
+            throw new RuntimeException('Negative string length');
+        }
+
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
         return $value;
     }
 
-    public static function readInt(string $buf, int &$o): int
-    {
-        $r = unpack('N', substr($buf, $o, 4));
-        if ($r === false || !isset($r[1])) {
-            throw new RuntimeException('unpack int failed');
+    public static function readStringInt(
+        string $buffer,
+        int &$offset
+    ): string {
+        $length = self::readLInt($buffer, $offset);
+
+        if ($length < 0) {
+            throw new RuntimeException('Negative string length');
         }
-        $o += 4;
-        /** @var int $value */
-        $value = $r[1];
+
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
         return $value;
     }
 
-    public static function readFloat(string $buf, int &$o): float
-    {
-        $r = unpack('g', substr($buf, $o, 4));
-        if ($r === false || !isset($r[1])) {
-            throw new RuntimeException('unpack float failed');
-        }
-        $o += 4;
-        /** @var float $value */
-        $value = $r[1];
-        return $value;
-    }
-
-    public static function readString(string $buf, int &$o): string
-    {
-        $len = self::readVarInt($buf, $o);
-        $v = substr($buf, $o, $len);
-        $o += $len;
-        return $v;
-    }
-
-    public static function readVarInt(string $buf, int &$o): int
+    public static function readVarInt(string $buffer, int &$offset): int
     {
         $value = 0;
-        $shift = 0;
-        $len = \strlen($buf);
 
-        while (true) {
-            if ($o >= $len) {
-                throw new RuntimeException("VarInt overflow");
-            }
+        for ($i = 0; $i < 5; ++$i) {
+            $byte = self::readByte($buffer, $offset);
 
-            $b = \ord($buf[$o++]);
-            $value |= ($b & 0x7F) << $shift;
+            $value |= ($byte & 0x7F) << ($i * 7);
 
-            if (($b & 0x80) === 0) {
-                break;
-            }
-
-            $shift += 7;
-            if ($shift > 35) {
-                throw new RuntimeException("VarInt too big");
+            if (($byte & 0x80) === 0) {
+                return $value;
             }
         }
+
+        throw new RuntimeException('VarInt32 overflow');
+    }
+
+    public static function readSignedVarInt(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = self::readVarInt($buffer, $offset);
+
+        return ($value >> 1) ^ -($value & 1);
+    }
+
+    public static function readUnsignedVarLong(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = 0;
+
+        for ($i = 0; $i < 10; ++$i) {
+            $byte = self::readByte($buffer, $offset);
+
+            if ($i === 9 && ($byte & 0x7E) !== 0) {
+                throw new RuntimeException('VarLong64 overflow');
+            }
+
+            $value |= ($byte & 0x7F) << ($i * 7);
+
+            if (($byte & 0x80) === 0) {
+                return $value;
+            }
+        }
+
+        throw new RuntimeException('VarLong64 overflow');
+    }
+
+    public static function readSignedVarLong(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = self::readUnsignedVarLong($buffer, $offset);
+
+        return ($value >> 1) ^ -($value & 1);
+    }
+
+    public static function readUUID(
+        string $buffer,
+        int &$offset
+    ): string {
+        self::requireBytes($buffer, $offset, 16);
+
+        $first = strrev(substr($buffer, $offset, 8));
+        $second = strrev(substr($buffer, $offset + 8, 8));
+
+        $offset += 16;
+
+        return \Ramsey\Uuid\Uuid::fromBytes($first . $second)
+            ->toString();
+    }
+
+    public static function writeBytes(string $value): string
+    {
+        return $value;
+    }
+
+    public static function readBytes(
+        string $buffer,
+        int &$offset,
+        int $length
+    ): string {
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
 
         return $value;
     }
 
-    public static function readLInt(string $buf, int &$o): int
-    {
-        $r = unpack('V', substr($buf, $o, 4));
-        if ($r === false || !isset($r[1])) {
-            throw new RuntimeException('unpack lint failed');
+    public static function remaining(
+        string $buffer,
+        int $offset
+    ): int {
+        if ($offset < 0 || $offset > strlen($buffer)) {
+            throw new RuntimeException('Invalid buffer offset');
         }
-        $o += 4;
-        /** @var int $value */
-        $value = $r[1];
-        return $value;
+
+        return strlen($buffer) - $offset;
+    }
+
+    public static function hasRemaining(
+        string $buffer,
+        int $offset
+    ): bool {
+        return $offset < strlen($buffer);
     }
 }
