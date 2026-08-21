@@ -98,13 +98,13 @@ final class Server
         $this->currentTick++;
         $this->getWorld()->tickTime();
         $this->getWorld()->getEntityManager()->tick();
-        mcpe\PacketHandler::syncPlayers();
+        mcpe\PacketDispatcher::syncPlayers();
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
                 $socket = $player->session->getSocket();
                 if ($socket !== null) {
-                    \watermossmc\mcpe\protocol\SetTime::send($player->session, $socket, $time);
+                    \watermossmc\mcpe\protocol\clientbound\SetTime::send($player->session, $socket, $time);
                 }
             }
         }

@@ -24,7 +24,7 @@ namespace watermossmc\mcpe\network;
 
 use Socket;
 use watermossmc\binary\Binary;
-use watermossmc\mcpe\PacketHandler;
+use watermossmc\mcpe\PacketDispatcher;
 use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\player\PlayerManager;
 use watermossmc\util\Config;
@@ -390,7 +390,7 @@ final class RakNet
             if ($pid === 0xfe) {
                 $batchPayload = substr($body, 1);
                 Logger::debug(\sprintf("MCPE batch received, raw len=%d", \strlen($batchPayload)));
-                PacketHandler::handleBatch($batchPayload, $session, $sock);
+                PacketDispatcher::handleBatch($batchPayload, $session, $sock);
                 continue;
             }
         }

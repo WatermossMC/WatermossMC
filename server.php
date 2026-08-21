@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\TickLoop;
-use watermossmc\mcpe\PacketHandler;
+use watermossmc\mcpe\PacketDispatcher;
 use watermossmc\Server;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
@@ -93,7 +93,7 @@ Logger::info("RakNet initialized");
 // Initialize server API and tick loop
 $tickLoop = new TickLoop();
 $server = new Server(__DIR__, $tickLoop);
-PacketHandler::setServer($server);
+PacketDispatcher::setServer($server);
 
 $tickLoop->add(static function () use ($server): void {
     $server->tick();

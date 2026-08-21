@@ -28,7 +28,7 @@ use LogicException;
 use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
-use watermossmc\mcpe\protocol\NetworkSettings;
+use watermossmc\mcpe\protocol\handshake\NetworkSettings;
 use watermossmc\util\Logger;
 
 final class Session
