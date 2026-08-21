@@ -23,7 +23,10 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\serverbound;
 
 use watermossmc\binary\McpeBinary;
+<<<<<<< HEAD:src/network/mcpe/protocol/serverbound/ResourcePackClientResponse.php
 use watermossmc\network\mcpe\protocol\Packet;
+=======
+>>>>>>> c945639 (...):src/mcpe/protocol/ResourcePackClientResponse.php
 
 final class ResourcePackClientResponse extends Packet
 {
@@ -41,11 +44,19 @@ final class ResourcePackClientResponse extends Packet
         McpeBinary::readString($p, $o);
 
         $packs = [];
+<<<<<<< HEAD:src/network/mcpe/protocol/serverbound/ResourcePackClientResponse.php
         if ($status === self::STATUS_SEND_PACKS) {
             $count = McpeBinary::readVarInt($p, $o);
             for ($i = 0; $i < $count; $i++) {
                 $packs[] = McpeBinary::readString($p, $o);
             }
+=======
+        if($status === self::STATUS_SEND_PACKS){
+          $count = McpeBinary::readVarInt($p, $o);
+          for ($i = 0; $i < $count; $i++) {
+            $packs[] = McpeBinary::readString($p, $o);
+          }
+>>>>>>> c945639 (...):src/mcpe/protocol/ResourcePackClientResponse.php
         }
         return ['status' => $status, 'packs' => $packs];
     }

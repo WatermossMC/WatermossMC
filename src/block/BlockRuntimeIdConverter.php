@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -18,10 +19,13 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
+=======
+>>>>>>> c945639 (...)
 declare(strict_types=1);
 
 namespace watermossmc\block;
 
+<<<<<<< HEAD
 final class BlockRuntimeIdConverter
 {
     public function __construct(
@@ -45,3 +49,31 @@ final class BlockRuntimeIdConverter
         return $this->runtimeIdMap->getState($runtimeId);
     }
 }
+=======
+use RuntimeException;
+
+final class BlockRuntimeIdConverter
+{
+	public function __construct(
+		private RuntimeIdMap $runtimeIdMap
+	) {
+	}
+
+	public function toRuntimeId(Block $block): int
+	{
+		return $this->runtimeIdMap->getRuntimeId(
+			$block->getState()
+		);
+	}
+
+	public function toRuntimeIdFromState(BlockState $state): int
+	{
+		return $this->runtimeIdMap->getRuntimeId($state);
+	}
+
+	public function fromRuntimeId(int $runtimeId): BlockState
+	{
+		return $this->runtimeIdMap->getState($runtimeId);
+	}
+}
+>>>>>>> c945639 (...)

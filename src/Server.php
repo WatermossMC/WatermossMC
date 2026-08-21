@@ -22,7 +22,10 @@ declare(strict_types=1);
 
 namespace watermossmc;
 
+<<<<<<< HEAD
 use watermossmc\block\BlockInitializer;
+=======
+>>>>>>> c945639 (...)
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\command\CommandMap;
 use watermossmc\command\CommandRegistry;
@@ -77,10 +80,17 @@ final class Server
 
     public function boot(): void
     {
+<<<<<<< HEAD
         BlockInitializer::init();
         BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
         ItemInitializer::init();
         foreach (CommandRegistry::getCommands() as $commandClass) {
+=======
+        block\BlockInitializer::init();
+		BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
+        item\ItemInitializer::init();
+        foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
+>>>>>>> c945639 (...)
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();
             $this->commands->register($command);

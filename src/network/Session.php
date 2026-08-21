@@ -631,18 +631,34 @@ final class Session
         return $this->maxChunkRadius;
     }
 
+<<<<<<< HEAD:src/network/Session.php
     public function touch(): void
     {
         $this->lastSeen = time();
+=======
+	public function touch(): void
+    {
+	    $this->lastSeen = time();
+>>>>>>> c945639 (...):src/mcpe/network/Session.php
     }
 
     public function getLastSeen(): int
     {
+<<<<<<< HEAD:src/network/Session.php
         return $this->lastSeen;
+=======
+	    return $this->lastSeen;
+>>>>>>> c945639 (...):src/mcpe/network/Session.php
     }
 
     public function isTimedOut(int $timeout): bool
     {
+<<<<<<< HEAD:src/network/Session.php
         return time() - $this->lastSeen >= $timeout;
     }
 }
+=======
+	    return time() - $this->lastSeen >= $timeout;
+    }
+}
+>>>>>>> c945639 (...):src/mcpe/network/Session.php

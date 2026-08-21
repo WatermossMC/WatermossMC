@@ -27,6 +27,10 @@ use RuntimeException;
 
 final class McpeBinary
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> c945639 (...)
     public static function writeByte(int $value): string
     {
         return chr($value & 0xFF);
@@ -161,7 +165,11 @@ final class McpeBinary
 
     public static function writeUUID(string $uuid): string
     {
+<<<<<<< HEAD
         $bytes = Uuid::fromString($uuid)->getBytes();
+=======
+        $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
+>>>>>>> c945639 (...)
 
         return strrev(substr($bytes, 0, 8))
             . strrev(substr($bytes, 8, 8));
@@ -398,6 +406,7 @@ final class McpeBinary
         }
 
         throw new RuntimeException('VarInt32 overflow');
+<<<<<<< HEAD
     }
 
     public static function readUnsignedVarInt(
@@ -466,6 +475,107 @@ final class McpeBinary
     public static function writeBytes(string $value): string
     {
         return $value;
+    }
+
+    public static function readBytes(
+        string $buffer,
+        int &$offset,
+        int $length
+    ): string {
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
+        return $value;
+    }
+
+    public static function remaining(
+        string $buffer,
+        int $offset
+    ): int {
+        if ($offset < 0 || $offset > strlen($buffer)) {
+            throw new RuntimeException('Invalid buffer offset');
+        }
+
+        return strlen($buffer) - $offset;
+    }
+
+    public static function hasRemaining(
+        string $buffer,
+        int $offset
+    ): bool {
+        return $offset < strlen($buffer);
+=======
+    }
+
+    public static function readUnsignedVarInt(
+        string $buffer,
+        int &$offset
+    ): int {
+        return self::readVarInt($buffer, $offset);
+    }
+
+    public static function readSignedVarInt(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = self::readVarInt($buffer, $offset);
+
+        return ($value >> 1) ^ -($value & 1);
+    }
+
+    public static function readUnsignedVarLong(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = 0;
+
+        for ($i = 0; $i < 10; ++$i) {
+            $byte = self::readByte($buffer, $offset);
+
+            if ($i === 9 && ($byte & 0x7E) !== 0) {
+                throw new RuntimeException('VarLong64 overflow');
+            }
+
+            $value |= ($byte & 0x7F) << ($i * 7);
+
+            if (($byte & 0x80) === 0) {
+                return $value;
+            }
+        }
+
+        throw new RuntimeException('VarLong64 overflow');
+    }
+
+    public static function readSignedVarLong(
+        string $buffer,
+        int &$offset
+    ): int {
+        $value = self::readUnsignedVarLong($buffer, $offset);
+
+        return ($value >> 1) ^ -($value & 1);
+    }
+
+    public static function readUUID(
+        string $buffer,
+        int &$offset
+    ): string {
+        self::requireBytes($buffer, $offset, 16);
+
+        $first = strrev(substr($buffer, $offset, 8));
+        $second = strrev(substr($buffer, $offset + 8, 8));
+
+        $offset += 16;
+
+        return \Ramsey\Uuid\Uuid::fromBytes($first . $second)
+            ->toString();
+    }
+
+    public static function writeBytes(string $value): string
+    {
+        return $value;
+>>>>>>> c945639 (...)
     }
 
     public static function readBytes(

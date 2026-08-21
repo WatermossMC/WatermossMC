@@ -98,7 +98,11 @@ $tickLoop->add(static function () use ($server): void {
     $server->tick();
 
     if ($server->getCurrentTick() % 20 === 0) {
+<<<<<<< HEAD
         RakNet::tick();
+=======
+		RakNet::tick();
+>>>>>>> c945639 (...)
 
         Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }

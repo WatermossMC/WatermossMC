@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -18,6 +19,8 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
+=======
+>>>>>>> c945639 (...)
 declare(strict_types=1);
 
 namespace watermossmc\block;
@@ -26,6 +29,7 @@ use RuntimeException;
 
 final class BlockStateRegistry
 {
+<<<<<<< HEAD
     private static ?RuntimeIdMap $runtimeIdMap = null;
 
     public static function init(): void
@@ -44,3 +48,23 @@ final class BlockStateRegistry
         return self::$runtimeIdMap;
     }
 }
+=======
+	private static ?RuntimeIdMap $runtimeIdMap = null;
+
+	public static function init(): void
+	{
+		self::$runtimeIdMap = new RuntimeIdMap();
+	}
+
+	public static function getRuntimeIdMap(): RuntimeIdMap
+	{
+		if (self::$runtimeIdMap === null) {
+			throw new RuntimeException(
+				'BlockStateRegistry has not been initialized'
+			);
+		}
+
+		return self::$runtimeIdMap;
+	}
+}
+>>>>>>> c945639 (...)

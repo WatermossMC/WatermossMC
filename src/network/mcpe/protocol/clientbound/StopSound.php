@@ -32,9 +32,31 @@ final class StopSound extends Packet
 {
     public static function send(Session $s, Socket $sock, string $soundName, bool $stopAll, bool $stopLegacyMusic): void
     {
+<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/StopSound.php
         $p = McpeBinary::writeString($soundName) .
              McpeBinary::writeBool($stopAll) .
              McpeBinary::writeBool($stopLegacyMusic);
         self::sendBatch(ProtocolInfo::STOP_SOUND_PACKET, $p, $s, $sock);
+=======
+        $payload = '';
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        // recipesWithTypeIds count
+        $payload .= Binary::writeVarInt(0);
+        // potionTypeRecipes count
+        $payload .= Binary::writeVarInt(0);
+        // potionContainerRecipes count
+        $payload .= Binary::writeVarInt(0);
+        // materialReducerRecipes count
+        $payload .= Binary::writeBool(true);
+        // cleanRecipes
+        self::sendBatch(ProtocolInfo::CRAFTING_DATA_PACKET, $payload, $s, $sock);
+>>>>>>> c945639 (...):src/mcpe/protocol/CraftingData.php
     }
 }

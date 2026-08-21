@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /*
  * __        __    _                                    __  __  ____
  * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
@@ -18,11 +19,18 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
+=======
+>>>>>>> c945639 (...)
 declare(strict_types=1);
 
 namespace watermossmc\block;
 
 interface BlockStateProvider
 {
+<<<<<<< HEAD
     public function getRuntimeId(BlockState $state): int;
 }
+=======
+	public function getRuntimeId(BlockState $state): int;
+}
+>>>>>>> c945639 (...)
