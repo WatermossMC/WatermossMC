@@ -24,17 +24,23 @@ namespace watermossmc\world;
 
 use RuntimeException;
 use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+use watermossmc\block\BlockRegistry;
+use watermossmc\block\BlockRuntimeIdConverter;
 
 final class SubChunk
 {
     public const SIZE = 4096;
 
-    /** @var int[] */
-    private array $blocks = [];
+    /** @var \SplFixedArray<int> */
+    private \SplFixedArray $blocks;
 
     public function __construct()
     {
-        $this->blocks = array_fill(0, self::SIZE, 0);
+        $this->blocks = new \SplFixedArray(self::SIZE);
+        for ($i = 0; $i < self::SIZE; $i++) {
+            $this->blocks[$i] = 0;
+        }
     }
 
     public function setBlock(int $x, int $y, int $z, int $id): void
@@ -49,19 +55,42 @@ final class SubChunk
         return $this->blocks[$index] ?? 0;
     }
 
-    public function encode(): string
-    {
-        $out = Binary::writeByte(8);
-        $palette = array_values(array_unique($this->blocks));
-        $bits = max(1, (int) ceil(log(\count($palette), 2)));
-        $out .= Binary::writeByte($bits);
-        $out .= $this->encodeBlocks($palette, $bits);
-        $out .= Binary::writeVarInt(\count($palette));
-        foreach ($palette as $id) {
-            $out .= Binary::writeVarInt($id);
-        }
-        return $out;
-    }
+    public function encode(
+		BlockRuntimeIdConverter $converter
+	): string {
+		$paletteData = $this->createPalette($converter);
+
+		$palette = $paletteData['palette'];
+		$indexes = $paletteData['indexes'];
+
+		$rawBits = max(1, (int) ceil(log(count($palette), 2)));
+
+		$validBits = [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 8, 8 => 8];
+		$bits = $rawBits > 8 ? 16 : $validBits[$rawBits];
+
+		$out = '';
+
+		$out .= Binary::writeByte(8);
+		$out .= Binary::writeByte(1);
+		$out .= Binary::writeByte($bits << 1);
+
+		$out .= $this->encodeIndexes(
+			$indexes,
+			$bits
+		);
+
+		$out .= McpeBinary::writeSignedVarInt(
+			count($palette)
+		);
+
+		foreach ($palette as $runtimeId) {
+			$out .= McpeBinary::writeUnsignedVarInt(
+				$runtimeId
+			);
+		}
+
+		return $out;
+	}
 
     /**
      * @param array<int, int> $palette
@@ -102,7 +131,94 @@ final class SubChunk
             throw new RuntimeException('Failed to decode subchunk binary');
         }
         $subChunk = new self();
-        $subChunk->blocks = array_values($values);
+        $subChunk->blocks = \SplFixedArray::fromArray(array_values($values), false);
         return $subChunk;
     }
+
+	/**
+	 * @return \SplFixedArray<int>
+	 */
+	public function getBlocks(): \SplFixedArray
+	{
+    	return $this->blocks;
+	}
+
+	/**
+	 * @return array{
+	 *     palette: int[],
+	 *     indexes: int[]
+	 * }
+ 	 */
+	public function createPalette(
+		BlockRuntimeIdConverter $converter
+	): array {
+		$palette = [];
+		$paletteMap = [];
+		$indexes = [];
+
+		foreach ($this->blocks as $index => $blockId) {
+			$block = BlockRegistry::get($blockId);
+
+			if ($block === null) {
+				throw new RuntimeException(
+					"Unknown block ID: {$blockId}"
+				);
+			}
+
+			$runtimeId = $converter->toRuntimeId($block);
+
+			if (!isset($paletteMap[$runtimeId])) {
+				$paletteMap[$runtimeId] = count($palette);
+				$palette[] = $runtimeId;
+			}
+
+			$indexes[$index] = $paletteMap[$runtimeId];
+		}
+
+		return [
+			'palette' => $palette,
+			'indexes' => $indexes,
+		];
+	}
+
+	/**
+ 	 * @param int[] $indexes
+ 	 */
+	private function encodeIndexes(
+		array $indexes,
+		int $bits
+	): string {
+		$valuesPerWord = intdiv(32, $bits);
+
+		if ($valuesPerWord <= 0) {
+			throw new RuntimeException(
+				"Invalid bits per block: {$bits}"
+			);
+		}
+
+		$out = '';
+
+		$count = count($indexes);
+		$words = (int) ceil(
+			$count / $valuesPerWord
+		);
+
+		for ($wordIndex = 0; $wordIndex < $words; $wordIndex++) {
+			$value = 0;
+
+			for ($i = 0; $i < $valuesPerWord; $i++) {
+				$index = $wordIndex * $valuesPerWord + $i;
+
+				if ($index >= $count) {
+					break;
+				}
+
+				$value |= $indexes[$index] << ($i * $bits);
+			}
+
+			$out .= Binary::writeInt($value);
+		}
+
+		return $out;
+	}
 }

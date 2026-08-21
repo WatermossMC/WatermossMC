@@ -145,6 +145,10 @@ final class Session
 
     private bool $cacheEnabled = false;
 
+    private int $chunkRadius = 0;
+
+    private int $maxChunkRadius = 0;
+
     public function __construct(string $addr, int $port)
     {
         $this->address = $addr;
@@ -605,5 +609,40 @@ final class Session
     public function setCacheEnabled(bool $v): void
     {
         $this->cacheEnabled = $v;
+    }
+
+    public function setChunkRadius(int $radius): void
+    {
+        $this->chunkRadius = $radius;
+    }
+
+    public function getChunkRadius(): int
+    {
+        return $this->chunkRadius;
+    }
+
+    public function setMaxChunkRadius(int $maxRadius): void
+    {
+        $this->maxChunkRadius = $maxRadius;
+    }
+
+    public function getMaxChunkRadius(): int
+    {
+        return $this->maxChunkRadius;
+    }
+
+	public function touch(): void
+    {
+	    $this->lastSeen = time();
+    }
+
+    public function getLastSeen(): int
+    {
+	    return $this->lastSeen;
+    }
+
+    public function isTimedOut(int $timeout): bool
+    {
+	    return time() - $this->lastSeen >= $timeout;
     }
 }

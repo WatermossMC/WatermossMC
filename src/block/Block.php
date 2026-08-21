@@ -28,11 +28,16 @@ abstract class Block
 {
     public const AIR = 0;
     public const STONE = 1;
-    public const GRASS = 2;
+    public const GRASS_BLOCK = 2;
     public const DIRT = 3;
-    public const BEDROCK = 7;
+    public const BEDROCK = 4;
 
     public function __construct(public readonly int $id, public readonly string $name) {}
+
+	public function getState(): BlockState
+	{
+		return new BlockState($this->name);
+	}
 
     public function onPlace(int $x, int $y, int $z): void
     {

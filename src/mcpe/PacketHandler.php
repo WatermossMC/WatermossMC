@@ -26,6 +26,7 @@ use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;
+use watermossmc\block\BlockRuntimeData;
 use watermossmc\crypto\Crypto;
 use watermossmc\event\PlayerJoinEvent;
 use watermossmc\event\PlayerMoveEvent;
@@ -51,6 +52,7 @@ use watermossmc\mcpe\protocol\PlayerHotbar;
 use watermossmc\mcpe\protocol\PlayerList;
 use watermossmc\mcpe\protocol\PlayStatus;
 use watermossmc\mcpe\protocol\ProtocolInfo;
+use watermossmc\mcpe\protocol\RequestChunkRadius;
 use watermossmc\mcpe\protocol\RequestNetworkSettings;
 use watermossmc\mcpe\protocol\ResourcePackClientResponse;
 use watermossmc\mcpe\protocol\ResourcePacksInfo;
@@ -334,9 +336,10 @@ final class PacketHandler
                 case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET:
                     // RequestChunkRadius
                     Logger::debug("[0x45] RequestChunkRadius received");
-                    $world = self::getWorld();
-                    $spawn = $world->getSpawnPosition();
-                    SetSpawnPosition::send($session, $socket, $spawn['x'], $spawn['y'], $spawn['z']);
+                    $data = RequestChunkRadius::read($packet, $o);
+                    $session->setChunkRadius($data['radius']);
+                    $session->setMaxChunkRadius($data['maxRadius']);
+                    Logger::debug("[0x45] Requested radius={$data['radius']}, maxRadius={$data['maxRadius']}");
                     self::sendSpawnChunks($session, $socket);
                     PlayStatus::sendPlayerSpawn($session, $socket);
                     $session->enterPlay();
@@ -420,54 +423,51 @@ final class PacketHandler
         /**Logger::debug("[Sequence] Sending VoxelShapes...");
            VoxelShapes::send($s, $sock, [], [], 0);*/
         Logger::debug("[Sequence] Sending StartGame...");
-        StartGame::send($s, $sock, $world, $player);
-        /**Logger::debug("[Sequence] Sending ItemRegistry...");
-                ItemRegistry::send($s, $sock);
+        StartGame::send($s, $sock, $world, $player);/**
+        Logger::debug("[Sequence] Sending ItemRegistry...");
+        ItemRegistry::send($s, $sock);
 
-                Logger::debug("[Sequence] Sending AvailableActorIdentifiers...");
-                AvailableActorIdentifiers::send($s, $sock);
+        Logger::debug("[Sequence] Sending AvailableActorIdentifiers...");
+        AvailableActorIdentifiers::send($s, $sock);
+*/
+        Logger::debug("[Sequence] Sending BiomeDefinitionList...");
+        BiomeDefinitionList::send($s, $sock);
+/**
+        Logger::debug("[Sequence] Sending UpdateAttributes...");
+        UpdateAttributes::send($player, $sock);
 
-                Logger::debug("[Sequence] Sending BiomeDefinitionList...");
-                BiomeDefinitionList::send($s, $sock);
+        Logger::debug("[Sequence] Sending AvailableCommands...");
+        AvailableCommands::send($s, $sock);
 
-                Logger::debug("[Sequence] Sending SetTime...");
-                SetTime::send($s, $sock, $world->getDayTime());
+        Logger::debug("[Sequence] Sending UpdateAbilities...");
+        UpdateAbilities::send($s, $sock);
 
-                Logger::debug("[Sequence] Sending UpdateAttributes...");
-                UpdateAttributes::send($player, $sock);
+        Logger::debug("[Sequence] Sending UpdateAdventureSettings...");
+        UpdateAdventureSettings::send($s, $sock, false, false, false, true, true);
 
-                Logger::debug("[Sequence] Sending AvailableCommands...");
-                AvailableCommands::send($s, $sock);
+        Logger::debug("[Sequence] Sending MobEffects...");
+        foreach ($player->getEffects() as $id => $effect) {
+            MobEffect::add($s, $sock, $id, $effect['amplifier'], $effect['particles'], $effect['duration'], $effect['ambient']);
+        }
 
-                Logger::debug("[Sequence] Sending UpdateAbilities...");
-                UpdateAbilities::send($s, $sock);
+        Logger::debug("[Sequence] Sending SetActorData...");
+        SetActorData::send($player, $s, $sock);
 
-                Logger::debug("[Sequence] Sending UpdateAdventureSettings...");
-                UpdateAdventureSettings::send($s, $sock, false, false, false, true, true);
+        Logger::debug("[Sequence] Sending InventoryContent...");
+        InventoryContent::send($s, $sock, InventoryContent::WINDOW_INVENTORY, $player->inventory->getWindowItems(InventoryContent::WINDOW_INVENTORY));
+        InventoryContent::send($s, $sock, InventoryContent::WINDOW_ARMOR, $player->inventory->getWindowItems(InventoryContent::WINDOW_ARMOR));
 
-                Logger::debug("[Sequence] Sending MobEffects...");
-                foreach ($player->getEffects() as $id => $effect) {
-                    MobEffect::add($s, $sock, $id, $effect['amplifier'], $effect['particles'], $effect['duration'], $effect['ambient']);
-                }
+        Logger::debug("[Sequence] Sending PlayerHotbar...");
+        PlayerHotbar::send($s, $sock, $player->inventory->getSelectedSlot());
 
-                Logger::debug("[Sequence] Sending SetActorData...");
-                SetActorData::send($player, $s, $sock);
+        Logger::debug("[Sequence] Sending CreativeContent...");
+        CreativeContent::sendEmpty($s, $sock);
 
-                Logger::debug("[Sequence] Sending InventoryContent...");
-                InventoryContent::send($s, $sock, InventoryContent::WINDOW_INVENTORY, $player->inventory->getWindowItems(InventoryContent::WINDOW_INVENTORY));
-                InventoryContent::send($s, $sock, InventoryContent::WINDOW_ARMOR, $player->inventory->getWindowItems(InventoryContent::WINDOW_ARMOR));
+        Logger::debug("[Sequence] Sending CraftingData...");
+        CraftingData::sendEmpty($s, $sock);
 
-                Logger::debug("[Sequence] Sending PlayerHotbar...");
-                PlayerHotbar::send($s, $sock, $player->inventory->getSelectedSlot());
-
-                Logger::debug("[Sequence] Sending CreativeContent...");
-                CreativeContent::sendEmpty($s, $sock);
-
-                Logger::debug("[Sequence] Sending CraftingData...");
-                CraftingData::sendEmpty($s, $sock);
-
-                Logger::debug("[Sequence] Sending PlayerList...");
-                PlayerList::sendAdd($s, $sock);
+        Logger::debug("[Sequence] Sending PlayerList...");
+        PlayerList::sendAdd($s, $sock);
 
                 foreach (PlayerManager::all() as $onlinePlayer) {
                     if ($onlinePlayer === $player) {
@@ -556,16 +556,16 @@ final class PacketHandler
             return;
         }
         $spawn = $world->getSpawnPosition();
+        $radius = $s->getChunkRadius();
         $centerChunkX = self::blockToChunk($spawn['x']);
         $centerChunkZ = self::blockToChunk($spawn['z']);
-        // The Bedrock protocol often requires sending a "cache enabled" boolean
-        // and a list of blob hashes before the chunks themselves.
-        // However, LevelChunk::send in this codebase handles the individual chunk.
-        // We need to ensure the chunk encoding itself respects the cache setting.
-        for ($x = $centerChunkX - 2; $x <= $centerChunkX + 2; $x++) {
-            for ($z = $centerChunkZ - 2; $z <= $centerChunkZ + 2; $z++) {
+		$converter = BlockRuntimeData::getConverter();
+
+        for ($x = $centerChunkX - $radius; $x <= $centerChunkX + 2; $x++) {
+            for ($z = $centerChunkZ - $radius; $z <= $centerChunkZ + 2; $z++) {
                 $chunk = $world->getChunk($x, $z);
-                LevelChunk::send($s, $sock, $x, $z, $chunk->encode(), $chunk->getSubChunkCount());
+                LevelChunk::send($s, $sock, $x, $z, $chunk->encode($converter), $chunk->getSubChunkCount());
+				RakNet::flush($s, $sock);
             }
         }
     }
@@ -596,4 +596,3 @@ final class PacketHandler
         }
     }
 }
-use watermossmc\mcpe\protocol\{AvailableActorIdentifiers, AvailableCommands, BiomeDefinitionList, ClientToServerHandshake, CraftingData, CreativeContent, Disconnect, InventoryContent, ItemRegistry, LevelChunk, Login, NetworkSettings, PlayStatus, PlayerHotbar, PlayerList, ProtocolInfo, RequestNetworkSettings, ResourcePackClientResponse, ResourcePackStack, ResourcePacksInfo, ServerToClientHandshake, SetActorData, StartGame, UpdateAbilities, UpdateAdventureSettings, UpdateAttributes};

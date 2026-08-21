@@ -110,16 +110,6 @@ final class Player extends Entity
         return $this->runtimeId;
     }
 
-    public function getPosition(): \watermossmc\util\Location
-    {
-        return new \watermossmc\util\Location($this->server->getWorld(), $this->x, $this->y, $this->z, $this->yaw, $this->pitch);
-    }
-
-    public function getLocation(): Location
-    {
-        return parent::getLocation();
-    }
-
     public function teleport(float $x, float $y, float $z, ?float $yaw = null, ?float $pitch = null): void
     {
         $this->setPosition($x, $y, $z);

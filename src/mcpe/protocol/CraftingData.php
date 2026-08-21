@@ -32,6 +32,13 @@ final class CraftingData extends Packet
     {
         $payload = '';
         $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
+        $payload .= Binary::writeVarInt(0);
         // recipesWithTypeIds count
         $payload .= Binary::writeVarInt(0);
         // potionTypeRecipes count

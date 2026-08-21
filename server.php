@@ -54,10 +54,7 @@ set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
     }
 });
 
-<<<<<<< HEAD
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
-=======
->>>>>>> 866a1c0 (...)
 if (\function_exists('pcntl_signal')) {
     pcntl_signal(SIGTERM, function () use (&$shutdown): void {
         Logger::info("Received SIGTERM, shutting down gracefully...");
@@ -72,10 +69,7 @@ if (\function_exists('pcntl_signal')) {
 
 Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
 
-<<<<<<< HEAD
 // Create UDP socket
-=======
->>>>>>> 866a1c0 (...)
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     $error = socket_strerror(socket_last_error());
@@ -105,6 +99,8 @@ $tickLoop->add(static function () use ($server): void {
     $server->tick();
 
     if ($server->getCurrentTick() % 20 === 0) {
+		RakNet::tick();
+
         Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }
 });
@@ -123,10 +119,7 @@ $tickInterval = 1_000_000_000 / 20; // 20 TPS
 Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
-<<<<<<< HEAD
     // Handle signals (if available)
-=======
->>>>>>> 866a1c0 (...)
     if (\function_exists('pcntl_signal_dispatch')) {
         pcntl_signal_dispatch();
     }

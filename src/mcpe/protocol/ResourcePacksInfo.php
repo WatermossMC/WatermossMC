@@ -43,7 +43,7 @@ final class ResourcePacksInfo extends Packet
         $p .= Binary::writeUUID('00000000-0000-0000-0000-000000000000'); // worldTemplateId
         $p .= McpeBinary::writeString(""); // worldTemplateVersion
 
-        $p .= Binary::writeLShort(\count($packs));
+        $p .= McpeBinary::writeUnsignedVarInt(\count($packs));
 
         Logger::debug("[ResourcePacks] Raw payload hex: " . bin2hex($p));
 

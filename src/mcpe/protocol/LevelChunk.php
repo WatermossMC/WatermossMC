@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
@@ -29,32 +29,55 @@ use watermossmc\mcpe\network\Session;
 
 final class LevelChunk extends Packet
 {
-    public static function send(Session $s, Socket $sock, int $chunkX, int $chunkZ, string $chunkData, int $subChunkCount): void
-    {
-        $p = Binary::writeVarInt($chunkX);
-        $p .= Binary::writeVarInt($chunkZ);
-        $p .= Binary::writeVarInt(0);
-        // dimension ID
-        $p .= Binary::writeVarInt($subChunkCount);
-        $p .= Binary::writeBool($s->isCacheEnabled());
-        // cache enabled
-        $p .= McpeBinary::writeString($chunkData);
-        $p .= McpeBinary::writeString("");
-        self::sendBatch(ProtocolInfo::LEVEL_CHUNK_PACKET, $p, $s, $sock);
-    }
+    private const MAX_BLOB_HASHES = 64;
 
-    private static function writeBiomeData(): string
-    {
-        $out = '';
-        $palette = [1];
-        $bits = 1;
-        $out .= Binary::writeByte($bits);
-        $words = intdiv(256 * $bits + 31, 32);
-        $out .= str_repeat("\x00\x00\x00\x00", $words);
-        $out .= Binary::writeVarInt(\count($palette));
-        foreach ($palette as $biomeId) {
-            $out .= Binary::writeVarInt($biomeId);
+    public static function send(
+        Session $s,
+        Socket $sock,
+        int $chunkX,
+        int $chunkZ,
+        string $chunkData,
+        int $subChunkCount,
+		int $dimensionId = 0
+    ): void {
+        $p = McpeBinary::writeSignedVarInt($chunkX);
+        $p .= McpeBinary::writeSignedVarInt($chunkZ);
+
+        // Dimension ID
+        $p .= McpeBinary::writeSignedVarInt($dimensionId);
+
+        // SubChunk count
+        $p .= McpeBinary::writeUnsignedVarInt($subChunkCount);
+
+        $clientRequestSubChunkLimit = null;
+
+        $p .= Binary::writeBool($clientRequestSubChunkLimit !== null);
+
+        if ($clientRequestSubChunkLimit !== null) {
+            $p .= McpeBinary::writeSignedVarInt($clientRequestSubChunkLimit);
         }
-        return $out;
+
+        // Cache enabled
+        $cacheEnabled = $s->isCacheEnabled();
+        $p .= Binary::writeBool($cacheEnabled);
+
+        // Used blob hashes
+        $usedBlobHashes = [];
+
+        $p .= McpeBinary::writeUnsignedVarInt(count($usedBlobHashes));
+
+        foreach ($usedBlobHashes as $hash) {
+            $p .= McpeBinary::writeUnsignedLong($hash);
+        }
+
+        // Extra payload
+        $p .= McpeBinary::writeString($chunkData);
+
+        self::sendBatch(
+            ProtocolInfo::LEVEL_CHUNK_PACKET,
+            $p,
+            $s,
+            $sock
+        );
     }
 }

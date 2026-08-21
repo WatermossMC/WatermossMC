@@ -65,17 +65,17 @@ final class EncryptionContext
 
         $payload = substr($decrypted, 0, -8);
         $clientChecksum = substr($decrypted, -8);
-        $expected = $this->computeChecksum($payload, $this->decryptionCounter);
+		$counter = $this->decryptionCounter++;
+        $expected = $this->computeChecksum($payload, $counter);
 
         if (!hash_equals($expected, $clientChecksum)) {
             throw new RuntimeException(
-                "Checksum mismatch! counter=" . $this->decryptionCounter .
+                "Checksum mismatch! counter=" . $counter .
                 " expected=" . bin2hex($expected) .
                 " actual=" . bin2hex($clientChecksum)
             );
         }
 
-        $this->decryptionCounter++;
         return $payload;
     }
 

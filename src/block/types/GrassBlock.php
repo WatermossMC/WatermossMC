@@ -28,6 +28,6 @@ final class GrassBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(2, 'Grass');
+        parent::__construct(Block::GRASS_BLOCK, 'minecraft:grass_block');
     }
 }

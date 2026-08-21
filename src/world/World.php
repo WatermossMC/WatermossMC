@@ -352,7 +352,7 @@ final class World
                 $chunk->setBlock($cx, 0, $cz, Block::BEDROCK);
                 for ($y = 1; $y <= $surfaceY; $y++) {
                     $blockId = match (true) {
-                        $y === $surfaceY => Block::GRASS,
+                        $y === $surfaceY => Block::GRASS_BLOCK,
                         $y >= $surfaceY - 3 => Block::DIRT,
                         default => Block::STONE,
                     };

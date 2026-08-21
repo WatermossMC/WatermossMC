@@ -22,6 +22,7 @@ declare (strict_types=1);
 
 namespace watermossmc;
 
+use watermossmc\block\BlockRuntimeData;
 use watermossmc\command\CommandMap;
 use watermossmc\event\Event;
 use watermossmc\event\EventDispatcher;
@@ -69,6 +70,7 @@ final class Server
     public function boot(): void
     {
         block\BlockInitializer::init();
+		BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
         item\ItemInitializer::init();
         foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
             /** @var \watermossmc\command\Command $command */

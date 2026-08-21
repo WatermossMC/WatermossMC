@@ -28,6 +28,6 @@ final class StoneBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(1, 'Stone');
+        parent::__construct(Block::STONE, 'minecraft:stone');
     }
 }

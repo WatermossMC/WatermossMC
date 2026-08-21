@@ -22,25 +22,29 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol;
 
-use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
 
 final class ResourcePackClientResponse extends Packet
 {
-    public const STATUS_REFUSED = 1;
-    public const STATUS_SEND_PACKS = 2;
-    public const STATUS_HAVE_ALL_PACKS = 3;
-    public const STATUS_COMPLETED = 4;
+    public const STATUS_REFUSED = 0;
+    public const STATUS_SEND_PACKS = 1;
+    public const STATUS_HAVE_ALL_PACKS = 2;
+    public const STATUS_COMPLETED = 3;
 
     /**
      * @return array{status:int}
      */
     public static function read(string $p, int &$o): array
     {
-        $status = Binary::readByte($p, $o);
-        $count = Binary::readLShort($p, $o);
+        $status = McpeBinary::readVarInt($p, $o);
+        McpeBinary::readString($p, $o);
+
         $packs = [];
-        for ($i = 0; $i < $count; $i++) {
-            $packs[] = Binary::readString($p, $o);
+        if($status === self::STATUS_SEND_PACKS){
+          $count = McpeBinary::readVarInt($p, $o);
+          for ($i = 0; $i < $count; $i++) {
+            $packs[] = McpeBinary::readString($p, $o);
+          }
         }
         return ['status' => $status, 'packs' => $packs];
     }

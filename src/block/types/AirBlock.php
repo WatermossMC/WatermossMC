@@ -30,7 +30,7 @@ final class AirBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(0, 'Air');
+        parent::__construct(Block::AIR, 'minecraft:air');
     }
 
     public function onInteract(int $x, int $y, int $z, Player $player): void

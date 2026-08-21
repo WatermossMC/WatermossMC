@@ -28,6 +28,6 @@ final class DirtBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(3, 'Dirt');
+        parent::__construct(Block::DIRT, 'minecraft:dirt');
     }
 }
