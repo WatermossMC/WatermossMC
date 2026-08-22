@@ -48,7 +48,7 @@ final class PlayStatus extends Packet
         self::send($payload, $s, $sock);
     }
 
-    public static function sendPlayerSpawn(Session $s, Socket $sock): void
+    public static function sendSpawn(Session $s, Socket $sock): void
     {
         $payload = Binary::writeInt(3);
         self::send($payload, $s, $sock);

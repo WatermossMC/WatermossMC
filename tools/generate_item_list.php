@@ -1,24 +1,21 @@
 <?php
 
-/**
- * generate_item_list.php
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
  *
- * Usage:
- *   php generate_item_list.php <input.json> [output_dir]
+ * WatermossMC
  *
- * Input JSON format (BedrockData required_item_list.json):
- *   {
- *     "minecraft:acacia_boat": {
- *       "runtime_id": 411,
- *       "component_based": false,
- *       "version": 2
- *     },
- *     ...
- *   }
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Outputs:
- *   ItemTypeList.php  — auto-generated list of all item entries
- *   ItemRegistry.php  — packet sender that uses ItemTypeList
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
  */
 
 declare(strict_types=1);

@@ -66,16 +66,25 @@ final class NBT
         return self::writeRoot($data, $name, self::FORMAT_NETWORK);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function parse(string $data, int &$offset = 0): array
     {
         return self::parseInternal($data, self::FORMAT_BIG_ENDIAN, $offset);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function parseLittle(string $data, int &$offset = 0): array
     {
         return self::parseInternal($data, self::FORMAT_LITTLE_ENDIAN, $offset);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function parseNetwork(string $data, int &$offset = 0): array
     {
         return self::parseInternal($data, self::FORMAT_NETWORK, $offset);
@@ -98,6 +107,9 @@ final class NBT
         return $result;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private static function writeRoot(array $data, string $name, int $format): string
     {
         return \chr(self::TAG_COMPOUND)
@@ -105,6 +117,9 @@ final class NBT
             . self::writeCompoundPayload($data, $format);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private static function parseInternal(string $data, int $format, int &$offset = 0): array
     {
         [$tag, $name, $value] = self::readNamedTag($data, $offset, $format);
@@ -120,61 +135,101 @@ final class NBT
         return $value;
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: int}
+     */
     public static function tagByte(int $value): array
     {
         return ['__nbt_type' => self::TAG_BYTE, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: int}
+     */
     public static function tagShort(int $value): array
     {
         return ['__nbt_type' => self::TAG_SHORT, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: int}
+     */
     public static function tagInt(int $value): array
     {
         return ['__nbt_type' => self::TAG_INT, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: int}
+     */
     public static function tagLong(int $value): array
     {
         return ['__nbt_type' => self::TAG_LONG, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: float}
+     */
     public static function tagFloat(float $value): array
     {
         return ['__nbt_type' => self::TAG_FLOAT, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: float}
+     */
     public static function tagDouble(float $value): array
     {
         return ['__nbt_type' => self::TAG_DOUBLE, '__nbt_value' => $value];
     }
 
+    /**
+     * @param list<int> $value
+     * @return array{__nbt_type: int, __nbt_value: list<int>}
+     */
     public static function tagByteArray(array $value): array
     {
         return ['__nbt_type' => self::TAG_BYTE_ARRAY, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{__nbt_type: int, __nbt_value: string}
+     */
     public static function tagString(string $value): array
     {
         return ['__nbt_type' => self::TAG_STRING, '__nbt_value' => $value];
     }
 
+    /**
+     * @param list<int> $value
+     * @return array{__nbt_type: int, __nbt_value: list<int>}
+     */
     public static function tagIntArray(array $value): array
     {
         return ['__nbt_type' => self::TAG_INT_ARRAY, '__nbt_value' => $value];
     }
 
+    /**
+     * @param array<string, mixed> $value
+     * @return array{__nbt_type: int, __nbt_value: array<string, mixed>}
+     */
     public static function tagCompound(array $value): array
     {
         return ['__nbt_type' => self::TAG_COMPOUND, '__nbt_value' => $value];
     }
 
+    /**
+     * @param list<mixed> $value
+     * @return array{__nbt_type: int, __nbt_value: list<mixed>}
+     */
     public static function tagList(array $value): array
     {
         return ['__nbt_type' => self::TAG_LIST, '__nbt_value' => $value];
     }
 
+    /**
+     * @return array{0: int, 1: string}
+     */
     private static function detectTag(mixed $value, int $format): array
     {
         if (\is_array($value) && isset($value['__nbt_type'], $value['__nbt_value'])) {
@@ -226,6 +281,9 @@ final class NBT
         throw new RuntimeException('Unsupported NBT value type: ' . \get_debug_type($value));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private static function writeCompoundPayload(array $data, int $format): string
     {
         $buf = '';
@@ -236,6 +294,10 @@ final class NBT
         return $buf . \chr(self::TAG_END);
     }
 
+    /**
+     * @param list<mixed> $list
+     * @return array{0: int, 1: string}
+     */
     private static function writeList(array $list, int $format): array
     {
         if ($list === []) {
@@ -307,6 +369,9 @@ final class NBT
         return \pack($format !== self::FORMAT_BIG_ENDIAN ? 'e' : 'E', $value);
     }
 
+    /**
+     * @param list<int> $value
+     */
     private static function writeByteArray(array $value, int $format): string
     {
         $buf = self::writeInt(\count($value), $format);
@@ -316,6 +381,9 @@ final class NBT
         return $buf;
     }
 
+    /**
+     * @param list<int> $value
+     */
     private static function writeIntArray(array $value, int $format): string
     {
         $buf = self::writeInt(\count($value), $format);
@@ -331,6 +399,9 @@ final class NBT
         return $buf;
     }
 
+    /**
+     * @return array{0: int, 1: string, 2: mixed}
+     */
     private static function readNamedTag(string $buffer, int &$offset, int $format): array
     {
         $tag = self::readUnsignedByte($buffer, $offset);
@@ -384,7 +455,11 @@ final class NBT
             self::ensure($buffer, $offset, 2);
             $bytes = \substr($buffer, $offset, 2);
             $offset += 2;
-            $length = \unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'v' : 'n', $bytes)[1];
+            $unpacked = \unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'v' : 'n', $bytes);
+            if ($unpacked === false) {
+                throw new RuntimeException('Failed to unpack string length');
+            }
+            $length = $unpacked[1];
         }
 
         if ($length > 32767) {
@@ -413,7 +488,11 @@ final class NBT
         self::ensure($buffer, $offset, 2);
         $bytes = \substr($buffer, $offset, 2);
         $offset += 2;
-        return self::signShort(\unpack($format !== self::FORMAT_BIG_ENDIAN ? 'v' : 'n', $bytes)[1]);
+        $unpacked = \unpack($format !== self::FORMAT_BIG_ENDIAN ? 'v' : 'n', $bytes);
+        if ($unpacked === false) {
+            throw new RuntimeException('Failed to unpack short');
+        }
+        return self::signShort($unpacked[1]);
     }
 
     private static function readInt(string $buffer, int &$offset, int $format): int
@@ -425,7 +504,11 @@ final class NBT
         self::ensure($buffer, $offset, 4);
         $bytes = \substr($buffer, $offset, 4);
         $offset += 4;
-        return self::signInt(\unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'V' : 'N', $bytes)[1]);
+        $unpacked = \unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'V' : 'N', $bytes);
+        if ($unpacked === false) {
+            throw new RuntimeException('Failed to unpack int');
+        }
+        return self::signInt($unpacked[1]);
     }
 
     private static function readLong(string $buffer, int &$offset, int $format): int
@@ -437,7 +520,11 @@ final class NBT
         self::ensure($buffer, $offset, 8);
         $bytes = \substr($buffer, $offset, 8);
         $offset += 8;
-        return \unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'P' : 'J', $bytes)[1];
+        $unpacked = \unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'P' : 'J', $bytes);
+        if ($unpacked === false) {
+            throw new RuntimeException('Failed to unpack long');
+        }
+        return $unpacked[1];
     }
 
     private static function readFloat(string $buffer, int &$offset, int $format): float
@@ -445,7 +532,11 @@ final class NBT
         self::ensure($buffer, $offset, 4);
         $bytes = \substr($buffer, $offset, 4);
         $offset += 4;
-        return \unpack($format !== self::FORMAT_BIG_ENDIAN ? 'g' : 'G', $bytes)[1];
+        $unpacked = \unpack($format !== self::FORMAT_BIG_ENDIAN ? 'g' : 'G', $bytes);
+        if ($unpacked === false) {
+            throw new RuntimeException('Failed to unpack float');
+        }
+        return $unpacked[1];
     }
 
     private static function readDouble(string $buffer, int &$offset, int $format): float
@@ -453,9 +544,16 @@ final class NBT
         self::ensure($buffer, $offset, 8);
         $bytes = \substr($buffer, $offset, 8);
         $offset += 8;
-        return \unpack($format !== self::FORMAT_BIG_ENDIAN ? 'e' : 'E', $bytes)[1];
+        $unpacked = \unpack($format !== self::FORMAT_BIG_ENDIAN ? 'e' : 'E', $bytes);
+        if ($unpacked === false) {
+            throw new RuntimeException('Failed to unpack double');
+        }
+        return $unpacked[1];
     }
 
+    /**
+     * @return list<int>
+     */
     private static function readByteArray(string $buffer, int &$offset, int $format): array
     {
         $length = self::readInt($buffer, $offset, $format);
@@ -472,6 +570,9 @@ final class NBT
         return \array_values(\unpack('c*', $bytes) ?: []);
     }
 
+    /**
+     * @return list<int>
+     */
     private static function readIntArray(string $buffer, int &$offset, int $format): array
     {
         $length = self::readInt($buffer, $offset, $format);
@@ -497,6 +598,9 @@ final class NBT
         return \array_values(\unpack($format === self::FORMAT_LITTLE_ENDIAN ? 'V*' : 'N*', $bytes) ?: []);
     }
 
+    /**
+     * @return list<mixed>
+     */
     private static function readList(string $buffer, int &$offset, int $format): array
     {
         $childTag = self::readUnsignedByte($buffer, $offset);
@@ -519,6 +623,9 @@ final class NBT
         return $result;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private static function readCompound(string $buffer, int &$offset, int $format): array
     {
         $result = [];
@@ -550,6 +657,9 @@ final class NBT
         }
     }
 
+    /**
+     * @param array<mixed> $array
+     */
     private static function isList(array $array): bool
     {
         return $array === [] || \array_keys($array) === \range(0, \count($array) - 1);

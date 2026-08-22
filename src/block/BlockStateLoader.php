@@ -50,12 +50,6 @@ final class BlockStateLoader
     {
         $nbt = NBT::parseMultipleNetwork($data);
 
-        if (!is_array($nbt)) {
-            throw new RuntimeException(
-                'Invalid canonical block state data'
-            );
-        }
-
         $map = new RuntimeIdMap();
 
         foreach ($nbt as $runtimeId => $entry) {

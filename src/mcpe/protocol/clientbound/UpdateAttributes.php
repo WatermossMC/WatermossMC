@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
@@ -27,12 +27,18 @@ use function count;
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
+use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\player\Player;
 
 final class UpdateAttributes extends Packet
 {
+    public static function sendSelf(Session $s, Socket $sock, Player $player): void
+    {
+        self::send($player, $sock);
+    }
+
     public static function send(Player $player, Socket $sock): void
     {
         $s = $player->session;

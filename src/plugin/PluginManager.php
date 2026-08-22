@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\plugin;
 

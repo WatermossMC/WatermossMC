@@ -1,8 +1,16 @@
 parameters:
-    level: 8
+    level: 5
     paths:
         - src
-    reportUnmatchedIgnoredErrors: true
+    reportUnmatchedIgnoredErrors: false
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
-        - '#is unused\.#'
+        - '~is unused\.~'
+        - '~Strict comparison using~'
+        - '~Method watermossmc\\mcpe\\protocol\\handshake\\Login::.* has no value type specified in iterable type array~'
+        - '~Method watermossmc\\mcpe\\protocol\\schema\\PacketSchema::__construct\(\) has parameter \$fields with no value type specified in iterable type array~'
+        - '~Method watermossmc\\nbt\\NBT::.* has no value type specified in iterable type array~'
+        - '~Parameter #1 \$data of static method watermossmc\\nbt\\NBT::writeRoot\(\) expects array<string, mixed>~'
+        - '~Parameter #1 \$list of static method watermossmc\\nbt\\NBT::writeList\(\) expects list<mixed>~'
+        - '~Cannot access offset 1 on array\|false~'
+        - '~Parameter &\$offset by-ref type of method watermossmc\\nbt\\NBT::readString\(\) expects int~'

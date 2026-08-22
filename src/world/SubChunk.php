@@ -64,7 +64,10 @@ final class SubChunk
         $indexes = new SplFixedArray(self::SIZE);
 
         foreach ($this->blocks as $i => $blockStateId) {
-            $block = BlockRegistry::get($blockStateId);
+            $block = BlockRegistry::get((int) $blockStateId);
+            if ($block === null) {
+                continue;
+            }
             $runtimeId = $converter->toRuntimeId($block);
             if (!isset($runtimeIdMap[$runtimeId])) {
                 $runtimeIdMap[$runtimeId] = count($palette);

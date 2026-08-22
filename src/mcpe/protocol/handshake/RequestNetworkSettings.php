@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\handshake;
 
@@ -26,6 +26,8 @@ use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\clientbound\Disconnect;
+use watermossmc\mcpe\protocol\clientbound\PlayStatus;
 use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\util\Logger;

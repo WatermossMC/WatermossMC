@@ -25,6 +25,7 @@ namespace watermossmc\mcpe\handler;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;
+use watermossmc\block\BlockRuntimeData;
 use watermossmc\event\PlayerMoveEvent;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
@@ -75,7 +76,7 @@ final class InGamePacketHandler implements PacketHandler
                 $session->setMaxChunkRadius($data['maxRadius']);
                 Logger::debug("[0x45] Requested radius={$data['radius']}, maxRadius={$data['maxRadius']}");
                 $this->sendSpawnChunks($session, $socket);
-                PlayStatus::sendPlayerSpawn($session, $socket);
+                PlayStatus::sendSpawn($session, $socket);
                 $session->enterPlay();
                 RakNet::flush($session, $socket);
                 return true;
@@ -133,13 +134,13 @@ final class InGamePacketHandler implements PacketHandler
 
     private function sendSpawnChunks(Session $session, Socket $socket): void
     {
-        $world = $this->world ?? World::getDefault();
+        $world = $this->world ?? Server::getInstance()?->getWorld();
         if ($world === null) {
             return;
         }
         $spawn = $world->getSpawnPosition();
-        $chunkX = $spawn->getFloorX() >> 4;
-        $chunkZ = $spawn->getFloorZ() >> 4;
+        $chunkX = $spawn['x'] >> 4;
+        $chunkZ = $spawn['z'] >> 4;
         $radius = 4;
         Logger::info("Sending spawn chunks around ({$chunkX}, {$chunkZ}), radius {$radius}...");
         for ($x = -$radius; $x <= $radius; $x++) {
@@ -148,7 +149,7 @@ final class InGamePacketHandler implements PacketHandler
                 $cz = $chunkZ + $z;
                 $chunk = $world->getChunk($cx, $cz);
                 if ($chunk !== null) {
-                    LevelChunk::send($session, $socket, $chunk);
+                    LevelChunk::send($session, $socket, $cx, $cz, $chunk->encode(BlockRuntimeData::getConverter()), $chunk->getSubChunkCount());
                 }
             }
         }
