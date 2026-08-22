@@ -82,38 +82,7 @@ final class ResourcePackPacketHandler implements PacketHandler
 
     private function startPlay(Session $s, Socket $sock): void
     {
-        Logger::info("Starting game sequence for " . $s->getPlayerName());
-        $world = $this->world ?? World::getDefault();
-        if ($world === null) {
-            throw new RuntimeException("World not available");
-        }
-        if ($this->server === null) {
-            throw new RuntimeException("Server not initialized");
-        }
-        $player = PlayerManager::add($s, $s->getPlayerName(), $this->server);
-        $world->getEntityManager()->addEntity($player);
-        $this->server->dispatch(new PlayerJoinEvent($this->server, $player));
-        $s->setMcpeState(Session::MC_PRESPAWN);
-        PlayStatus::sendSpawn($s, $sock);
-        StartGame::send($s, $sock, $world);
-        BiomeDefinitionList::send($s, $sock);
-        AvailableActorIdentifiers::send($s, $sock);
-        VoxelShapes::send($s, $sock);
-        ItemRegistry::send($s, $sock);
-        CraftingData::send($s, $sock);
-        CreativeContent::send($s, $sock);
-        AvailableCommands::send($s, $sock);
-        PlayerList::sendAdd($s, $sock, [$player]);
-        SetSpawnPosition::send($s, $sock, $world->getSpawnPosition());
-        SetTime::send($s, $sock, 0);
-        UpdateAbilities::send($s, $sock);
-        UpdateAdventureSettings::send($s, $sock);
-        InventoryContent::sendInitial($s, $sock);
-        PlayerHotbar::sendInitial($s, $sock);
-        SetActorData::sendSelf($s, $sock, $player);
-        UpdateAttributes::sendSelf($s, $sock, $player);
-        AddPlayer::send($s, $sock, $player);
-        MobEffect::sendInitial($s, $sock);
-        RakNet::flush($s, $sock);
+        $preSpawn = new PreSpawnPacketHandler($this->world, $this->server);
+        $preSpawn->triggerSpawnSequence($s, $sock);
     }
 }
