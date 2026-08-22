@@ -105,7 +105,7 @@ final class LoginPacketHandler implements PacketHandler
         if (!openssl_sign($signingInput, $signature, $serverPrivKeyPem, \OPENSSL_ALGO_SHA384)) {
             throw new RuntimeException('Failed to sign handshake JWT');
         }
-        $sigRaw = Crypto::derToSignature($signature);
+        $sigRaw = Crypto::derToSignature($signature, 48);
         return $signingInput . '.' . $b64Url($sigRaw);
     }
 }
