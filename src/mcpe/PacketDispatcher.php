@@ -12,9 +12,11 @@ use watermossmc\mcpe\handler\HandshakePacketHandler;
 use watermossmc\mcpe\handler\InGamePacketHandler;
 use watermossmc\mcpe\handler\LoginPacketHandler;
 use watermossmc\mcpe\handler\NetworkSettingsPacketHandler;
+use watermossmc\mcpe\handler\PreSpawnPacketHandler;
 use watermossmc\mcpe\handler\ResourcePackPacketHandler;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\InboundPacketRegistry;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;
@@ -58,7 +60,8 @@ final class PacketDispatcher
             new LoginPacketHandler(),
             new HandshakePacketHandler(),
             new ResourcePackPacketHandler($world, $server),
-            $inGame = new InGamePacketHandler($world, $server),
+            new PreSpawnPacketHandler($world, $server),
+            new InGamePacketHandler($world, $server),
         ];
 
         foreach ($phaseHandlers as $handler) {
@@ -142,11 +145,7 @@ final class PacketDispatcher
             }
 
             $handler = self::$handlers[$pid];
-            if ($handler instanceof InGamePacketHandler) {
-                $handler->handlePacket($pid, $packet, $o, $session, $socket);
-            } else {
-                $handler->handle($packet, $o, $session, $socket);
-            }
+            $handler->handle($packet, 0, $session, $socket);
         } catch (Throwable $e) {
             Logger::error("Packet handling error [PID: 0x{$pidHex}]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());
