@@ -22,13 +22,12 @@ declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class LevelChunk extends Packet
 {
@@ -41,7 +40,7 @@ final class LevelChunk extends Packet
         int $chunkZ,
         string $chunkData,
         int $subChunkCount,
-		int $dimensionId = 0
+        int $dimensionId = 0
     ): void {
         $p = McpeBinary::writeSignedVarInt($chunkX);
         $p .= McpeBinary::writeSignedVarInt($chunkZ);

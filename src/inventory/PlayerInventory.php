@@ -105,7 +105,7 @@ final class PlayerInventory
         return $this->selectedSlot;
     }
 
-    public function getHolder(): ?Player
+    public function getHolder(): mixed
     {
         return null;
     }

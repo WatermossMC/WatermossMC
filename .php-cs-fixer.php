@@ -91,7 +91,7 @@ TEXT,
         'return_type_declaration' => ['space_before' => 'none'],
 
         'single_quote' => false,
-        'escape_implicit_backslashes' => false,
+        'string_implicit_backslashes' => false,
 
         'native_constant_invocation' => false,
         'modernize_strpos' => true,

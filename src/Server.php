@@ -22,15 +22,21 @@ declare (strict_types=1);
 
 namespace watermossmc;
 
+use watermossmc\block\BlockInitializer;
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\command\CommandMap;
+use watermossmc\command\CommandRegistry;
 use watermossmc\event\Event;
 use watermossmc\event\EventDispatcher;
 use watermossmc\event\ServerStartEvent;
 use watermossmc\event\ServerStopEvent;
 use watermossmc\event\TickEvent;
 use watermossmc\event\WorldLoadEvent;
+use watermossmc\item\ItemInitializer;
 use watermossmc\mcpe\network\TickLoop;
+use watermossmc\mcpe\PacketDispatcher;
+use watermossmc\mcpe\protocol\clientbound\SetTime;
+use watermossmc\player\OperatorManager;
 use watermossmc\player\Player;
 use watermossmc\player\PlayerManager;
 use watermossmc\plugin\PluginBase;
@@ -69,15 +75,15 @@ final class Server
 
     public function boot(): void
     {
-        block\BlockInitializer::init();
-		BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
-        item\ItemInitializer::init();
-        foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
+        BlockInitializer::init();
+        BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
+        ItemInitializer::init();
+        foreach (CommandRegistry::getCommands() as $commandClass) {
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();
             $this->commands->register($command);
         }
-        \watermossmc\player\OperatorManager::load($this);
+        OperatorManager::load($this);
         $this->running = true;
         $this->plugins->loadPlugins();
         $this->plugins->enablePlugins();
@@ -88,7 +94,7 @@ final class Server
     {
         $this->running = false;
         $this->dispatch(new ServerStopEvent($this));
-        \watermossmc\player\OperatorManager::save($this);
+        OperatorManager::save($this);
         $this->saveWorld();
         $this->plugins->disablePlugins();
     }
@@ -98,13 +104,13 @@ final class Server
         $this->currentTick++;
         $this->getWorld()->tickTime();
         $this->getWorld()->getEntityManager()->tick();
-        mcpe\PacketDispatcher::syncPlayers();
+        PacketDispatcher::syncPlayers();
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
                 $socket = $player->session->getSocket();
                 if ($socket !== null) {
-                    \watermossmc\mcpe\protocol\clientbound\SetTime::send($player->session, $socket, $time);
+                    SetTime::send($player->session, $socket, $time);
                 }
             }
         }

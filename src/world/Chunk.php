@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace watermossmc\world;
 
 use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
 use watermossmc\block\BlockRuntimeIdConverter;
 
 final class Chunk
@@ -81,7 +82,7 @@ final class Chunk
         $payload .= str_repeat("\x01\x00\x00\x00", 256); // 256 entries of Biome ID 1 (Plains)
 
         // Border blocks data count (0)
-        $payload .= \watermossmc\binary\McpeBinary::writeUnsignedVarInt(0);
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
 
         return $payload;
     }

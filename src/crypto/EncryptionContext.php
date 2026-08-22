@@ -65,7 +65,7 @@ final class EncryptionContext
 
         $payload = substr($decrypted, 0, -8);
         $clientChecksum = substr($decrypted, -8);
-		$counter = $this->decryptionCounter++;
+        $counter = $this->decryptionCounter++;
         $expected = $this->computeChecksum($payload, $counter);
 
         if (!hash_equals($expected, $clientChecksum)) {

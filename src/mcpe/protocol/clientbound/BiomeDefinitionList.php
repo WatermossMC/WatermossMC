@@ -22,15 +22,14 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\data\BiomeDefinitions;
 use watermossmc\mcpe\cache\StaticPacketCache;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class BiomeDefinitionList extends Packet
 {

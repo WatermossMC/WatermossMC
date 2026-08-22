@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace watermossmc\binary;
 
+use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
 final class McpeBinary
 {
-
     public static function writeByte(int $value): string
     {
         return chr($value & 0xFF);
@@ -161,7 +161,7 @@ final class McpeBinary
 
     public static function writeUUID(string $uuid): string
     {
-        $bytes = \Ramsey\Uuid\Uuid::fromString($uuid)->getBytes();
+        $bytes = Uuid::fromString($uuid)->getBytes();
 
         return strrev(substr($bytes, 0, 8))
             . strrev(substr($bytes, 8, 8));
@@ -459,7 +459,7 @@ final class McpeBinary
 
         $offset += 16;
 
-        return \Ramsey\Uuid\Uuid::fromBytes($first . $second)
+        return Uuid::fromBytes($first . $second)
             ->toString();
     }
 

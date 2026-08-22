@@ -22,12 +22,11 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\handshake;
 
-use watermossmc\mcpe\protocol\Packet;
-
 use RuntimeException;
 use Throwable;
 use watermossmc\binary\Binary;
 use watermossmc\crypto\XboxAuth;
+use watermossmc\mcpe\protocol\Packet;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
 

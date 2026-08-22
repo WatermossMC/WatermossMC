@@ -34,10 +34,10 @@ abstract class Block
 
     public function __construct(public readonly int $id, public readonly string $name) {}
 
-	public function getState(): BlockState
-	{
-		return new BlockState($this->name);
-	}
+    public function getState(): BlockState
+    {
+        return new BlockState($this->name);
+    }
 
     public function onPlace(int $x, int $y, int $z): void
     {

@@ -22,6 +22,7 @@ declare (strict_types=1);
 
 namespace watermossmc\player;
 
+use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
@@ -30,7 +31,6 @@ use watermossmc\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\mcpe\protocol\clientbound\MobEffect;
 use watermossmc\mcpe\protocol\clientbound\Text;
 use watermossmc\Server;
-use watermossmc\util\Location;
 use watermossmc\util\Permission;
 
 final class Player extends Entity
@@ -57,7 +57,7 @@ final class Player extends Entity
 
     public bool $onGround = true;
 
-    private \watermossmc\Server $server;
+    private Server $server;
 
     /** @var array<string, float|int|bool>|null */
     public ?array $pendingMove = null;
@@ -75,7 +75,7 @@ final class Player extends Entity
         $this->uuid = $s->getUuid();
         $this->username = $username;
         $this->inventory = new PlayerInventory();
-        $factory = \watermossmc\entity\AttributeFactory::getInstance();
+        $factory = AttributeFactory::getInstance();
         $map = $this->getAttributeMap();
         $map->add($factory->mustGet('minecraft:health'));
         $map->add($factory->mustGet('minecraft:follow_range'));
@@ -90,7 +90,7 @@ final class Player extends Entity
         $map->add($factory->mustGet('minecraft:player.level'));
         $map->add($factory->mustGet('minecraft:player.experience'));
         // Load role from OperatorManager
-        $this->role = \watermossmc\player\OperatorManager::getPermissionLevel($username);
+        $this->role = OperatorManager::getPermissionLevel($username);
         // Initialize default player properties
         $this->getEntityData()->setString(EntityMetadataProperties::NAMETAG, $username);
     }

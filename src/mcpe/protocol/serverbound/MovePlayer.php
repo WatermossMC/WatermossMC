@@ -22,10 +22,9 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\serverbound;
 
-use watermossmc\mcpe\protocol\Packet;
-
 use watermossmc\binary\Binary;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\types\MovePlayerMode;
 use watermossmc\player\PlayerManager;
 

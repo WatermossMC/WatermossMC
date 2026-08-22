@@ -27,23 +27,23 @@ use watermossmc\block\BlockState;
 
 final class BedrockBlock extends Block
 {
-	public function __construct()
-	{
-		parent::__construct(Block::BEDROCK, 'minecraft:bedrock');
-	}
+    public function __construct()
+    {
+        parent::__construct(Block::BEDROCK, 'minecraft:bedrock');
+    }
 
-	public function getState(): BlockState
-	{
-		return new BlockState(
-			'minecraft:bedrock',
-			[
-				'infiniburn_bit' => 0,
-			]
-		);
-	}
+    public function getState(): BlockState
+    {
+        return new BlockState(
+            'minecraft:bedrock',
+            [
+                'infiniburn_bit' => 0,
+            ]
+        );
+    }
 
-	public function onBreak(int $x, int $y, int $z): void
-	{
-		// Bedrock cannot be broken in survival
-	}
+    public function onBreak(int $x, int $y, int $z): void
+    {
+        // Bedrock cannot be broken in survival
+    }
 }

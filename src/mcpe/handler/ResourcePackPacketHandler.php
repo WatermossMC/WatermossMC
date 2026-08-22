@@ -1,41 +1,34 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 namespace watermossmc\mcpe\handler;
 
-use RuntimeException;
 use Socket;
-use watermossmc\event\PlayerJoinEvent;
 use watermossmc\mcpe\network\RakNet;
-use watermossmc\mcpe\PacketHandler;
 use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\protocol\clientbound\AddPlayer;
-use watermossmc\mcpe\protocol\clientbound\AvailableActorIdentifiers;
-use watermossmc\mcpe\protocol\clientbound\AvailableCommands;
-use watermossmc\mcpe\protocol\clientbound\BiomeDefinitionList;
-use watermossmc\mcpe\protocol\clientbound\CraftingData;
-use watermossmc\mcpe\protocol\clientbound\CreativeContent;
-use watermossmc\mcpe\protocol\clientbound\InventoryContent;
-use watermossmc\mcpe\protocol\clientbound\ItemRegistry;
-use watermossmc\mcpe\protocol\clientbound\LevelChunk;
-use watermossmc\mcpe\protocol\clientbound\MobEffect;
-use watermossmc\mcpe\protocol\clientbound\MoveActorAbsolute;
-use watermossmc\mcpe\protocol\clientbound\PlayerHotbar;
-use watermossmc\mcpe\protocol\clientbound\PlayerList;
-use watermossmc\mcpe\protocol\clientbound\PlayStatus;
+use watermossmc\mcpe\PacketHandler;
 use watermossmc\mcpe\protocol\clientbound\ResourcePackStack;
-use watermossmc\mcpe\protocol\clientbound\SetActorData;
-use watermossmc\mcpe\protocol\clientbound\SetSpawnPosition;
-use watermossmc\mcpe\protocol\clientbound\SetTime;
-use watermossmc\mcpe\protocol\clientbound\StartGame;
-use watermossmc\mcpe\protocol\clientbound\UpdateAbilities;
-use watermossmc\mcpe\protocol\clientbound\UpdateAdventureSettings;
-use watermossmc\mcpe\protocol\clientbound\UpdateAttributes;
-use watermossmc\mcpe\protocol\clientbound\VoxelShapes;
 use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\mcpe\protocol\serverbound\ResourcePackClientResponse;
-use watermossmc\player\PlayerManager;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;

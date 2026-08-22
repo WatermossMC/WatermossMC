@@ -50,8 +50,7 @@ final class RakNet
     public const FRAME_SET_MAX = 0x8d;
     public const ACK = 0xc0;
     public const NACK = 0xa0;
-
-	private const SESSION_TIMEOUT = 10.0;
+    private const SESSION_TIMEOUT = 10.0;
 
     /** @var Session[] */
     private static array $sessions = [];
@@ -265,7 +264,7 @@ final class RakNet
     private static function handleFrameSet(string $p, string $a, int $po, Socket $sock): void
     {
         $session = self::session($a, $po);
-		$session->touch();
+        $session->touch();
 
         $o = 1;
         $len = \strlen($p);
@@ -412,7 +411,7 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-		$session->touch();
+        $session->touch();
         for ($i = 0; $i < $count; $i++) {
             $isRange = \ord($p[$o++]);
             if ($isRange === 1) {
@@ -438,7 +437,7 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-		$session->touch();
+        $session->touch();
         for ($i = 0; $i < $count; $i++) {
             $isSingle = \ord($p[$o++]);
             if ($isSingle === 1) {
@@ -469,24 +468,24 @@ final class RakNet
         $session->sendQueue = [];
     }
 
-	public static function tick(): void
-	{
-		$now = microtime(true);
+    public static function tick(): void
+    {
+        $now = microtime(true);
 
-		foreach (self::$sessions as $key => $session) {
-			if (($now - $session->lastSeen) < self::SESSION_TIMEOUT) {
-				continue;
-			}
+        foreach (self::$sessions as $key => $session) {
+            if (($now - $session->lastSeen) < self::SESSION_TIMEOUT) {
+                continue;
+            }
 
-			Logger::debug(
-				"Session timeout: {$session->address}:{$session->port}"
-			);
+            Logger::debug(
+                "Session timeout: {$session->address}:{$session->port}"
+            );
 
-			PlayerManager::remove($session);
+            PlayerManager::remove($session);
 
-			$session->close(false);
+            $session->close(false);
 
-			unset(self::$sessions[$key]);
-		}
-	}
+            unset(self::$sessions[$key]);
+        }
+    }
 }

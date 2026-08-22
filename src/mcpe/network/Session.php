@@ -631,18 +631,18 @@ final class Session
         return $this->maxChunkRadius;
     }
 
-	public function touch(): void
+    public function touch(): void
     {
-	    $this->lastSeen = time();
+        $this->lastSeen = time();
     }
 
     public function getLastSeen(): int
     {
-	    return $this->lastSeen;
+        return $this->lastSeen;
     }
 
     public function isTimedOut(int $timeout): bool
     {
-	    return time() - $this->lastSeen >= $timeout;
+        return time() - $this->lastSeen >= $timeout;
     }
 }

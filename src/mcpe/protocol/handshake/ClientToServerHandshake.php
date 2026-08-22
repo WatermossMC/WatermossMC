@@ -23,7 +23,6 @@ declare (strict_types=1);
 namespace watermossmc\mcpe\protocol\handshake;
 
 use watermossmc\mcpe\protocol\Packet;
-
 use watermossmc\util\Logger;
 
 final class ClientToServerHandshake extends Packet

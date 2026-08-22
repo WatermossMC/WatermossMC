@@ -22,18 +22,18 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use function count;
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
+use watermossmc\player\Player;
 
 final class UpdateAttributes extends Packet
 {
-    public static function send(\watermossmc\player\Player $player, Socket $sock): void
+    public static function send(Player $player, Socket $sock): void
     {
         $s = $player->session;
         $runtimeId = $s->getRuntimeId();

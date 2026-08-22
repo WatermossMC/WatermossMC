@@ -22,13 +22,12 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\handshake;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\util\Logger;
 
 final class RequestNetworkSettings extends Packet

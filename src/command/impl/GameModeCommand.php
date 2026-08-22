@@ -25,6 +25,7 @@ namespace watermossmc\command\impl;
 use watermossmc\command\Command;
 use watermossmc\player\Player;
 use watermossmc\Server;
+use watermossmc\util\Permission;
 
 final class GameModeCommand extends Command
 {
@@ -34,7 +35,7 @@ final class GameModeCommand extends Command
             'gamemode',
             'Changes the game mode of a player',
             '/gamemode <mode> [player]',
-            \watermossmc\util\Permission::ROLE_OPERATOR
+            Permission::ROLE_OPERATOR
         );
     }
 

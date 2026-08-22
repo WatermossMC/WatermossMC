@@ -22,9 +22,6 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use function count;
 
 use Socket;
@@ -32,6 +29,8 @@ use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\inventory\ItemStack;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class InventoryContent extends Packet
 {

@@ -22,12 +22,11 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\handshake;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use Socket;
 use watermossmc\binary\McpeBinary;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class NetworkSettings extends Packet
 {

@@ -22,9 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\serverbound;
 
-use watermossmc\mcpe\protocol\Packet;
-
 use watermossmc\binary\Binary;
+use watermossmc\mcpe\protocol\Packet;
 
 final class ClientCacheStatus extends Packet
 {
