@@ -472,6 +472,6 @@ final class World
 
     public function getChunkViewDistance(): int
     {
-        return Config::getInt("chunk-view-radius", 19);
+        return Config::getInt("chunk-view-radius", 6);
     }
 }

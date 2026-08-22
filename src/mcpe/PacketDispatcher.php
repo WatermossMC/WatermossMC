@@ -86,9 +86,6 @@ final class PacketDispatcher
 
         foreach ($phaseHandlers as $handler) {
             foreach ($handler->packetIds() as $pid) {
-                if (isset(self::$handlers[$pid])) {
-                    throw new RuntimeException("Duplicate handler registered for packet ID 0x" . dechex($pid));
-                }
                 self::$handlers[$pid] = $handler;
             }
         }
@@ -165,7 +162,7 @@ final class PacketDispatcher
             }
 
             $handler = self::$handlers[$pid];
-            $handler->handle($packet, 0, $session, $socket);
+            $handler->handle($packet, $o, $session, $socket);
         } catch (Throwable $e) {
             Logger::error("Packet handling error [PID: 0x{$pidHex}]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());
