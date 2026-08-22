@@ -18,20 +18,14 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-namespace watermossmc\network\raknet;
+namespace watermossmc\mcpe\network;
 
 use Socket;
 use watermossmc\binary\Binary;
-<<<<<<< HEAD:src/network/raknet/RakNet.php
-use watermossmc\network\mcpe\PacketDispatcher;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
-=======
 use watermossmc\mcpe\PacketDispatcher;
 use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>> 8b12078 (...):src/mcpe/network/RakNet.php
 use watermossmc\player\PlayerManager;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
@@ -57,8 +51,6 @@ final class RakNet
     public const ACK = 0xc0;
     public const NACK = 0xa0;
     private const SESSION_TIMEOUT = 10.0;
-
-	private const SESSION_TIMEOUT = 10.0;
 
     /** @var Session[] */
     private static array $sessions = [];
@@ -272,11 +264,7 @@ final class RakNet
     private static function handleFrameSet(string $p, string $a, int $po, Socket $sock): void
     {
         $session = self::session($a, $po);
-<<<<<<< HEAD:src/network/raknet/RakNet.php
         $session->touch();
-=======
-		$session->touch();
->>>>>>> c945639 (...):src/mcpe/network/RakNet.php
 
         $o = 1;
         $len = \strlen($p);
@@ -423,11 +411,7 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-<<<<<<< HEAD:src/network/raknet/RakNet.php
         $session->touch();
-=======
-		$session->touch();
->>>>>>> c945639 (...):src/mcpe/network/RakNet.php
         for ($i = 0; $i < $count; $i++) {
             $isRange = \ord($p[$o++]);
             if ($isRange === 1) {
@@ -453,11 +437,7 @@ final class RakNet
         $o = 1;
         $count = Binary::readShort($p, $o);
         $session = self::session($a, $po);
-<<<<<<< HEAD:src/network/raknet/RakNet.php
         $session->touch();
-=======
-		$session->touch();
->>>>>>> c945639 (...):src/mcpe/network/RakNet.php
         for ($i = 0; $i < $count; $i++) {
             $isSingle = \ord($p[$o++]);
             if ($isSingle === 1) {
@@ -488,7 +468,6 @@ final class RakNet
         $session->sendQueue = [];
     }
 
-<<<<<<< HEAD:src/network/raknet/RakNet.php
     public static function tick(): void
     {
         $now = microtime(true);
@@ -509,26 +488,4 @@ final class RakNet
             unset(self::$sessions[$key]);
         }
     }
-=======
-	public static function tick(): void
-	{
-		$now = microtime(true);
-
-		foreach (self::$sessions as $key => $session) {
-			if (($now - $session->lastSeen) < self::SESSION_TIMEOUT) {
-				continue;
-			}
-
-			Logger::debug(
-				"Session timeout: {$session->address}:{$session->port}"
-			);
-
-			PlayerManager::remove($session);
-
-			$session->close(false);
-
-			unset(self::$sessions[$key]);
-		}
-	}
->>>>>>> c945639 (...):src/mcpe/network/RakNet.php
 }

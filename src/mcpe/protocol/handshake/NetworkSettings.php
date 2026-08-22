@@ -18,22 +18,15 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/NetworkSettings.php
-namespace watermossmc\network\mcpe\protocol\handshake;
-========
 namespace watermossmc\mcpe\protocol\handshake;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/NetworkSettings.php
 
 use Socket;
 use watermossmc\binary\McpeBinary;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class NetworkSettings extends Packet
 {

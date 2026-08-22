@@ -20,16 +20,10 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/serverbound/ClientCacheStatus.php
-namespace watermossmc\network\mcpe\protocol\serverbound;
-========
 namespace watermossmc\mcpe\protocol\serverbound;
 
-use watermossmc\mcpe\protocol\Packet;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/serverbound/ClientCacheStatus.php
-
 use watermossmc\binary\Binary;
-use watermossmc\network\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\Packet;
 
 final class ClientCacheStatus extends Packet
 {

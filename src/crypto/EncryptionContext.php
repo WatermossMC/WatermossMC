@@ -65,11 +65,7 @@ final class EncryptionContext
 
         $payload = substr($decrypted, 0, -8);
         $clientChecksum = substr($decrypted, -8);
-<<<<<<< HEAD
         $counter = $this->decryptionCounter++;
-=======
-		$counter = $this->decryptionCounter++;
->>>>>>> c945639 (...)
         $expected = $this->computeChecksum($payload, $counter);
 
         if (!hash_equals($expected, $clientChecksum)) {

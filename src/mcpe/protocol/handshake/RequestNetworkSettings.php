@@ -18,25 +18,16 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/RequestNetworkSettings.php
-namespace watermossmc\network\mcpe\protocol\handshake;
-========
 namespace watermossmc\mcpe\protocol\handshake;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/RequestNetworkSettings.php
 
 use Socket;
 use watermossmc\binary\Binary;
-use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
-use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
+use watermossmc\mcpe\network\RakNet;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\util\Logger;
 
 final class RequestNetworkSettings extends Packet

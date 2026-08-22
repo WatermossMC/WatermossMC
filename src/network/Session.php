@@ -18,9 +18,9 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-namespace watermossmc\network;
+namespace watermossmc\mcpe\network;
 
 use function count;
 
@@ -28,11 +28,7 @@ use LogicException;
 use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
-<<<<<<< HEAD:src/network/Session.php
-use watermossmc\network\mcpe\protocol\handshake\NetworkSettings;
-=======
 use watermossmc\mcpe\protocol\handshake\NetworkSettings;
->>>>>>> 8b12078 (...):src/mcpe/network/Session.php
 use watermossmc\util\Logger;
 
 final class Session
@@ -635,37 +631,18 @@ final class Session
         return $this->maxChunkRadius;
     }
 
-<<<<<<< HEAD:src/network/Session.php
     public function touch(): void
     {
         $this->lastSeen = time();
-=======
-	public function touch(): void
-    {
-	    $this->lastSeen = time();
->>>>>>> c945639 (...):src/mcpe/network/Session.php
     }
 
     public function getLastSeen(): int
     {
-<<<<<<< HEAD:src/network/Session.php
         return $this->lastSeen;
-=======
-	    return $this->lastSeen;
->>>>>>> c945639 (...):src/mcpe/network/Session.php
     }
 
     public function isTimedOut(int $timeout): bool
     {
-<<<<<<< HEAD:src/network/Session.php
         return time() - $this->lastSeen >= $timeout;
     }
 }
-=======
-	    return time() - $this->lastSeen >= $timeout;
-    }
-}
-<<<<<<< HEAD:src/network/Session.php
->>>>>>> c945639 (...):src/mcpe/network/Session.php
-=======
->>>>>>> 8b12078 (...):src/mcpe/network/Session.php

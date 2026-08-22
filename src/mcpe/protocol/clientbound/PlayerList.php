@@ -18,56 +18,59 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/PlayerList.php
-namespace watermossmc\network\mcpe\protocol\clientbound;
-========
 namespace watermossmc\mcpe\protocol\clientbound;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/PlayerList.php
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
-use watermossmc\player\Player;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class PlayerList extends Packet
 {
     public const TYPE_ADD = 0;
     public const TYPE_REMOVE = 1;
 
-    /**
-     * @param Player[] $players
-     */
-    public static function sendAdd(Session $s, Socket $sock, array $players): void
+    public static function sendAdd(Session $s, Socket $sock): void
     {
-        foreach ($players as $player) {
-            $uuid = $player->session->getUuid();
-            $name = $player->session->getPlayerName();
-            $xuid = $player->session->getXuid();
-            $rId = $player->session->getRuntimeId();
-            $payload = '';
-            $payload .= Binary::writeUInt8(self::TYPE_ADD);
-            $payload .= Binary::writeVarInt(1);
-            $payload .= self::writeUuidBytes($uuid);
-            $payload .= Binary::writeVarLong($rId);
-            $payload .= McpeBinary::writeString($name);
-            $payload .= McpeBinary::writeString((string) $xuid);
-            $payload .= McpeBinary::writeString(''); // platformChatId
-            $payload .= Binary::writeLInt(-1); // buildPlatform (-1 = unknown)
-            $payload .= self::writeMinimalSkin($name); // skinData
-            $payload .= Binary::writeBool(false); // isTeacher
-            $payload .= Binary::writeBool(false); // isHost
-            $payload .= Binary::writeBool(false); // isSubClient
-            $payload .= Binary::writeBool(false); // chattedXUID
-            self::sendBatch(ProtocolInfo::PLAYER_LIST_PACKET, $payload, $s, $sock);
-        }
+        $uuid = $s->getUuid();
+        $name = $s->getPlayerName();
+        $xuid = $s->getXuid();
+        $rId = $s->getRuntimeId();
+        $payload = '';
+        $payload .= Binary::writeUInt8(self::TYPE_ADD);
+        // type
+        $payload .= Binary::writeVarInt(1);
+        // entry count
+        // --- Entry ---
+        $payload .= self::writeUuidBytes($uuid);
+        // UUID (16 bytes LE)
+        $payload .= Binary::writeVarLong($rId);
+        // actorUniqueId
+        $payload .= McpeBinary::writeString($name);
+        // username
+        $payload .= McpeBinary::writeString((string) $xuid);
+        // xboxUserId
+        $payload .= McpeBinary::writeString('');
+        // platformChatId
+        $payload .= Binary::writeLInt(-1);
+        // buildPlatform (-1 = unknown)
+        $payload .= self::writeMinimalSkin($name);
+        // skinData
+        $payload .= Binary::writeBool(false);
+        // isTeacher
+        $payload .= Binary::writeBool(false);
+        // isHost
+        $payload .= Binary::writeBool(false);
+        // isSubClient
+        $payload .= Binary::writeLInt(0xffffffff);
+        // color (ARGB white)
+        // skinVerified flags (one per entry)
+        $payload .= Binary::writeBool(false);
+        self::sendBatch(ProtocolInfo::PLAYER_LIST_PACKET, $payload, $s, $sock);
     }
 
     public static function sendRemove(Session $s, Socket $sock): void

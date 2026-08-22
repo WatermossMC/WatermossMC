@@ -23,7 +23,10 @@ declare(strict_types=1);
 namespace watermossmc\world;
 
 use RuntimeException;
+use SplFixedArray;
 use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+use watermossmc\block\BlockRegistry;
 use watermossmc\block\BlockRuntimeIdConverter;
 
 final class SubChunk
@@ -31,12 +34,12 @@ final class SubChunk
     public const SIZE = 4096;
     public const EDGE_LENGTH = 16;
 
-    /** @var \SplFixedArray<int> */
-    private \SplFixedArray $blocks;
+    /** @var SplFixedArray<int> */
+    private SplFixedArray $blocks;
 
     public function __construct()
     {
-        $this->blocks = new \SplFixedArray(self::SIZE);
+        $this->blocks = new SplFixedArray(self::SIZE);
         for ($i = 0; $i < self::SIZE; $i++) {
             $this->blocks[$i] = 0;
         }
@@ -58,10 +61,11 @@ final class SubChunk
     {
         $palette = [0 => 0]; // Air or default block runtime ID
         $runtimeIdMap = [];
-        $indexes = new \SplFixedArray(self::SIZE);
+        $indexes = new SplFixedArray(self::SIZE);
 
         foreach ($this->blocks as $i => $blockStateId) {
-            $runtimeId = $converter->toRuntimeId($blockStateId);
+            $block = BlockRegistry::get($blockStateId);
+            $runtimeId = $converter->toRuntimeId($block);
             if (!isset($runtimeIdMap[$runtimeId])) {
                 $runtimeIdMap[$runtimeId] = count($palette);
                 $palette[] = $runtimeId;
@@ -77,7 +81,7 @@ final class SubChunk
                 break;
             }
         }
-        if ($bits > 8 && $bits < 16) {
+        if ($bits > 8) {
             $bits = 16;
         }
 
@@ -101,9 +105,9 @@ final class SubChunk
             $out .= Binary::writeInt($word);
         }
 
-        $out .= \watermossmc\binary\McpeBinary::writeUnsignedVarInt($paletteCount);
+        $out .= McpeBinary::writeUnsignedVarInt($paletteCount);
         foreach ($palette as $runtimeId) {
-            $out .= \watermossmc\binary\McpeBinary::writeUnsignedVarInt($runtimeId);
+            $out .= McpeBinary::writeUnsignedVarInt($runtimeId);
         }
 
         return $out;
@@ -124,14 +128,14 @@ final class SubChunk
             throw new RuntimeException('Failed to decode subchunk binary');
         }
         $subChunk = new self();
-        $subChunk->blocks = \SplFixedArray::fromArray(array_values($values), false);
+        $subChunk->blocks = SplFixedArray::fromArray(array_values($values), false);
         return $subChunk;
     }
 
     /**
-     * @return \SplFixedArray<int>
+     * @return SplFixedArray<int>
      */
-    public function getBlocks(): \SplFixedArray
+    public function getBlocks(): SplFixedArray
     {
         return $this->blocks;
     }

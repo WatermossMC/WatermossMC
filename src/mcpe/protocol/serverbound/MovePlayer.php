@@ -18,20 +18,14 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/serverbound/MovePlayer.php
-namespace watermossmc\network\mcpe\protocol\serverbound;
-========
 namespace watermossmc\mcpe\protocol\serverbound;
 
-use watermossmc\mcpe\protocol\Packet;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/serverbound/MovePlayer.php
-
 use watermossmc\binary\Binary;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\types\MovePlayerMode;
-use watermossmc\network\Session;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\types\MovePlayerMode;
 use watermossmc\player\PlayerManager;
 
 final class MovePlayer extends Packet

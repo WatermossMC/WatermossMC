@@ -18,23 +18,16 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/SetActorData.php
-namespace watermossmc\network\mcpe\protocol\clientbound;
-========
 namespace watermossmc\mcpe\protocol\clientbound;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/SetActorData.php
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\entity\Entity;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class SetActorData extends Packet
 {
@@ -59,18 +52,14 @@ final class SetActorData extends Packet
     public const FLAG_CAN_CLIMB = 19;
     public const FLAG_BREATHING = 35;
 
-    public static function sendPlayer(Session $s, Socket $sock, Entity $entity): void
+    public static function sendPlayer(Session $s, Socket $sock): void
     {
         // flags: breathing + can climb
         $flags = 0;
         $flags |= 1 << self::FLAG_BREATHING;
         $flags |= 1 << self::FLAG_CAN_CLIMB;
-        self::send($entity, $s, $sock);
-    }
-
-    public static function sendSelf(Session $s, Socket $sock, Entity $entity, int $tick = 0): void
-    {
-        self::send($entity, $s, $sock, $tick);
+        $entries = [[self::DATA_FLAGS, self::TYPE_LONG, $flags], [self::DATA_AIR, self::TYPE_SHORT, 400], [self::DATA_MAX_AIR, self::TYPE_SHORT, 400], [self::DATA_BOUNDING_BOX_WIDTH, self::TYPE_FLOAT, 0.6], [self::DATA_BOUNDING_BOX_HEIGHT, self::TYPE_FLOAT, 1.8]];
+        self::send($s, $sock, $entries);
     }
 
     public static function send(Entity $entity, Session $s, Socket $sock, int $tick = 0): void

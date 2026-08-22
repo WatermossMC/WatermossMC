@@ -18,22 +18,15 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/AvailableActorIdentifiers.php
-namespace watermossmc\network\mcpe\protocol\clientbound;
-========
 namespace watermossmc\mcpe\protocol\clientbound;
 
+use Socket;
+use watermossmc\mcpe\cache\StaticPacketCache;
+use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/AvailableActorIdentifiers.php
-
-use Socket;
-use watermossmc\network\mcpe\cache\StaticPacketCache;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class AvailableActorIdentifiers extends Packet
@@ -41,7 +34,7 @@ final class AvailableActorIdentifiers extends Packet
     public static function send(Session $s, Socket $sock): void
     {
         $payload = StaticPacketCache::getInstance()->get('available_actor_identifiers', function () {
-            $path = \dirname(__DIR__, 4) . '/resources/entity_identifiers.nbt';
+            $path = \dirname(__DIR__, 3) . '/resources/entity_identifiers.nbt';
             $data = @file_get_contents($path);
             if ($data === false) {
                 Logger::error("entity_identifiers.nbt not found!");

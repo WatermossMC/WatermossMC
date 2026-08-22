@@ -18,31 +18,22 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc\player;
 
-use watermossmc\command\CommandSender;
 use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
-<<<<<<< HEAD
-use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
-use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
-use watermossmc\network\mcpe\protocol\clientbound\Respawn;
-use watermossmc\network\mcpe\protocol\clientbound\Text;
-use watermossmc\network\Session;
-=======
 use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\mcpe\protocol\clientbound\MobEffect;
 use watermossmc\mcpe\protocol\clientbound\Text;
->>>>>>> 8b12078 (...)
 use watermossmc\Server;
 use watermossmc\util\Permission;
 
-final class Player extends Entity implements CommandSender
+final class Player extends Entity
 {
     public Session $session;
 
@@ -126,13 +117,14 @@ final class Player extends Entity implements CommandSender
         $this->session->setPosition($x, $y, $z);
     }
 
-    public function sendMessage(string $message, int $type = Text::TYPE_RAW): void
+    public function sendMessage(string $message, int $type = Text::TYPE_RAW): bool
     {
         $socket = $this->session->getSocket();
         if ($socket === null || !$this->session->isPlaying()) {
-            return;
+            return false;
         }
         Text::send($this->session, $socket, $message, $type);
+        return true;
     }
 
     public function kick(string $reason = "Disconnected"): bool
@@ -172,11 +164,6 @@ final class Player extends Entity implements CommandSender
         $this->role = $role;
     }
 
-    public function hasPermission(int $role): bool
-    {
-        return $this->role >= $role;
-    }
-
     public function tick(): void
     {
         parent::tick();
@@ -198,24 +185,5 @@ final class Player extends Entity implements CommandSender
         if ($socket !== null) {
             MobEffect::remove($this->session, $socket, $effectId);
         }
-    }
-
-    public function damage(float $amount): void
-    {
-        if ($this->gameMode === 1) {
-            return;
-        }
-        parent::damage($amount);
-    }
-
-    public function onDeath(): void
-    {
-        parent::onDeath();
-        $this->sendMessage("§cYou have died!");
-        $socket = $this->session->getSocket();
-        if ($socket !== null) {
-            Respawn::send($this->session, $socket, $this->x, $this->y, $this->z, Respawn::READY_TO_SPAWN, $this->runtimeId);
-        }
-        $this->health = $this->maxHealth;
     }
 }

@@ -18,19 +18,14 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace watermossmc;
 
-<<<<<<< HEAD
 use watermossmc\block\BlockInitializer;
-=======
->>>>>>> c945639 (...)
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\command\CommandMap;
 use watermossmc\command\CommandRegistry;
-use watermossmc\command\CommandSender;
-use watermossmc\command\impl\SaveCommand;
 use watermossmc\event\Event;
 use watermossmc\event\EventDispatcher;
 use watermossmc\event\ServerStartEvent;
@@ -38,9 +33,9 @@ use watermossmc\event\ServerStopEvent;
 use watermossmc\event\TickEvent;
 use watermossmc\event\WorldLoadEvent;
 use watermossmc\item\ItemInitializer;
-use watermossmc\network\mcpe\PacketDispatcher;
-use watermossmc\network\mcpe\protocol\clientbound\SetTime;
-use watermossmc\network\TickLoop;
+use watermossmc\mcpe\network\TickLoop;
+use watermossmc\mcpe\PacketDispatcher;
+use watermossmc\mcpe\protocol\clientbound\SetTime;
 use watermossmc\player\OperatorManager;
 use watermossmc\player\Player;
 use watermossmc\player\PlayerManager;
@@ -80,17 +75,10 @@ final class Server
 
     public function boot(): void
     {
-<<<<<<< HEAD
         BlockInitializer::init();
         BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
         ItemInitializer::init();
         foreach (CommandRegistry::getCommands() as $commandClass) {
-=======
-        block\BlockInitializer::init();
-		BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
-        item\ItemInitializer::init();
-        foreach (\watermossmc\command\CommandRegistry::getCommands() as $commandClass) {
->>>>>>> c945639 (...)
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();
             $this->commands->register($command);
@@ -116,31 +104,13 @@ final class Server
         $this->currentTick++;
         $this->getWorld()->tickTime();
         $this->getWorld()->getEntityManager()->tick();
-<<<<<<< HEAD
         PacketDispatcher::syncPlayers();
-
-        $autoSave = Config::getBool('auto-save', true) && SaveCommand::isSavingEnabled();
-        $autoSaveInterval = Config::getInt('auto-save-interval', 6000); // 6000 ticks = 5 minutes
-        if ($autoSave && $autoSaveInterval > 0 && $this->currentTick % $autoSaveInterval === 0) {
-            $this->broadcastMessage('§e[Server] Saving world...');
-            $this->saveWorld();
-            OperatorManager::save($this);
-            $this->broadcastMessage('§a[Server] Save complete.');
-        }
-
-=======
-        mcpe\PacketDispatcher::syncPlayers();
->>>>>>> 8b12078 (...)
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
                 $socket = $player->session->getSocket();
                 if ($socket !== null) {
-<<<<<<< HEAD
                     SetTime::send($player->session, $socket, $time);
-=======
-                    \watermossmc\mcpe\protocol\clientbound\SetTime::send($player->session, $socket, $time);
->>>>>>> 8b12078 (...)
                 }
             }
         }
@@ -164,18 +134,7 @@ final class Server
 
     public function getVersionName(): string
     {
-        return VersionInfo::MINECRAFT_VERSION;
-    }
-
-    /** @return array{name: string, version: string, api: string, minecraft: string, channel: string, repository: string} */
-    public function getVersionInfo(): array
-    {
-        return VersionInfo::all();
-    }
-
-    public function getSoftwareVersion(): string
-    {
-        return VersionInfo::getSoftwareVersion();
+        return Config::getString("version_name", "1.21.124");
     }
 
     public function getBindAddress(): string
@@ -218,16 +177,9 @@ final class Server
         return $this->plugins->getPlugin($name);
     }
 
-    /**
-     * Executes a command and returns whether it completed successfully.
-     * @param CommandSender|mixed $sender
-     */
-    public function dispatchCommand(mixed $sender, string $commandLine): bool
+    public function dispatchCommand(mixed $sender, string $commandLine): void
     {
-        if (!($sender instanceof CommandSender)) {
-            return false;
-        }
-        return $this->commands->execute($sender, $commandLine);
+        $this->commands->execute($sender, $commandLine);
     }
 
     /**
@@ -247,17 +199,9 @@ final class Server
      * @param class-string<Event> $eventClass
      * @param callable(Event): void $listener
      */
-    public function on(string $eventClass, callable $listener): int
+    public function on(string $eventClass, callable $listener): void
     {
-        return $this->events->listen($eventClass, $listener);
-    }
-
-    /**
-     * Removes a listener previously registered with {@see self::on()}.
-     */
-    public function off(int $listenerId): void
-    {
-        $this->events->unlisten($listenerId);
+        $this->events->listen($eventClass, $listener);
     }
 
     public function getWorld(): World
@@ -290,7 +234,6 @@ final class Server
      */
     public function getOnlinePlayers(): array
     {
-        /** @var array<string, Player> */
         return PlayerManager::all();
     }
 
@@ -313,8 +256,9 @@ final class Server
     {
         $sent = 0;
         foreach ($this->getOnlinePlayers() as $player) {
-            $player->sendMessage($message);
-            $sent++;
+            if ($player->sendMessage($message)) {
+                $sent++;
+            }
         }
         return $sent;
     }

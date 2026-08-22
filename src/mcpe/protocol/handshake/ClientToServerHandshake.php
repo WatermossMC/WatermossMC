@@ -18,17 +18,11 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/ClientToServerHandshake.php
-namespace watermossmc\network\mcpe\protocol\handshake;
-========
 namespace watermossmc\mcpe\protocol\handshake;
 
 use watermossmc\mcpe\protocol\Packet;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/ClientToServerHandshake.php
-
-use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\util\Logger;
 
 final class ClientToServerHandshake extends Packet

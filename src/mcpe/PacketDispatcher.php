@@ -1,9 +1,28 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 namespace watermossmc\mcpe;
 
+use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;
@@ -16,6 +35,7 @@ use watermossmc\mcpe\handler\PreSpawnPacketHandler;
 use watermossmc\mcpe\handler\ResourcePackPacketHandler;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\mcpe\protocol\InboundPacketRegistry;
 use watermossmc\Server;
 use watermossmc\util\Logger;
@@ -67,7 +87,7 @@ final class PacketDispatcher
         foreach ($phaseHandlers as $handler) {
             foreach ($handler->packetIds() as $pid) {
                 if (isset(self::$handlers[$pid])) {
-                    throw new \RuntimeException("Duplicate handler registered for packet ID 0x" . dechex($pid));
+                    throw new RuntimeException("Duplicate handler registered for packet ID 0x" . dechex($pid));
                 }
                 self::$handlers[$pid] = $handler;
             }
@@ -149,7 +169,7 @@ final class PacketDispatcher
         } catch (Throwable $e) {
             Logger::error("Packet handling error [PID: 0x{$pidHex}]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());
-            protocol\clientbound\Disconnect::send($session, $socket, "Internal Server Error");
+            Disconnect::send($session, $socket, "Internal Server Error");
             RakNet::flush($session, $socket);
         }
     }

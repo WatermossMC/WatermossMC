@@ -22,12 +22,11 @@ declare (strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
-
 use Socket;
 use watermossmc\binary\McpeBinary;
 use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 use watermossmc\player\Player;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
@@ -42,9 +41,9 @@ final class StartGame extends Packet
         $spawn = $world->getSpawnPosition();
         $position = $player->getPosition();
         $rotation = $player->getRotation();
-        
+
         $payload = '';
-        
+
         // --- Actor IDs ---
         $xuid = $player->session->getXuid() ?? '0';
         $payload .= McpeBinary::writeSignedVarLong((int) $xuid); // actorUniqueId
@@ -57,12 +56,12 @@ final class StartGame extends Packet
         $payload .= McpeBinary::writeFloat($position['z']);
         $payload .= McpeBinary::writeFloat($rotation['pitch']);
         $payload .= McpeBinary::writeFloat($rotation['yaw']);
-        
+
         // ==========================================
         // --- LevelSettings ---
         // ==========================================
         $payload .= McpeBinary::writeLLong($seed);
-        
+
         // SpawnSettings (biomeType, biomeName, dimension)
         $payload .= McpeBinary::writeLShort(0); // biomeType = DEFAULT (0)
         $payload .= McpeBinary::writeString(''); // biomeName
@@ -72,12 +71,12 @@ final class StartGame extends Packet
         $payload .= McpeBinary::writeSignedVarInt($world->getGameType()); // worldGamemode
         $payload .= McpeBinary::writeBool(false); // hardcore
         $payload .= McpeBinary::writeSignedVarInt(1); // difficulty (1 = Normal)
-        
+
         // BlockPosition (Spawn)
         $payload .= McpeBinary::writeSignedVarInt($spawn['x']);
         $payload .= McpeBinary::writeSignedVarInt($spawn['y']);
         $payload .= McpeBinary::writeSignedVarInt($spawn['z']);
-        
+
         $payload .= McpeBinary::writeBool(true); // hasAchievementsDisabled
         $payload .= McpeBinary::writeSignedVarInt(0); // editorWorldType = NON_EDITOR
         $payload .= McpeBinary::writeBool(false); // createdInEditorMode
@@ -95,20 +94,20 @@ final class StartGame extends Packet
         $payload .= McpeBinary::writeSignedVarInt(0); // platformBroadcastMode (0 = Public)
         $payload .= McpeBinary::writeBool(true); // commandsEnabled
         $payload .= McpeBinary::writeBool(false); // isTexturePacksRequired
-        
+
         // GameRules (Count = 0)
-        $payload .= McpeBinary::writeUnsignedVarInt(0); 
-        
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
         // Experiments
         $payload .= McpeBinary::writeLInt(0); // experiments count
         $payload .= McpeBinary::writeBool(false); // hasPreviouslyUsedExperiments
-        
+
         $payload .= McpeBinary::writeBool(false); // hasBonusChestEnabled
         $payload .= McpeBinary::writeBool(false); // hasStartWithMapEnabled
 
         $payload .= McpeBinary::writeByte(1); // defaultPlayerPermission (1 = Member)
         $payload .= McpeBinary::writeLInt(4); // serverChunkTickRadius
-        
+
         $payload .= McpeBinary::writeBool(false); // hasLockedBehaviorPack
         $payload .= McpeBinary::writeBool(false); // hasLockedResourcePack
         $payload .= McpeBinary::writeBool(false); // isFromLockedWorldTemplate
@@ -123,14 +122,14 @@ final class StartGame extends Packet
         $payload .= McpeBinary::writeLInt(0); // limitedWorldWidth
         $payload .= McpeBinary::writeLInt(0); // limitedWorldLength
         $payload .= McpeBinary::writeBool(true); // isNewNether
-        
+
         // EduSharedUriResource
         $payload .= McpeBinary::writeString(""); // buttonName
         $payload .= McpeBinary::writeString(""); // linkUri
-        
+
         // experimentalGameplayOverride
         $payload .= McpeBinary::writeBool(false); // hasValue = false
-        
+
         $payload .= McpeBinary::writeByte(0); // chatRestrictionLevel
         $payload .= McpeBinary::writeBool(false); // disablePlayerInteractions
         $payload .= McpeBinary::writeSignedVarInt(0); // serverEditorConnectionPolicy
@@ -144,46 +143,46 @@ final class StartGame extends Packet
         $payload .= McpeBinary::writeString($worldName); // worldName
         $payload .= McpeBinary::writeString(""); // premiumWorldTemplateId
         $payload .= McpeBinary::writeBool(false); // isTrial
-        
+
         // PlayerMovementSettings
         $payload .= McpeBinary::writeSignedVarInt(0); // rewindHistorySize
         $payload .= McpeBinary::writeBool(true); // serverAuthoritativeBlockBreaking
-        
+
         // Tick & Seed
         $payload .= McpeBinary::writeLLong(0); // currentTick
         $payload .= McpeBinary::writeSignedVarInt(0); // enchantmentSeed
-        
+
         // Block Palette
         $payload .= McpeBinary::writeUnsignedVarInt(0); // blockPalette Count
-        
+
         // Server Info
         $payload .= McpeBinary::writeString(""); // multiplayerCorrelationId
         $payload .= McpeBinary::writeBool(true); // enableNewInventorySystem
         $payload .= McpeBinary::writeString("WatermossMC"); // serverSoftwareVersion
-        
+
         // Player Actor Properties
         $payload .= "\x0a\x00\x00";
-        
+
         // Checksum & Template
         $payload .= McpeBinary::writeLLong(0); // blockPaletteChecksum
         $payload .= McpeBinary::writeUUID("00000000-0000-0000-0000-000000000000"); // worldTemplateId
         $payload .= McpeBinary::writeBool(false); // enableClientSideChunkGeneration
         $payload .= McpeBinary::writeBool(false); // blockNetworkIdsAreHashes
-        
+
         // NetworkPermissions
         $payload .= McpeBinary::writeBool(false); // serverAuthSounds
-        
+
         // ServerJoinInformation (Optional, hasValue = false)
-        $payload .= McpeBinary::writeBool(false); 
-        
+        $payload .= McpeBinary::writeBool(false);
+
         // ServerTelemetryData
         $payload .= McpeBinary::writeString(""); // serverId
         $payload .= McpeBinary::writeString(""); // scenarioId
         $payload .= McpeBinary::writeString(""); // worldId
         $payload .= McpeBinary::writeString(""); // ownerId
 
-      Logger::debug(bin2hex($payload));
-        
+        Logger::debug(bin2hex($payload));
+
         self::sendBatch(ProtocolInfo::START_GAME_PACKET, $payload, $s, $sock);
     }
 }

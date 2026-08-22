@@ -18,21 +18,15 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare(strict_types=1);
+declare (strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/Login.php
-namespace watermossmc\network\mcpe\protocol\handshake;
-========
 namespace watermossmc\mcpe\protocol\handshake;
-
-use watermossmc\mcpe\protocol\Packet;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/Login.php
 
 use RuntimeException;
 use Throwable;
 use watermossmc\binary\Binary;
 use watermossmc\crypto\XboxAuth;
-use watermossmc\network\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\Packet;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
 
@@ -75,7 +69,7 @@ final class Login extends Packet
         $authRaw = substr($conn, $io, $authLen);
         $io += $authLen;
         try {
-            $authInfo = json_decode((string) $authRaw, true, 512, \JSON_THROW_ON_ERROR);
+            $authInfo = json_decode($authRaw, true, 512, \JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
             throw new RuntimeException("Login JSON corrupt: " . $e->getMessage());
         }

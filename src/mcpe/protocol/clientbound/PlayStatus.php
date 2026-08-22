@@ -20,20 +20,13 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/PlayStatus.php
-namespace watermossmc\network\mcpe\protocol\clientbound;
-========
 namespace watermossmc\mcpe\protocol\clientbound;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/PlayStatus.php
 
 use Socket;
 use watermossmc\binary\Binary;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
+use watermossmc\mcpe\network\Session;
+use watermossmc\mcpe\protocol\Packet;
+use watermossmc\mcpe\protocol\ProtocolInfo;
 
 final class PlayStatus extends Packet
 {
@@ -55,7 +48,7 @@ final class PlayStatus extends Packet
         self::send($payload, $s, $sock);
     }
 
-    public static function sendSpawn(Session $s, Socket $sock): void
+    public static function sendPlayerSpawn(Session $s, Socket $sock): void
     {
         $payload = Binary::writeInt(3);
         self::send($payload, $s, $sock);
