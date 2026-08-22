@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
@@ -52,14 +52,18 @@ final class SetActorData extends Packet
     public const FLAG_CAN_CLIMB = 19;
     public const FLAG_BREATHING = 35;
 
-    public static function sendPlayer(Session $s, Socket $sock): void
+    public static function sendPlayer(Session $s, Socket $sock, Entity $entity): void
     {
         // flags: breathing + can climb
         $flags = 0;
         $flags |= 1 << self::FLAG_BREATHING;
         $flags |= 1 << self::FLAG_CAN_CLIMB;
-        $entries = [[self::DATA_FLAGS, self::TYPE_LONG, $flags], [self::DATA_AIR, self::TYPE_SHORT, 400], [self::DATA_MAX_AIR, self::TYPE_SHORT, 400], [self::DATA_BOUNDING_BOX_WIDTH, self::TYPE_FLOAT, 0.6], [self::DATA_BOUNDING_BOX_HEIGHT, self::TYPE_FLOAT, 1.8]];
-        self::send($s, $sock, $entries);
+        self::send($entity, $s, $sock);
+    }
+
+    public static function sendSelf(Session $s, Socket $sock, Entity $entity, int $tick = 0): void
+    {
+        self::send($entity, $s, $sock, $tick);
     }
 
     public static function send(Entity $entity, Session $s, Socket $sock, int $tick = 0): void

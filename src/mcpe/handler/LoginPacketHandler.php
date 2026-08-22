@@ -62,7 +62,7 @@ final class LoginPacketHandler implements PacketHandler
             Disconnect::send($session, $socket, "Invalid login payload");
             return true;
         }
-        $name = $loginData['displayName'];
+        $name = $loginData['displayName'] ?? 'unknown';
         $uuid = $loginData['payload']['identity'] ?? '0';
         $xuid = $loginData['payload']['XUID'] ?? '0';
         Logger::info("Login attempt: {$name} (UUID: {$uuid}, XUID: {$xuid})");

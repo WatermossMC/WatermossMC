@@ -66,11 +66,7 @@ final class LevelChunk extends Packet
         // Used blob hashes
         $usedBlobHashes = [];
 
-        $p .= McpeBinary::writeUnsignedVarInt(count($usedBlobHashes));
-
-        foreach ($usedBlobHashes as $hash) {
-            $p .= McpeBinary::writeUnsignedLong($hash);
-        }
+        $p .= McpeBinary::writeUnsignedVarInt(0);
 
         // Extra payload
         $p .= McpeBinary::writeString($chunkData);

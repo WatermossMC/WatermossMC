@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace watermossmc\mcpe;
 
-use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;

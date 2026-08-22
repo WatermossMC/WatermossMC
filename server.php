@@ -20,19 +20,12 @@
 
 declare(strict_types=1);
 
-<<<<<<< HEAD
-use watermossmc\network\mcpe\PacketDispatcher;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\TickLoop;
-=======
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\TickLoop;
 use watermossmc\mcpe\PacketDispatcher;
->>>>>>> 8b12078 (...)
 use watermossmc\Server;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
-use watermossmc\VersionInfo;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -50,8 +43,15 @@ $config = [
 $shutdown = false;
 
 set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
-    Logger::exception($e);
-    $shutdown = true;
+    Logger::error($e::class . ": " . $e->getMessage());
+
+    foreach ($e->getTrace() as $i => $t) {
+        $file = $t['file'] ?? 'unknown';
+        $line = $t['line'] ?? 0;
+        $func = $t['function'] ?? 'unknown';
+
+        Logger::debug("#$i $file:$line ($func)");
+    }
 });
 
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
@@ -67,12 +67,7 @@ if (\function_exists('pcntl_signal')) {
     });
 }
 
-Logger::info('========================================');
-Logger::success(VersionInfo::NAME . ' ' . VersionInfo::VERSION . ' (' . VersionInfo::CHANNEL . ')');
-Logger::info('Minecraft Bedrock ' . VersionInfo::MINECRAFT_VERSION . ' | Plugin API ' . VersionInfo::getApiVersion());
-Logger::info('Repository: ' . VersionInfo::REPOSITORY);
-Logger::info('Starting server on ' . $config['bind_ip'] . ':' . $config['bind_port'], ['maxPlayers' => $config['max_players']]);
-Logger::info('========================================');
+Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
 
 // Create UDP socket
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
@@ -104,11 +99,7 @@ $tickLoop->add(static function () use ($server): void {
     $server->tick();
 
     if ($server->getCurrentTick() % 20 === 0) {
-<<<<<<< HEAD
         RakNet::tick();
-=======
-		RakNet::tick();
->>>>>>> c945639 (...)
 
         Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }

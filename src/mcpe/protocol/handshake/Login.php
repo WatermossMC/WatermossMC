@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\handshake;
 
@@ -69,7 +69,7 @@ final class Login extends Packet
         $authRaw = substr($conn, $io, $authLen);
         $io += $authLen;
         try {
-            $authInfo = json_decode($authRaw, true, 512, \JSON_THROW_ON_ERROR);
+            $authInfo = json_decode((string) $authRaw, true, 512, \JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
             throw new RuntimeException("Login JSON corrupt: " . $e->getMessage());
         }

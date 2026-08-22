@@ -26,6 +26,7 @@ use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;
+use watermossmc\block\BlockRuntimeData;
 use watermossmc\event\PlayerJoinEvent;
 use watermossmc\mcpe\network\RakNet;
 use watermossmc\mcpe\network\Session;
@@ -90,7 +91,7 @@ final class PreSpawnPacketHandler implements PacketHandler
                 $session->setMaxChunkRadius($data['maxRadius']);
                 Logger::debug("[0x45] Requested radius={$data['radius']}, maxRadius={$data['maxRadius']}");
                 $this->sendSpawnChunks($session, $socket);
-                PlayStatus::sendPlayerSpawn($session, $socket);
+                PlayStatus::sendSpawn($session, $socket);
                 $session->enterPlay();
                 RakNet::flush($session, $socket);
                 return true;
@@ -116,7 +117,7 @@ final class PreSpawnPacketHandler implements PacketHandler
     public function triggerSpawnSequence(Session $s, Socket $sock): void
     {
         Logger::info("Starting game sequence for " . $s->getPlayerName());
-        $world = $this->world ?? World::getDefault();
+        $world = $this->world ?? Server::getInstance()?->getWorld();
         if ($world === null) {
             throw new RuntimeException("World not available");
         }
@@ -128,37 +129,37 @@ final class PreSpawnPacketHandler implements PacketHandler
         $this->server->dispatch(new PlayerJoinEvent($this->server, $player));
         $s->setMcpeState(Session::MC_PRESPAWN);
         PlayStatus::sendSpawn($s, $sock);
-        StartGame::send($s, $sock, $world);
+        StartGame::send($s, $sock, $world, $player);
         BiomeDefinitionList::send($s, $sock);
         AvailableActorIdentifiers::send($s, $sock);
-        VoxelShapes::send($s, $sock);
+        VoxelShapes::send($s, $sock, [], []);
         ItemRegistry::send($s, $sock);
         CraftingData::send($s, $sock);
-        CreativeContent::send($s, $sock);
+        CreativeContent::sendEmpty($s, $sock);
         AvailableCommands::send($s, $sock);
         PlayerList::sendAdd($s, $sock, [$player]);
-        SetSpawnPosition::send($s, $sock, $world->getSpawnPosition());
+        SetSpawnPosition::send($s, $sock, $world->getSpawnPosition()['x'], $world->getSpawnPosition()['y'], $world->getSpawnPosition()['z']);
         SetTime::send($s, $sock, 0);
         UpdateAbilities::send($s, $sock);
-        UpdateAdventureSettings::send($s, $sock);
-        InventoryContent::sendInitial($s, $sock);
-        PlayerHotbar::sendInitial($s, $sock);
+        UpdateAdventureSettings::send($s, $sock, false, false, false, true, true);
+        InventoryContent::sendEmpty($s, $sock, InventoryContent::WINDOW_INVENTORY);
+        PlayerHotbar::send($s, $sock);
         SetActorData::sendSelf($s, $sock, $player);
         UpdateAttributes::sendSelf($s, $sock, $player);
         AddPlayer::send($s, $sock, $player);
-        MobEffect::sendInitial($s, $sock);
+        MobEffect::add($s, $sock, 1);
         RakNet::flush($s, $sock);
     }
 
     private function sendSpawnChunks(Session $session, Socket $socket): void
     {
-        $world = $this->world ?? World::getDefault();
+        $world = $this->world ?? Server::getInstance()?->getWorld();
         if ($world === null) {
             return;
         }
         $spawn = $world->getSpawnPosition();
-        $chunkX = $spawn->getFloorX() >> 4;
-        $chunkZ = $spawn->getFloorZ() >> 4;
+        $chunkX = $spawn['x'] >> 4;
+        $chunkZ = $spawn['z'] >> 4;
         $radius = 4;
         Logger::info("Sending spawn chunks around ({$chunkX}, {$chunkZ}), radius {$radius}...");
         for ($x = -$radius; $x <= $radius; $x++) {
@@ -167,7 +168,7 @@ final class PreSpawnPacketHandler implements PacketHandler
                 $cz = $chunkZ + $z;
                 $chunk = $world->getChunk($cx, $cz);
                 if ($chunk !== null) {
-                    LevelChunk::send($session, $socket, $chunk);
+                    LevelChunk::send($session, $socket, $cx, $cz, $chunk->encode(BlockRuntimeData::getConverter()), $chunk->getSubChunkCount());
                 }
             }
         }
