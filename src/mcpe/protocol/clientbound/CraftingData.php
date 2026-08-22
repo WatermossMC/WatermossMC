@@ -18,39 +18,63 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\mcpe\protocol\clientbound;
 
+use Socket;
+use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\ProtocolInfo;
 
-use Socket;
-use watermossmc\binary\Binary;
-use watermossmc\mcpe\network\Session;
-
 final class CraftingData extends Packet
 {
-    public static function sendEmpty(Session $s, Socket $sock): void
+    public static function send(Session $s, Socket $sock): void
     {
         $payload = '';
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        // recipesWithTypeIds count
-        $payload .= Binary::writeVarInt(0);
-        // potionTypeRecipes count
-        $payload .= Binary::writeVarInt(0);
-        // potionContainerRecipes count
-        $payload .= Binary::writeVarInt(0);
-        // materialReducerRecipes count
+
+        // Recipes (Shapeless, Shaped, Furnace, etc.)
+        // 1. shapeless recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 2. shaped recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 3. furnace recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 4. furnace aux recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 5. pps / multi recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 6. material reducer recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 7. smithing transform recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 8. smithing trim recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // recipes with type IDs count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // potion type recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // potion container recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // material reducer recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // cleanRecipes (bool)
         $payload .= Binary::writeBool(true);
-        // cleanRecipes
+
         self::sendBatch(ProtocolInfo::CRAFTING_DATA_PACKET, $payload, $s, $sock);
     }
 }
