@@ -20,50 +20,61 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/StopSound.php
-namespace watermossmc\network\mcpe\protocol\clientbound;
-========
 namespace watermossmc\mcpe\protocol\clientbound;
 
+use Socket;
+use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+use watermossmc\mcpe\network\Session;
 use watermossmc\mcpe\protocol\Packet;
 use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/CraftingData.php
 
-use Socket;
-use watermossmc\binary\McpeBinary;
-use watermossmc\network\mcpe\protocol\Packet;
-use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
-
-final class StopSound extends Packet
+final class CraftingData extends Packet
 {
-    public static function send(Session $s, Socket $sock, string $soundName, bool $stopAll, bool $stopLegacyMusic): void
+    public static function send(Session $s, Socket $sock): void
     {
-<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/StopSound.php
-        $p = McpeBinary::writeString($soundName) .
-             McpeBinary::writeBool($stopAll) .
-             McpeBinary::writeBool($stopLegacyMusic);
-        self::sendBatch(ProtocolInfo::STOP_SOUND_PACKET, $p, $s, $sock);
-=======
         $payload = '';
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        $payload .= Binary::writeVarInt(0);
-        // recipesWithTypeIds count
-        $payload .= Binary::writeVarInt(0);
-        // potionTypeRecipes count
-        $payload .= Binary::writeVarInt(0);
-        // potionContainerRecipes count
-        $payload .= Binary::writeVarInt(0);
-        // materialReducerRecipes count
+
+        // Recipes (Shapeless, Shaped, Furnace, etc.)
+        // 1. shapeless recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 2. shaped recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 3. furnace recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 4. furnace aux recipe count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 5. pps / multi recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 6. material reducer recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 7. smithing transform recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // 8. smithing trim recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // recipes with type IDs count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // potion type recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // potion container recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // material reducer recipes count (0)
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        // cleanRecipes (bool)
         $payload .= Binary::writeBool(true);
-        // cleanRecipes
+
         self::sendBatch(ProtocolInfo::CRAFTING_DATA_PACKET, $payload, $s, $sock);
->>>>>>> c945639 (...):src/mcpe/protocol/CraftingData.php
     }
 }
