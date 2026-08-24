@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\command;
 
-use InvalidArgumentException;
 use Throwable;
+use watermossmc\player\Player;
 use watermossmc\util\Logger;
 use watermossmc\util\Permission;
 
@@ -91,9 +91,10 @@ final class CommandMap
     }
 
     /**
+     * @param Player|null $sender
      * @param string $commandLine
      */
-    public function execute(CommandSender $sender, string $commandLine): bool
+    public function execute(mixed $sender, string $commandLine): bool
     {
         $parts = CommandParser::parse($commandLine);
         $commandName = strtolower(ltrim(array_shift($parts) ?? '', '/'));
@@ -102,19 +103,30 @@ final class CommandMap
         }
         $command = $this->getCommand($commandName);
         if ($command === null) {
-            $sender->sendMessage("Unknown command. Type /help for help.");
+            if ($sender instanceof Player) {
+                $sender->sendMessage("Unknown command. Type /help for help.");
+            } else {
+                echo "Unknown command: {$commandName}\n";
+            }
             return false;
         }
         // Permission Check
-        if (!$sender->hasPermission($command->requiredRole)) {
-            $sender->sendMessage("You do not have permission to execute this command.");
+        $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
+        if ($senderRole < $command->requiredRole) {
+            if ($sender instanceof Player) {
+                $sender->sendMessage("You do not have permission to execute this command.");
+            } else {
+                echo "Insufficient permission level.\n";
+            }
             return false;
         }
         try {
             $command->execute($sender, $parts);
         } catch (Throwable $e) {
             Logger::error("Error executing command /{$commandName}: " . $e->getMessage());
-            $sender->sendMessage("An internal error occurred while executing this command.");
+            if ($sender instanceof Player) {
+                $sender->sendMessage("An internal error occurred while executing this command.");
+            }
             return false;
         }
         return true;
@@ -140,7 +152,7 @@ final class CommandMap
     {
         $name = strtolower(trim($name));
         if ($name === '' || str_contains($name, ' ')) {
-            throw new InvalidArgumentException('Command names and aliases must be non-empty single words');
+            throw new \InvalidArgumentException('Command names and aliases must be non-empty single words');
         }
         return $name;
     }

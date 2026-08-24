@@ -2,5 +2,6 @@
 vendor/*
 world/*
 plugins/*
+logs/
 *ref/*
 ops.txt

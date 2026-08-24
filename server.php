@@ -26,6 +26,7 @@ use watermossmc\mcpe\PacketDispatcher;
 use watermossmc\Server;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
+use watermossmc\VersionInfo;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -43,15 +44,8 @@ $config = [
 $shutdown = false;
 
 set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
-    Logger::error($e::class . ": " . $e->getMessage());
-
-    foreach ($e->getTrace() as $i => $t) {
-        $file = $t['file'] ?? 'unknown';
-        $line = $t['line'] ?? 0;
-        $func = $t['function'] ?? 'unknown';
-
-        Logger::debug("#$i $file:$line ($func)");
-    }
+    Logger::exception($e);
+    $shutdown = true;
 });
 
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
@@ -67,7 +61,12 @@ if (\function_exists('pcntl_signal')) {
     });
 }
 
-Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
+Logger::info('========================================');
+Logger::success(VersionInfo::NAME . ' ' . VersionInfo::VERSION . ' (' . VersionInfo::CHANNEL . ')');
+Logger::info('Minecraft Bedrock ' . VersionInfo::MINECRAFT_VERSION . ' | Plugin API ' . VersionInfo::getApiVersion());
+Logger::info('Repository: ' . VersionInfo::REPOSITORY);
+Logger::info('Starting server on ' . $config['bind_ip'] . ':' . $config['bind_port'], ['maxPlayers' => $config['max_players']]);
+Logger::info('========================================');
 
 // Create UDP socket
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);

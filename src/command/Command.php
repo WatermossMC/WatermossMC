@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace watermossmc\command;
 
+use watermossmc\player\Player;
 use watermossmc\util\Permission;
 
 abstract class Command
@@ -49,12 +50,17 @@ abstract class Command
     }
 
     /**
+     * @param Player|null $sender Null if the command was executed from console.
      * @param array<string> $args
      */
-    abstract public function execute(CommandSender $sender, array $args): void;
+    public function execute(mixed $sender, array $args): void {}
 
-    protected function sendMessage(CommandSender $sender, string $message): void
+    protected function sendMessage(mixed $sender, string $message): void
     {
-        $sender->sendMessage($message);
+        if ($sender instanceof Player) {
+            $sender->sendMessage($message);
+        } else {
+            echo $message . "\n";
+        }
     }
 }

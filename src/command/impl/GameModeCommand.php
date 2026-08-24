@@ -33,9 +33,10 @@ final class GameModeCommand extends Command
     {
         parent::__construct(
             'gamemode',
-            'Changes the game mode of a player',
-            '/gamemode <mode> [player]',
-            Permission::ROLE_OPERATOR
+            'Sets a player\'s game mode',
+            '/gamemode <survival|creative|adventure> [player]',
+            Permission::ROLE_OPERATOR,
+            ['gm']
         );
     }
 
@@ -47,7 +48,13 @@ final class GameModeCommand extends Command
             return;
         }
 
-        $mode = (int) $args[0];
+        $modes = ['survival' => 0, 's' => 0, '0' => 0, 'creative' => 1, 'c' => 1, '1' => 1, 'adventure' => 2, 'a' => 2, '2' => 2];
+        $modeName = strtolower($args[0]);
+        if (!isset($modes[$modeName])) {
+            $this->sendMessage($sender, 'Invalid game mode. Expected survival, creative, or adventure.');
+            return;
+        }
+        $mode = $modes[$modeName];
         $targetName = $args[1] ?? null;
 
         if ($targetName === null) {
@@ -71,6 +78,7 @@ final class GameModeCommand extends Command
         }
 
         $target->setGameMode($mode);
-        $this->sendMessage($sender, "Game mode of {$target->getName()} set to {$mode}.");
+        $names = ['survival', 'creative', 'adventure'];
+        $this->sendMessage($sender, "Set {$target->getName()}'s game mode to {$names[$mode]}.");
     }
 }

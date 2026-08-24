@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\plugin;
 
+use watermossmc\VersionInfo;
+
 use RuntimeException;
 use watermossmc\VersionInfo;
 
