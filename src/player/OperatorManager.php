@@ -63,6 +63,17 @@ final class OperatorManager
         self::$ops[$username] = $role;
     }
 
+    public static function removeOp(string $username): bool
+    {
+        foreach (self::$ops as $name => $role) {
+            if (strcasecmp($name, $username) === 0) {
+                unset(self::$ops[$name]);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function save(Server $server): void
     {
         $opFile = $server->getRootPath() . '/ops.txt';

@@ -32,37 +32,83 @@ final class CommandMap
     /** @var array<string, Command> */
     private array $commands = [];
 
+    /** @var array<string, string> Alias to a canonical command name. */
+    private array $aliases = [];
+
     public function __construct() {}
 
-    public function register(Command $command): void
+    /**
+     * Registers a command and all of its aliases.
+     *
+     * Returns false if any name is already in use; no partial registration is made.
+     */
+    public function register(Command $command): bool
     {
-        $this->commands[strtolower($command->name)] = $command;
+        $name = $this->normalizeName($command->name);
+        $names = [$name, ...array_map($this->normalizeName(...), $command->getAliases())];
+        if (count($names) !== count(array_unique($names))) {
+            return false;
+        }
+        foreach ($names as $commandName) {
+            if (isset($this->commands[$commandName]) || isset($this->aliases[$commandName])) {
+                return false;
+            }
+        }
+
+        $this->commands[$name] = $command;
+        foreach (array_slice($names, 1) as $alias) {
+            $this->aliases[$alias] = $name;
+        }
+        return true;
     }
 
-    public function unregister(string $name): void
+    /** Removes a command by its primary name or one of its aliases. */
+    public function unregister(string $name): bool
     {
-        unset($this->commands[strtolower($name)]);
+        $name = strtolower($name);
+        $canonicalName = $this->aliases[$name] ?? $name;
+        if (!isset($this->commands[$canonicalName])) {
+            return false;
+        }
+        unset($this->commands[$canonicalName]);
+        foreach ($this->aliases as $alias => $commandName) {
+            if ($commandName === $canonicalName) {
+                unset($this->aliases[$alias]);
+            }
+        }
+        return true;
+    }
+
+    public function getCommand(string $name): ?Command
+    {
+        $name = strtolower(trim($name));
+        return $this->commands[$this->aliases[$name] ?? $name] ?? null;
+    }
+
+    public function hasCommand(string $name): bool
+    {
+        return $this->getCommand($name) !== null;
     }
 
     /**
      * @param Player|null $sender
      * @param string $commandLine
      */
-    public function execute(mixed $sender, string $commandLine): void
+    public function execute(mixed $sender, string $commandLine): bool
     {
-        $parts = explode(' ', trim($commandLine));
-        $commandName = strtolower(array_shift($parts) ?? '');
+        $parts = CommandParser::parse($commandLine);
+        $commandName = strtolower(ltrim(array_shift($parts) ?? '', '/'));
         if ($commandName === '') {
-            return;
+            return false;
         }
-        $command = $this->commands[$commandName] ?? null;
+        $command = $this->getCommand($commandName);
         if ($command === null) {
             if ($sender instanceof Player) {
                 $sender->sendMessage("Unknown command. Type /help for help.");
             } else {
                 echo "Unknown command: {$commandName}\n";
             }
-            return;
+            return false;
         }
         // Permission Check
         $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
@@ -72,7 +118,7 @@ final class CommandMap
             } else {
                 echo "Insufficient permission level.\n";
             }
-            return;
+            return false;
         }
         try {
             $command->execute($sender, $parts);
@@ -81,7 +127,9 @@ final class CommandMap
             if ($sender instanceof Player) {
                 $sender->sendMessage("An internal error occurred while executing this command.");
             }
+            return false;
         }
+        return true;
     }
 
     /**
@@ -90,5 +138,22 @@ final class CommandMap
     public function getCommands(): array
     {
         return $this->commands;
+    }
+
+    /**
+     * @return array<string, string> Maps every alias to its primary command name.
+     */
+    public function getAliases(): array
+    {
+        return $this->aliases;
+    }
+
+    private function normalizeName(string $name): string
+    {
+        $name = strtolower(trim($name));
+        if ($name === '' || str_contains($name, ' ')) {
+            throw new \InvalidArgumentException('Command names and aliases must be non-empty single words');
+        }
+        return $name;
     }
 }

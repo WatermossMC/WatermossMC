@@ -134,7 +134,18 @@ final class Server
 
     public function getVersionName(): string
     {
-        return Config::getString("version_name", "1.21.124");
+        return VersionInfo::MINECRAFT_VERSION;
+    }
+
+    /** @return array{name: string, version: string, api: string, minecraft: string, channel: string, repository: string} */
+    public function getVersionInfo(): array
+    {
+        return VersionInfo::all();
+    }
+
+    public function getSoftwareVersion(): string
+    {
+        return VersionInfo::getSoftwareVersion();
     }
 
     public function getBindAddress(): string
@@ -177,9 +188,12 @@ final class Server
         return $this->plugins->getPlugin($name);
     }
 
-    public function dispatchCommand(mixed $sender, string $commandLine): void
+    /**
+     * Executes a command and returns whether it completed successfully.
+     */
+    public function dispatchCommand(mixed $sender, string $commandLine): bool
     {
-        $this->commands->execute($sender, $commandLine);
+        return $this->commands->execute($sender, $commandLine);
     }
 
     /**
@@ -199,9 +213,17 @@ final class Server
      * @param class-string<Event> $eventClass
      * @param callable(Event): void $listener
      */
-    public function on(string $eventClass, callable $listener): void
+    public function on(string $eventClass, callable $listener): int
     {
-        $this->events->listen($eventClass, $listener);
+        return $this->events->listen($eventClass, $listener);
+    }
+
+    /**
+     * Removes a listener previously registered with {@see self::on()}.
+     */
+    public function off(int $listenerId): void
+    {
+        $this->events->unlisten($listenerId);
     }
 
     public function getWorld(): World
