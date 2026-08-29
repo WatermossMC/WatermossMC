@@ -24,8 +24,10 @@ namespace watermossmc;
 
 use watermossmc\block\BlockInitializer;
 use watermossmc\block\BlockRuntimeData;
+use watermossmc\command\impl\SaveCommand;
 use watermossmc\command\CommandMap;
 use watermossmc\command\CommandRegistry;
+use watermossmc\command\CommandSender;
 use watermossmc\event\Event;
 use watermossmc\event\EventDispatcher;
 use watermossmc\event\ServerStartEvent;
@@ -33,9 +35,10 @@ use watermossmc\event\ServerStopEvent;
 use watermossmc\event\TickEvent;
 use watermossmc\event\WorldLoadEvent;
 use watermossmc\item\ItemInitializer;
-use watermossmc\mcpe\network\TickLoop;
-use watermossmc\mcpe\PacketDispatcher;
-use watermossmc\mcpe\protocol\clientbound\SetTime;
+use watermossmc\network\Session;
+use watermossmc\network\TickLoop;
+use watermossmc\network\mcpe\PacketDispatcher;
+use watermossmc\network\mcpe\protocol\clientbound\SetTime;
 use watermossmc\player\OperatorManager;
 use watermossmc\player\Player;
 use watermossmc\player\PlayerManager;
@@ -105,6 +108,16 @@ final class Server
         $this->getWorld()->tickTime();
         $this->getWorld()->getEntityManager()->tick();
         PacketDispatcher::syncPlayers();
+
+        $autoSave = Config::getBool('auto-save', true) && SaveCommand::isSavingEnabled();
+        $autoSaveInterval = Config::getInt('auto-save-interval', 6000); // 6000 ticks = 5 minutes
+        if ($autoSave && $autoSaveInterval > 0 && $this->currentTick % $autoSaveInterval === 0) {
+            $this->broadcastMessage('§e[Server] Saving world...');
+            $this->saveWorld();
+            OperatorManager::save($this);
+            $this->broadcastMessage('§a[Server] Save complete.');
+        }
+
         if ($this->currentTick % 20 === 0) {
             $time = $this->getWorld()->getDayTime();
             foreach ($this->getOnlinePlayers() as $player) {
@@ -190,9 +203,13 @@ final class Server
 
     /**
      * Executes a command and returns whether it completed successfully.
+     * @param CommandSender|mixed $sender
      */
     public function dispatchCommand(mixed $sender, string $commandLine): bool
     {
+        if (!($sender instanceof CommandSender)) {
+            return false;
+        }
         return $this->commands->execute($sender, $commandLine);
     }
 
@@ -256,6 +273,7 @@ final class Server
      */
     public function getOnlinePlayers(): array
     {
+        /** @var array<string, Player> */
         return PlayerManager::all();
     }
 
@@ -278,9 +296,8 @@ final class Server
     {
         $sent = 0;
         foreach ($this->getOnlinePlayers() as $player) {
-            if ($player->sendMessage($message)) {
-                $sent++;
-            }
+            $player->sendMessage($message);
+            $sent++;
         }
         return $sent;
     }
