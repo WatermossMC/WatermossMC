@@ -29,6 +29,7 @@ use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
+use watermossmc\network\mcpe\protocol\clientbound\Respawn;
 use watermossmc\network\mcpe\protocol\clientbound\Text;
 use watermossmc\network\Session;
 use watermossmc\Server;
@@ -190,5 +191,24 @@ final class Player extends Entity implements CommandSender
         if ($socket !== null) {
             MobEffect::remove($this->session, $socket, $effectId);
         }
+    }
+
+    public function damage(float $amount): void
+    {
+        if ($this->gameMode === 1) {
+            return;
+        }
+        parent::damage($amount);
+    }
+
+    public function onDeath(): void
+    {
+        parent::onDeath();
+        $this->sendMessage("§cYou have died!");
+        $socket = $this->session->getSocket();
+        if ($socket !== null) {
+            Respawn::send($this->session, $socket, $this->x, $this->y, $this->z, Respawn::READY_TO_SPAWN, $this->runtimeId);
+        }
+        $this->health = $this->maxHealth;
     }
 }

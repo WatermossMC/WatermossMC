@@ -30,11 +30,14 @@ use watermossmc\event\PlayerMoveEvent;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\LevelChunk;
 use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
+use watermossmc\network\mcpe\protocol\clientbound\Respawn as ClientboundRespawn;
 use watermossmc\network\mcpe\protocol\clientbound\Text;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\serverbound\CommandRequest;
 use watermossmc\network\mcpe\protocol\serverbound\MovePlayer;
+use watermossmc\network\mcpe\protocol\serverbound\PlayerAction;
 use watermossmc\network\mcpe\protocol\serverbound\RequestChunkRadius;
+use watermossmc\network\mcpe\protocol\serverbound\Respawn as ServerboundRespawn;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
@@ -62,6 +65,8 @@ final class InGamePacketHandler implements PacketHandler
             ProtocolInfo::MOVE_PLAYER_PACKET,
             ProtocolInfo::TEXT_PACKET,
             ProtocolInfo::COMMAND_REQUEST_PACKET,
+            ProtocolInfo::PLAYER_ACTION_PACKET,
+            ProtocolInfo::RESPAWN_PACKET,
         ];
     }
 
@@ -125,6 +130,22 @@ final class InGamePacketHandler implements PacketHandler
                     Server::getInstance()?->dispatchCommand($player, $command);
                 } catch (Throwable $e) {
                     Logger::error("Failed to handle CommandRequest: {$e->getMessage()}");
+                }
+                return true;
+            case ProtocolInfo::PLAYER_ACTION_PACKET:
+                $data = PlayerAction::read($packet, $offset);
+                $player = PlayerManager::get($session);
+                if ($player !== null && $data['action'] === PlayerAction::ACTION_RESPAWN) {
+                    ClientboundRespawn::send($session, $socket, $player->x, $player->y, $player->z, ClientboundRespawn::READY_TO_SPAWN, $player->getRuntimeId());
+                }
+                return true;
+            case ProtocolInfo::RESPAWN_PACKET:
+                $data = ServerboundRespawn::read($packet, $offset);
+                if ($data['respawnState'] === ServerboundRespawn::CLIENT_READY_TO_SPAWN) {
+                    $player = PlayerManager::get($session);
+                    if ($player !== null) {
+                        ClientboundRespawn::send($session, $socket, $player->x, $player->y, $player->z, ClientboundRespawn::READY_TO_SPAWN, $player->getRuntimeId());
+                    }
                 }
                 return true;
         }
