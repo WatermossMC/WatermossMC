@@ -26,13 +26,13 @@ use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\crypto\Crypto;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\handshake\Login;
 use watermossmc\network\mcpe\protocol\handshake\ServerToClientHandshake;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class LoginPacketHandler implements PacketHandler

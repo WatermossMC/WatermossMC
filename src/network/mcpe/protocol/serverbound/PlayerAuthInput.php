@@ -23,9 +23,9 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\serverbound;
 
 use watermossmc\binary\Binary;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\types\PlayerAuthInputFlags;
+use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
 
 final class PlayerAuthInput extends Packet

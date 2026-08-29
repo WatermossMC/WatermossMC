@@ -1,9 +1,30 @@
 <?php
 
+/*
+ * __        __    _                                    __  __  ____
+ * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
+ *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
+ *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
+ *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
+ *
+ * WatermossMC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author WatermossMC Team
+ * @link https://github.com/watermossmc/WatermossMC
+ */
+
 declare(strict_types=1);
 
 namespace watermossmc\util;
 
+use DateTimeImmutable;
+use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 
 /** Central server logger for console and optional file output. */
@@ -14,7 +35,9 @@ final class Logger
     private const LEVELS = ['DEBUG' => 100, 'INFO' => 200, 'SUCCESS' => 200, 'WARN' => 300, 'ERROR' => 400];
 
     private static int $minimumLevel = self::LEVELS['INFO'];
+
     private static bool $colorsEnabled = false;
+
     private static ?string $filePath = null;
 
     /** Configures logging from server.properties and the DEBUG environment variable. */
@@ -30,7 +53,7 @@ final class Logger
     {
         $level = strtoupper(trim($level));
         if (!isset(self::LEVELS[$level])) {
-            throw new \InvalidArgumentException('Unknown log level: ' . $level);
+            throw new InvalidArgumentException('Unknown log level: ' . $level);
         }
         self::$minimumLevel = self::LEVELS[$level];
     }
@@ -53,7 +76,7 @@ final class Logger
     /**
      * Sets the destination file. Pass null to disable file logging.
      *
-     * @throws \RuntimeException If the file or its directory cannot be opened.
+     * @throws RuntimeException If the file or its directory cannot be opened.
      */
     public static function setLogFile(?string $path): void
     {
@@ -64,28 +87,43 @@ final class Logger
         $path = trim($path);
         $directory = dirname($path);
         if (!is_dir($directory) && !mkdir($directory, 0o777, true) && !is_dir($directory)) {
-            throw new \RuntimeException('Unable to create log directory: ' . $directory);
+            throw new RuntimeException('Unable to create log directory: ' . $directory);
         }
         if (@file_put_contents($path, '', FILE_APPEND | LOCK_EX) === false) {
-            throw new \RuntimeException('Unable to write log file: ' . $path);
+            throw new RuntimeException('Unable to write log file: ' . $path);
         }
         self::$filePath = $path;
     }
 
     /** @param array<string, scalar|null> $context */
-    public static function debug(string $message, array $context = []): void { self::log('DEBUG', $message, $context); }
+    public static function debug(string $message, array $context = []): void
+    {
+        self::log('DEBUG', $message, $context);
+    }
 
     /** @param array<string, scalar|null> $context */
-    public static function info(string $message, array $context = []): void { self::log('INFO', $message, $context); }
+    public static function info(string $message, array $context = []): void
+    {
+        self::log('INFO', $message, $context);
+    }
 
     /** @param array<string, scalar|null> $context */
-    public static function success(string $message, array $context = []): void { self::log('SUCCESS', $message, $context); }
+    public static function success(string $message, array $context = []): void
+    {
+        self::log('SUCCESS', $message, $context);
+    }
 
     /** @param array<string, scalar|null> $context */
-    public static function warning(string $message, array $context = []): void { self::log('WARN', $message, $context); }
+    public static function warning(string $message, array $context = []): void
+    {
+        self::log('WARN', $message, $context);
+    }
 
     /** @param array<string, scalar|null> $context */
-    public static function error(string $message, array $context = []): void { self::log('ERROR', $message, $context); }
+    public static function error(string $message, array $context = []): void
+    {
+        self::log('ERROR', $message, $context);
+    }
 
     /** @param array<string, scalar|null> $context */
     public static function exception(Throwable $exception, array $context = []): void
@@ -99,12 +137,12 @@ final class Logger
     {
         $level = strtoupper($level);
         if (!isset(self::LEVELS[$level])) {
-            throw new \InvalidArgumentException('Unknown log level: ' . $level);
+            throw new InvalidArgumentException('Unknown log level: ' . $level);
         }
         if (self::LEVELS[$level] < self::$minimumLevel) {
             return;
         }
-        $line = sprintf('[%s] [%-7s] %s%s', (new \DateTimeImmutable())->format('Y-m-d H:i:s.v'), $level, $message, self::formatContext($context));
+        $line = sprintf('[%s] [%-7s] %s%s', (new DateTimeImmutable())->format('Y-m-d H:i:s.v'), $level, $message, self::formatContext($context));
         echo self::$colorsEnabled ? self::COLORS[$level] . $line . self::RESET . PHP_EOL : $line . PHP_EOL;
         if (self::$filePath !== null && @file_put_contents(self::$filePath, $line . PHP_EOL, FILE_APPEND | LOCK_EX) === false) {
             self::$filePath = null;

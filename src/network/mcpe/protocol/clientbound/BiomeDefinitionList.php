@@ -27,9 +27,9 @@ use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\data\BiomeDefinitions;
 use watermossmc\network\mcpe\cache\StaticPacketCache;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 
 final class BiomeDefinitionList extends Packet
 {

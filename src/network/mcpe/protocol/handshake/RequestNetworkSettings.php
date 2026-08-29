@@ -24,12 +24,12 @@ namespace watermossmc\network\mcpe\protocol\handshake;
 
 use Socket;
 use watermossmc\binary\Binary;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class RequestNetworkSettings extends Packet

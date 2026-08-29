@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace watermossmc\command;
 
-use watermossmc\player\Player;
 use watermossmc\util\Permission;
 
 abstract class Command

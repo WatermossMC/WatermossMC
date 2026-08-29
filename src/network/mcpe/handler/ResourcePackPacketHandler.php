@@ -23,12 +23,12 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\handler;
 
 use Socket;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\ResourcePackStack;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\serverbound\ResourcePackClientResponse;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;

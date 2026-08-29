@@ -25,10 +25,10 @@ namespace watermossmc\network\mcpe\protocol\clientbound;
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\types\Experiments;
+use watermossmc\network\Session;
 
 final class ResourcePackStack extends Packet
 {

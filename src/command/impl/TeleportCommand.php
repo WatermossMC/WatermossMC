@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
-use watermossmc\player\Player;
 use watermossmc\command\CommandSender;
+use watermossmc\player\Player;
 use watermossmc\player\PlayerManager;
 
 final class TeleportCommand extends Command
@@ -34,7 +34,7 @@ final class TeleportCommand extends Command
         parent::__construct('tp', 'Teleports entities', '/tp [player] <destination|x y z>', aliases: ['teleport']);
     }
 
-    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
+    public function execute(CommandSender $sender, array $args): void
     {
         if (\count($args) < 1) {
             $this->sendMessage($sender, "Usage: {$this->usage}");

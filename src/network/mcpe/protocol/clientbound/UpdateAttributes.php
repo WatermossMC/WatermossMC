@@ -27,9 +27,9 @@ use function count;
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 use watermossmc\player\Player;
 
 final class UpdateAttributes extends Packet
