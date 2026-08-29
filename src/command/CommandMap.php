@@ -91,10 +91,9 @@ final class CommandMap
     }
 
     /**
-     * @param Player|null $sender
      * @param string $commandLine
      */
-    public function execute(mixed $sender, string $commandLine): bool
+    public function execute(CommandSender $sender, string $commandLine): bool
     {
         $parts = CommandParser::parse($commandLine);
         $commandName = strtolower(ltrim(array_shift($parts) ?? '', '/'));
@@ -103,30 +102,19 @@ final class CommandMap
         }
         $command = $this->getCommand($commandName);
         if ($command === null) {
-            if ($sender instanceof Player) {
-                $sender->sendMessage("Unknown command. Type /help for help.");
-            } else {
-                echo "Unknown command: {$commandName}\n";
-            }
+            $sender->sendMessage("Unknown command. Type /help for help.");
             return false;
         }
         // Permission Check
-        $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
-        if ($senderRole < $command->requiredRole) {
-            if ($sender instanceof Player) {
-                $sender->sendMessage("You do not have permission to execute this command.");
-            } else {
-                echo "Insufficient permission level.\n";
-            }
+        if (!$sender->hasPermission($command->requiredRole)) {
+            $sender->sendMessage("You do not have permission to execute this command.");
             return false;
         }
         try {
             $command->execute($sender, $parts);
         } catch (Throwable $e) {
             Logger::error("Error executing command /{$commandName}: " . $e->getMessage());
-            if ($sender instanceof Player) {
-                $sender->sendMessage("An internal error occurred while executing this command.");
-            }
+            $sender->sendMessage("An internal error occurred while executing this command.");
             return false;
         }
         return true;

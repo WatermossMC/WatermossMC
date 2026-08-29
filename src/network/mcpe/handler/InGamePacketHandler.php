@@ -27,19 +27,16 @@ use Throwable;
 use watermossmc\binary\Binary;
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\event\PlayerMoveEvent;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\LevelChunk;
 use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
-use watermossmc\network\mcpe\protocol\clientbound\Respawn as ClientboundRespawn;
 use watermossmc\network\mcpe\protocol\clientbound\Text;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\serverbound\CommandRequest;
 use watermossmc\network\mcpe\protocol\serverbound\MovePlayer;
-use watermossmc\network\mcpe\protocol\serverbound\PlayerAction;
 use watermossmc\network\mcpe\protocol\serverbound\RequestChunkRadius;
-use watermossmc\network\mcpe\protocol\serverbound\Respawn as ServerboundRespawn;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
 use watermossmc\Server;
 use watermossmc\util\Logger;
@@ -65,13 +62,12 @@ final class InGamePacketHandler implements PacketHandler
             ProtocolInfo::MOVE_PLAYER_PACKET,
             ProtocolInfo::TEXT_PACKET,
             ProtocolInfo::COMMAND_REQUEST_PACKET,
-            ProtocolInfo::PLAYER_ACTION_PACKET,
-            ProtocolInfo::RESPAWN_PACKET,
         ];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
-	{
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
+    {
+        $pid = Binary::readVarInt($packet, $offset);
         switch ($pid) {
             case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET:
                 Logger::debug("[0x45] RequestChunkRadius received");
@@ -132,22 +128,6 @@ final class InGamePacketHandler implements PacketHandler
                     Logger::error("Failed to handle CommandRequest: {$e->getMessage()}");
                 }
                 return true;
-            case ProtocolInfo::PLAYER_ACTION_PACKET:
-                $data = PlayerAction::read($packet, $offset);
-                $player = PlayerManager::get($session);
-                if ($player !== null && $data['action'] === PlayerAction::ACTION_RESPAWN) {
-                    ClientboundRespawn::send($session, $socket, $player->x, $player->y, $player->z, ClientboundRespawn::READY_TO_SPAWN, $player->getRuntimeId());
-                }
-                return true;
-            case ProtocolInfo::RESPAWN_PACKET:
-                $data = ServerboundRespawn::read($packet, $offset);
-                if ($data['respawnState'] === ServerboundRespawn::CLIENT_READY_TO_SPAWN) {
-                    $player = PlayerManager::get($session);
-                    if ($player !== null) {
-                        ClientboundRespawn::send($session, $socket, $player->x, $player->y, $player->z, ClientboundRespawn::READY_TO_SPAWN, $player->getRuntimeId());
-                    }
-                }
-                return true;
         }
         return false;
     }
@@ -171,7 +151,6 @@ final class InGamePacketHandler implements PacketHandler
                 if ($chunk !== null) {
                     LevelChunk::send($session, $socket, $cx, $cz, $chunk->encode(BlockRuntimeData::getConverter()), $chunk->getSubChunkCount());
                 }
-				RakNet::flush($session, $socket);
             }
         }
     }

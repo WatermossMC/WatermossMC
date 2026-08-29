@@ -17,7 +17,7 @@ final class TimeCommand extends Command
         parent::__construct('time', 'Changes or queries the world time', '/time <set|add|query> <value>', Permission::ROLE_OPERATOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         $world = Server::getInstance()?->getWorld();
         if ($world === null || $args === []) {

@@ -24,13 +24,13 @@ namespace watermossmc\network\mcpe\handler;
 
 use Socket;
 use Throwable;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
 use watermossmc\network\mcpe\protocol\clientbound\ResourcePacksInfo;
 use watermossmc\network\mcpe\protocol\handshake\ClientToServerHandshake;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class HandshakePacketHandler implements PacketHandler
@@ -40,7 +40,7 @@ final class HandshakePacketHandler implements PacketHandler
         return [ProtocolInfo::CLIENT_TO_SERVER_HANDSHAKE_PACKET];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
     {
         Logger::debug("[0x04] ClientToServerHandshake received.");
         if (!$session->hasWaitingHandshakeAck()) {

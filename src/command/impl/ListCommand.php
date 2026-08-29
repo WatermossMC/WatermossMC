@@ -15,7 +15,7 @@ final class ListCommand extends Command
         parent::__construct('list', 'Lists online players', '/list', Permission::ROLE_VISITOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         $server = Server::getInstance();
         if ($server === null) {

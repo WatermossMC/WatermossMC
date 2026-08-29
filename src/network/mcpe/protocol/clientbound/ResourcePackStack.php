@@ -20,22 +20,15 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/ResourcePackStack.php
 namespace watermossmc\network\mcpe\protocol\clientbound;
-========
-namespace watermossmc\mcpe\protocol\clientbound;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/ResourcePackStack.php
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\types\Experiments;
-use watermossmc\network\Session;
 
 final class ResourcePackStack extends Packet
 {

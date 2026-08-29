@@ -28,6 +28,8 @@ use Throwable;
 use watermossmc\binary\Binary;
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\event\PlayerJoinEvent;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\AddPlayer;
 use watermossmc\network\mcpe\protocol\clientbound\AvailableActorIdentifiers;
@@ -53,8 +55,6 @@ use watermossmc\network\mcpe\protocol\clientbound\VoxelShapes;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\serverbound\PlayerAuthInput;
 use watermossmc\network\mcpe\protocol\serverbound\RequestChunkRadius;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
 use watermossmc\Server;
 use watermossmc\util\Logger;
@@ -80,8 +80,9 @@ final class PreSpawnPacketHandler implements PacketHandler
         ];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
-	{
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
+    {
+        $pid = Binary::readVarInt($packet, $offset);
         switch ($pid) {
             case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET:
                 Logger::debug("[0x45] RequestChunkRadius received");
@@ -169,7 +170,6 @@ final class PreSpawnPacketHandler implements PacketHandler
                 if ($chunk !== null) {
                     LevelChunk::send($session, $socket, $cx, $cz, $chunk->encode(BlockRuntimeData::getConverter()), $chunk->getSubChunkCount());
                 }
-				RakNet::flush($session, $socket);
             }
         }
     }

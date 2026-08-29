@@ -23,12 +23,12 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\handler;
 
 use Socket;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\ResourcePackStack;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\mcpe\protocol\serverbound\ResourcePackClientResponse;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;
@@ -50,7 +50,7 @@ final class ResourcePackPacketHandler implements PacketHandler
         return [ProtocolInfo::RESOURCE_PACK_CLIENT_RESPONSE_PACKET];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
     {
         if ($session->getMcpeState() !== Session::MC_RESOURCE) {
             return true;

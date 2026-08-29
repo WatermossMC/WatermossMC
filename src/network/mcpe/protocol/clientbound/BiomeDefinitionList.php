@@ -20,23 +20,16 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/clientbound/BiomeDefinitionList.php
 namespace watermossmc\network\mcpe\protocol\clientbound;
-========
-namespace watermossmc\mcpe\protocol\clientbound;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/clientbound/BiomeDefinitionList.php
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\data\BiomeDefinitions;
 use watermossmc\network\mcpe\cache\StaticPacketCache;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
 
 final class BiomeDefinitionList extends Packet
 {

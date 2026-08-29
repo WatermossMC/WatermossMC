@@ -15,7 +15,7 @@ final class SayCommand extends Command
         parent::__construct('say', 'Broadcasts a message to all players', '/say <message>', Permission::ROLE_OPERATOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         if ($args === []) {
             $this->sendMessage($sender, "Usage: {$this->usage}");

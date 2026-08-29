@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace watermossmc\mcpe\network;
+namespace watermossmc\network;
 
 use function count;
 
@@ -28,7 +28,7 @@ use LogicException;
 use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
-use watermossmc\mcpe\protocol\handshake\NetworkSettings;
+use watermossmc\network\mcpe\protocol\handshake\NetworkSettings;
 use watermossmc\util\Logger;
 
 final class Session

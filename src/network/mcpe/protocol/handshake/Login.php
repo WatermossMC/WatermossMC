@@ -20,13 +20,7 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/Login.php
 namespace watermossmc\network\mcpe\protocol\handshake;
-========
-namespace watermossmc\mcpe\protocol\handshake;
-
-use watermossmc\mcpe\protocol\Packet;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/Login.php
 
 use RuntimeException;
 use Throwable;

@@ -25,6 +25,5 @@ namespace watermossmc\event;
 interface Cancellable
 {
     public function isCancelled(): bool;
-
     public function cancel(): void;
 }

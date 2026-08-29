@@ -20,14 +20,14 @@
 
 declare(strict_types=1);
 
-namespace watermossmc\mcpe\handler;
+namespace watermossmc\network\mcpe\handler;
 
 use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\event\PlayerQuitEvent;
-use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\PacketHandler;
-use watermossmc\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
+use watermossmc\network\mcpe\PacketHandler;
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\player\PlayerManager;
 use watermossmc\Server;
 use watermossmc\util\Logger;

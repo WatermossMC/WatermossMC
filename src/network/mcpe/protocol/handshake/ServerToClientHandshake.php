@@ -20,20 +20,13 @@
 
 declare(strict_types=1);
 
-<<<<<<<< HEAD:src/network/mcpe/protocol/handshake/ServerToClientHandshake.php
 namespace watermossmc\network\mcpe\protocol\handshake;
-========
-namespace watermossmc\mcpe\protocol\handshake;
-
-use watermossmc\mcpe\protocol\Packet;
-use watermossmc\mcpe\protocol\ProtocolInfo;
->>>>>>>> 8b12078 (...):src/mcpe/protocol/handshake/ServerToClientHandshake.php
 
 use Socket;
 use watermossmc\binary\McpeBinary;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\Session;
 
 final class ServerToClientHandshake extends Packet
 {

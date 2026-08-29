@@ -23,12 +23,12 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\handler;
 
 use Socket;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\handshake\NetworkSettings;
 use watermossmc\network\mcpe\protocol\handshake\RequestNetworkSettings;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class NetworkSettingsPacketHandler implements PacketHandler
@@ -38,7 +38,7 @@ final class NetworkSettingsPacketHandler implements PacketHandler
         return [ProtocolInfo::REQUEST_NETWORK_SETTINGS_PACKET];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
     {
         Logger::debug("[0xC1] RequestNetworkSettings received.");
         if ($session->getMcpeState() !== Session::MC_NONE) {

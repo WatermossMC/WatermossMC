@@ -22,19 +22,17 @@ declare(strict_types=1);
 
 namespace watermossmc\network\mcpe\handler;
 
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 use RuntimeException;
 use Socket;
 use Throwable;
 use watermossmc\crypto\Crypto;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\Session;
 use watermossmc\network\mcpe\PacketHandler;
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\handshake\Login;
 use watermossmc\network\mcpe\protocol\handshake\ServerToClientHandshake;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
-use watermossmc\network\raknet\RakNet;
-use watermossmc\network\Session;
 use watermossmc\util\Logger;
 
 final class LoginPacketHandler implements PacketHandler
@@ -44,7 +42,7 @@ final class LoginPacketHandler implements PacketHandler
         return [ProtocolInfo::LOGIN_PACKET];
     }
 
-    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
     {
         Logger::debug("[0x01] Login packet received.");
         if ($session->getMcpeState() !== Session::MC_NETWORK) {
@@ -65,7 +63,7 @@ final class LoginPacketHandler implements PacketHandler
             return true;
         }
         $name = $loginData['displayName'] ?? 'unknown';
-        $uuid = self::resolveIdentifier($loginData['payload']['identity'] ?? '0');
+        $uuid = $loginData['payload']['identity'] ?? '0';
         $xuid = $loginData['payload']['XUID'] ?? '0';
         Logger::info("Login attempt: {$name} (UUID: {$uuid}, XUID: {$xuid})");
         try {
@@ -109,33 +107,5 @@ final class LoginPacketHandler implements PacketHandler
         }
         $sigRaw = Crypto::derToSignature($signature, 48);
         return $signingInput . '.' . $b64Url($sigRaw);
-    }
-
-    private static function resolveIdentifier(string $value): UuidInterface
-    {
-        $source = "pocket-auth-1-xuid:" . $value;
-        $buffer = md5($source, true);
-
-        $positions = [
-            6 => [0x0f, 0x30],
-            8 => [0x3f, 0x80],
-        ];
-
-        foreach ($positions as $offset => [$mask, $flag]) {
-            $byte = ord($buffer[$offset]);
-            $byte &= $mask;
-            $byte |= $flag;
-
-            $buffer[$offset] = chr($byte);
-        }
-
-        $length = strlen($buffer);
-        $normalized = '';
-
-        for ($index = 0; $index < $length; ++$index) {
-            $normalized .= $buffer[$index];
-        }
-
-        return Uuid::fromBytes($normalized);
     }
 }

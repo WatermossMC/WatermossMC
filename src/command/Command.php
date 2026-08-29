@@ -50,17 +50,12 @@ abstract class Command
     }
 
     /**
-     * @param Player|null $sender Null if the command was executed from console.
      * @param array<string> $args
      */
-    public function execute(mixed $sender, array $args): void {}
+    abstract public function execute(CommandSender $sender, array $args): void;
 
-    protected function sendMessage(mixed $sender, string $message): void
+    protected function sendMessage(CommandSender $sender, string $message): void
     {
-        if ($sender instanceof Player) {
-            $sender->sendMessage($message);
-        } else {
-            echo $message . "\n";
-        }
+        $sender->sendMessage($message);
     }
 }

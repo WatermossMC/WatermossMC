@@ -24,6 +24,7 @@ namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
 use watermossmc\player\Player;
+use watermossmc\command\CommandSender;
 use watermossmc\Server;
 use watermossmc\util\Permission;
 
@@ -41,7 +42,7 @@ final class GameModeCommand extends Command
     }
 
     /** @param array<string> $args */
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         if (count($args) < 1) {
             $this->sendMessage($sender, "Usage: {$this->usage}");

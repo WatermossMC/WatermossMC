@@ -20,12 +20,13 @@
 
 declare(strict_types=1);
 
-namespace watermossmc\mcpe\network;
+namespace watermossmc\network\raknet;
 
 use Socket;
 use watermossmc\binary\Binary;
-use watermossmc\mcpe\PacketDispatcher;
-use watermossmc\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\mcpe\PacketDispatcher;
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
