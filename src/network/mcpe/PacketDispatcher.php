@@ -25,7 +25,6 @@ namespace watermossmc\network\mcpe;
 use Socket;
 use Throwable;
 use watermossmc\binary\Binary;
-use watermossmc\network\mcpe\handler\DisconnectPacketHandler;
 use watermossmc\network\mcpe\handler\HandshakePacketHandler;
 use watermossmc\network\mcpe\handler\InGamePacketHandler;
 use watermossmc\network\mcpe\handler\LoginPacketHandler;
@@ -74,7 +73,6 @@ final class PacketDispatcher
         $server = self::$server;
 
         $phaseHandlers = [
-            new DisconnectPacketHandler(),
             new NetworkSettingsPacketHandler(),
             new LoginPacketHandler(),
             new HandshakePacketHandler(),
@@ -161,7 +159,7 @@ final class PacketDispatcher
             }
 
             $handler = self::$handlers[$pid];
-            $handler->handle($packet, $o, $session, $socket);
+            $handler->handle($packet, $pid, $o, $session, $socket);
         } catch (Throwable $e) {
             Logger::error("Packet handling error [PID: 0x{$pidHex}]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());

@@ -80,9 +80,8 @@ final class PreSpawnPacketHandler implements PacketHandler
         ];
     }
 
-    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
-    {
-        $pid = Binary::readVarInt($packet, $offset);
+    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
+	{
         switch ($pid) {
             case ProtocolInfo::REQUEST_CHUNK_RADIUS_PACKET:
                 Logger::debug("[0x45] RequestChunkRadius received");
@@ -170,6 +169,7 @@ final class PreSpawnPacketHandler implements PacketHandler
                 if ($chunk !== null) {
                     LevelChunk::send($session, $socket, $cx, $cz, $chunk->encode(BlockRuntimeData::getConverter()), $chunk->getSubChunkCount());
                 }
+				RakNet::flush($session, $socket);
             }
         }
     }

@@ -34,7 +34,7 @@ final class AvailableActorIdentifiers extends Packet
     public static function send(Session $s, Socket $sock): void
     {
         $payload = StaticPacketCache::getInstance()->get('available_actor_identifiers', function () {
-            $path = \dirname(__DIR__, 3) . '/resources/entity_identifiers.nbt';
+            $path = \dirname(__DIR__, 4) . '/resources/entity_identifiers.nbt';
             $data = @file_get_contents($path);
             if ($data === false) {
                 Logger::error("entity_identifiers.nbt not found!");

@@ -38,7 +38,7 @@ final class NetworkSettingsPacketHandler implements PacketHandler
         return [ProtocolInfo::REQUEST_NETWORK_SETTINGS_PACKET];
     }
 
-    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
     {
         Logger::debug("[0xC1] RequestNetworkSettings received.");
         if ($session->getMcpeState() !== Session::MC_NONE) {
