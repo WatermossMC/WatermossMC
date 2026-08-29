@@ -50,7 +50,7 @@ final class ResourcePackPacketHandler implements PacketHandler
         return [ProtocolInfo::RESOURCE_PACK_CLIENT_RESPONSE_PACKET];
     }
 
-    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
     {
         if ($session->getMcpeState() !== Session::MC_RESOURCE) {
             return true;

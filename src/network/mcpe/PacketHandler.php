@@ -32,5 +32,5 @@ interface PacketHandler
      */
     public function packetIds(): array;
 
-    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool;
+    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool;
 }

@@ -40,7 +40,7 @@ final class HandshakePacketHandler implements PacketHandler
         return [ProtocolInfo::CLIENT_TO_SERVER_HANDSHAKE_PACKET];
     }
 
-    public function handle(string $packet, int $offset, Session $session, Socket $socket): bool
+    public function handle(string $packet, int $pid, int $offset, Session $session, Socket $socket): bool
     {
         Logger::debug("[0x04] ClientToServerHandshake received.");
         if (!$session->hasWaitingHandshakeAck()) {
