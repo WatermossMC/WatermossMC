@@ -84,22 +84,20 @@ final class SubChunk
 
     public function encode(BlockRuntimeIdConverter $converter): string
     {
-        $palette = [$this->emptyBlockId => 0];
+        $palette = [];
         $runtimeIdMap = [];
         $indexes = new SplFixedArray(self::SIZE);
 
         $defaultBlock = BlockRegistry::get($this->emptyBlockId);
         $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
-        $palette[0] = $defaultRuntimeId;
+        
+        $palette[] = $defaultRuntimeId;
         $runtimeIdMap[$defaultRuntimeId] = 0;
 
         foreach ($this->blocks as $i => $blockStateId) {
             $block = BlockRegistry::get((int) $blockStateId);
-            if ($block === null) {
-                $indexes[$i] = 0;
-                continue;
-            }
-            $runtimeId = $converter->toRuntimeId($block);
+            $runtimeId = $block !== null ? $converter->toRuntimeId($block) : $defaultRuntimeId;
+            
             if (!isset($runtimeIdMap[$runtimeId])) {
                 $runtimeIdMap[$runtimeId] = count($palette);
                 $palette[] = $runtimeId;
@@ -115,10 +113,6 @@ final class SubChunk
                 break;
             }
         }
-        if ($bits > 8) {
-            $bits = 16;
-        }
-
         $out = '';
         $out .= Binary::writeByte(8); // version 8
         $out .= Binary::writeByte(1); // storage count (1 layer)
@@ -132,6 +126,7 @@ final class SubChunk
             $bitOffset = $i * $bits;
             $wordIndex = $bitOffset >> 5;
             $bitInWord = $bitOffset & 31;
+
             $wordArray[$wordIndex] |= ($val << $bitInWord);
         }
 
