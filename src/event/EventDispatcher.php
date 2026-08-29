@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace watermossmc\event;
 
+use InvalidArgumentException;
 use Throwable;
 use watermossmc\util\Logger;
 
@@ -39,7 +40,7 @@ final class EventDispatcher
     public function listen(string $eventClass, callable $listener): int
     {
         if (!is_a($eventClass, Event::class, true)) {
-            throw new \InvalidArgumentException("Event listener class must extend " . Event::class);
+            throw new InvalidArgumentException("Event listener class must extend " . Event::class);
         }
 
         $listenerId = $this->nextListenerId++;

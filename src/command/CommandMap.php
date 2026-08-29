@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\command;
 
+use InvalidArgumentException;
 use Throwable;
-use watermossmc\player\Player;
 use watermossmc\util\Logger;
 use watermossmc\util\Permission;
 
@@ -140,7 +140,7 @@ final class CommandMap
     {
         $name = strtolower(trim($name));
         if ($name === '' || str_contains($name, ' ')) {
-            throw new \InvalidArgumentException('Command names and aliases must be non-empty single words');
+            throw new InvalidArgumentException('Command names and aliases must be non-empty single words');
         }
         return $name;
     }

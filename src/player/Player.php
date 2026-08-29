@@ -27,10 +27,10 @@ use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
 use watermossmc\network\mcpe\protocol\clientbound\Text;
+use watermossmc\network\Session;
 use watermossmc\Server;
 use watermossmc\util\Permission;
 

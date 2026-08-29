@@ -24,9 +24,9 @@ namespace watermossmc\network\mcpe\protocol\handshake;
 
 use Socket;
 use watermossmc\binary\McpeBinary;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 
 final class ServerToClientHandshake extends Packet
 {

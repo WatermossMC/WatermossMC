@@ -28,9 +28,9 @@ use Socket;
 use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\inventory\ItemStack;
-use watermossmc\network\Session;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 
 final class InventoryContent extends Packet
 {

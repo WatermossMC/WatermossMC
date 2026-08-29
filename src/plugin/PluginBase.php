@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\plugin;
 
+use LogicException;
+use RuntimeException;
 use watermossmc\command\Command;
 use watermossmc\event\Event;
 use watermossmc\Server;
@@ -100,7 +102,7 @@ abstract class PluginBase
     public function setConfigDefaults(array $defaults): void
     {
         if ($this->config !== null) {
-            throw new \LogicException('Config defaults must be set before the config is loaded');
+            throw new LogicException('Config defaults must be set before the config is loaded');
         }
         $this->configDefaults = $defaults;
     }
@@ -126,10 +128,10 @@ abstract class PluginBase
             return false;
         }
         if (!is_dir($this->dataFolder) && !mkdir($this->dataFolder, 0o777, true) && !is_dir($this->dataFolder)) {
-            throw new \RuntimeException('Unable to create data folder: ' . $this->dataFolder);
+            throw new RuntimeException('Unable to create data folder: ' . $this->dataFolder);
         }
         if (!copy($source, $target)) {
-            throw new \RuntimeException('Unable to copy default plugin config: ' . $source);
+            throw new RuntimeException('Unable to copy default plugin config: ' . $source);
         }
         $this->config?->reload();
         return true;
@@ -207,7 +209,7 @@ abstract class PluginBase
     public function registerCommand(Command $command): void
     {
         if (!$this->server->getCommandMap()->register($command)) {
-            throw new \LogicException('A command named ' . $command->name . ' or one of its aliases is already registered');
+            throw new LogicException('A command named ' . $command->name . ' or one of its aliases is already registered');
         }
         $this->commandNames[strtolower($command->name)] = $command;
     }

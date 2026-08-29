@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
-use watermossmc\player\Player;
 use watermossmc\command\CommandSender;
+use watermossmc\player\Player;
 use watermossmc\Server;
 use watermossmc\util\Permission;
 
@@ -35,7 +35,7 @@ final class HelpCommand extends Command
         parent::__construct('help', 'Lists all available commands', '/help [command]', Permission::ROLE_VISITOR);
     }
 
-    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
+    public function execute(CommandSender $sender, array $args): void
     {
         if (count($args) > 0) {
             $commandName = strtolower($args[0]);
