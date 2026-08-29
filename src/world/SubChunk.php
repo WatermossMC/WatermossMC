@@ -38,6 +38,7 @@ final class SubChunk
 
     /** @var SplFixedArray<int> */
     private SplFixedArray $blocks;
+
     private int $emptyBlockId;
 
     public function __construct(int $emptyBlockId = 0)
