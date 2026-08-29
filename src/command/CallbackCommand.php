@@ -11,13 +11,11 @@ use watermossmc\util\Permission;
  */
 final class CallbackCommand extends Command
 {
-    /** @var callable(mixed, array<string>): void */
+    /** @var callable(CommandSender, array<string>): void */
     private $handler;
 
     /**
-     * @param callable(mixed, array<string>): void $handler
-     */
-    /**
+     * @param callable(CommandSender, array<string>): void $handler
      * @param list<string> $aliases
      */
     public function __construct(string $name, string $description, string $usage, callable $handler, int $requiredRole = Permission::ROLE_MEMBER, array $aliases = [])
@@ -27,7 +25,7 @@ final class CallbackCommand extends Command
     }
 
     /** @param array<string> $args */
-    public function execute(mixed $sender, array $args): void
+    public function execute(CommandSender $sender, array $args): void
     {
         ($this->handler)($sender, $args);
     }

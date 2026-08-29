@@ -16,7 +16,7 @@ final class DeopCommand extends Command
         parent::__construct('deop', 'Revokes operator status from a player', '/deop <player>', Permission::ROLE_OPERATOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         $name = $args[0] ?? '';
         if ($name === '') {

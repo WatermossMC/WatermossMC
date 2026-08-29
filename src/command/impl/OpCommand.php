@@ -16,7 +16,7 @@ final class OpCommand extends Command
         parent::__construct('op', 'Grants operator status to a player', '/op <player>', Permission::ROLE_OPERATOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         $name = $args[0] ?? '';
         if ($name === '') {

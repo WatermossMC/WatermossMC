@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace watermossmc\event;
 
-abstract class Event
+abstract class Event implements Cancellable
 {
     private bool $cancelled = false;
 

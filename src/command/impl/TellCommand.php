@@ -6,6 +6,7 @@ namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
 use watermossmc\player\Player;
+use watermossmc\command\CommandSender;
 use watermossmc\player\PlayerManager;
 use watermossmc\util\Permission;
 
@@ -16,7 +17,7 @@ final class TellCommand extends Command
         parent::__construct('tell', 'Sends a private message', '/tell <player> <message>', Permission::ROLE_MEMBER, ['msg', 'w']);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(\watermossmc\command\CommandSender $sender, array $args): void
     {
         if (count($args) < 2) {
             $this->sendMessage($sender, "Usage: {$this->usage}");

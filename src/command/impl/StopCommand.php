@@ -23,7 +23,8 @@ declare(strict_types=1);
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
-use watermossmc\player\Player;
+use watermossmc\command\CommandSender;
+use watermossmc\command\ConsoleCommandSender;
 use watermossmc\Server;
 
 final class StopCommand extends Command
@@ -33,9 +34,9 @@ final class StopCommand extends Command
         parent::__construct('stop', 'Stops the server', '/stop');
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(CommandSender $sender, array $args): void
     {
-        if ($sender instanceof Player) {
+        if (!$sender instanceof ConsoleCommandSender) {
             $this->sendMessage($sender, "You do not have permission to stop the server.");
             return;
         }

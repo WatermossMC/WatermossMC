@@ -22,18 +22,19 @@ declare(strict_types=1);
 
 namespace watermossmc\player;
 
+use watermossmc\command\CommandSender;
 use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
-use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\protocol\clientbound\Disconnect;
-use watermossmc\mcpe\protocol\clientbound\MobEffect;
-use watermossmc\mcpe\protocol\clientbound\Text;
+use watermossmc\network\Session;
+use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
+use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
+use watermossmc\network\mcpe\protocol\clientbound\Text;
 use watermossmc\Server;
 use watermossmc\util\Permission;
 
-final class Player extends Entity
+final class Player extends Entity implements CommandSender
 {
     public Session $session;
 
@@ -117,14 +118,13 @@ final class Player extends Entity
         $this->session->setPosition($x, $y, $z);
     }
 
-    public function sendMessage(string $message, int $type = Text::TYPE_RAW): bool
+    public function sendMessage(string $message, int $type = Text::TYPE_RAW): void
     {
         $socket = $this->session->getSocket();
         if ($socket === null || !$this->session->isPlaying()) {
-            return false;
+            return;
         }
         Text::send($this->session, $socket, $message, $type);
-        return true;
     }
 
     public function kick(string $reason = "Disconnected"): bool
@@ -162,6 +162,11 @@ final class Player extends Entity
     public function setRole(int $role): void
     {
         $this->role = $role;
+    }
+
+    public function hasPermission(int $role): bool
+    {
+        return $this->role >= $role;
     }
 
     public function tick(): void
