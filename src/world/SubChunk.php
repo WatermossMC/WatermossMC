@@ -33,16 +33,25 @@ final class SubChunk
 {
     public const SIZE = 4096;
     public const EDGE_LENGTH = 16;
+    public const COORD_BIT_SIZE = 4;
+    public const COORD_MASK = 0x0F;
 
     /** @var SplFixedArray<int> */
     private SplFixedArray $blocks;
+    private int $emptyBlockId;
 
-    public function __construct()
+    public function __construct(int $emptyBlockId = 0)
     {
+        $this->emptyBlockId = $emptyBlockId;
         $this->blocks = new SplFixedArray(self::SIZE);
         for ($i = 0; $i < self::SIZE; $i++) {
-            $this->blocks[$i] = 0;
+            $this->blocks[$i] = $emptyBlockId;
         }
+    }
+
+    public function getEmptyBlockId(): int
+    {
+        return $this->emptyBlockId;
     }
 
     public function setBlock(int $x, int $y, int $z, int $id): void
@@ -54,18 +63,39 @@ final class SubChunk
     public function getBlock(int $x, int $y, int $z): int
     {
         $index = ($x & 0x0f) << 8 | ($z & 0x0f) << 4 | ($y & 0x0f);
-        return $this->blocks[$index] ?? 0;
+        return $this->blocks[$index] ?? $this->emptyBlockId;
+    }
+
+    public function isEmptyFast(): bool
+    {
+        foreach ($this->blocks as $block) {
+            if ($block !== $this->emptyBlockId) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function isEmptyAuthoritative(): bool
+    {
+        return $this->isEmptyFast();
     }
 
     public function encode(BlockRuntimeIdConverter $converter): string
     {
-        $palette = [0 => 0]; // Air or default block runtime ID
+        $palette = [$this->emptyBlockId => 0];
         $runtimeIdMap = [];
         $indexes = new SplFixedArray(self::SIZE);
+
+        $defaultBlock = BlockRegistry::get($this->emptyBlockId);
+        $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
+        $palette[0] = $defaultRuntimeId;
+        $runtimeIdMap[$defaultRuntimeId] = 0;
 
         foreach ($this->blocks as $i => $blockStateId) {
             $block = BlockRegistry::get((int) $blockStateId);
             if ($block === null) {
+                $indexes[$i] = 0;
                 continue;
             }
             $runtimeId = $converter->toRuntimeId($block);
