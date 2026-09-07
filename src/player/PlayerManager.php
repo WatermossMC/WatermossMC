@@ -18,11 +18,11 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\player;
 
-use watermossmc\mcpe\network\Session;
+use watermossmc\network\Session;
 use watermossmc\Server;
 
 final class PlayerManager

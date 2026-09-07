@@ -40,7 +40,7 @@ final class CommandRegistry
         }
 
         foreach ($files as $file) {
-            $className = 'watermossmc\command\impl' . basename($file, '.php');
+            $className = 'watermossmc\\command\\impl\\' . basename($file, '.php');
             if (class_exists($className)) {
                 $commands[] = $className;
             }

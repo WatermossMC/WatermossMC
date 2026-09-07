@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use PhpCsFixer\Runner\Parallel\ParallelConfig;
+
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
@@ -22,7 +24,7 @@ return (new Config())
     ->setUsingCache(true)
     ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
     ->setFinder($finder)
-    ->setParallelConfig(new \PhpCsFixer\Runner\Parallel\ParallelConfig(8))
+    ->setParallelConfig(new ParallelConfig(8))
     ->setRules([
         '@PSR12' => true,
         '@PHP8x1Migration' => true,
@@ -91,7 +93,7 @@ TEXT,
         'return_type_declaration' => ['space_before' => 'none'],
 
         'single_quote' => false,
-        'escape_implicit_backslashes' => false,
+        'string_implicit_backslashes' => false,
 
         'native_constant_invocation' => false,
         'modernize_strpos' => true,

@@ -18,22 +18,24 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\player;
 
+use watermossmc\command\CommandSender;
+use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
 use watermossmc\entity\EntityMetadataProperties;
 use watermossmc\inventory\PlayerInventory;
-use watermossmc\mcpe\network\Session;
-use watermossmc\mcpe\protocol\Disconnect;
-use watermossmc\mcpe\protocol\MobEffect;
-use watermossmc\mcpe\protocol\Text;
+use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
+use watermossmc\network\mcpe\protocol\clientbound\MobEffect;
+use watermossmc\network\mcpe\protocol\clientbound\Respawn;
+use watermossmc\network\mcpe\protocol\clientbound\Text;
+use watermossmc\network\Session;
 use watermossmc\Server;
-use watermossmc\util\Location;
 use watermossmc\util\Permission;
 
-final class Player extends Entity
+final class Player extends Entity implements CommandSender
 {
     public Session $session;
 
@@ -57,7 +59,7 @@ final class Player extends Entity
 
     public bool $onGround = true;
 
-    private \watermossmc\Server $server;
+    private Server $server;
 
     /** @var array<string, float|int|bool>|null */
     public ?array $pendingMove = null;
@@ -75,7 +77,7 @@ final class Player extends Entity
         $this->uuid = $s->getUuid();
         $this->username = $username;
         $this->inventory = new PlayerInventory();
-        $factory = \watermossmc\entity\AttributeFactory::getInstance();
+        $factory = AttributeFactory::getInstance();
         $map = $this->getAttributeMap();
         $map->add($factory->mustGet('minecraft:health'));
         $map->add($factory->mustGet('minecraft:follow_range'));
@@ -90,7 +92,7 @@ final class Player extends Entity
         $map->add($factory->mustGet('minecraft:player.level'));
         $map->add($factory->mustGet('minecraft:player.experience'));
         // Load role from OperatorManager
-        $this->role = \watermossmc\player\OperatorManager::getPermissionLevel($username);
+        $this->role = OperatorManager::getPermissionLevel($username);
         // Initialize default player properties
         $this->getEntityData()->setString(EntityMetadataProperties::NAMETAG, $username);
     }
@@ -110,16 +112,6 @@ final class Player extends Entity
         return $this->runtimeId;
     }
 
-    public function getPosition(): \watermossmc\util\Location
-    {
-        return new \watermossmc\util\Location($this->server->getWorld(), $this->x, $this->y, $this->z, $this->yaw, $this->pitch);
-    }
-
-    public function getLocation(): Location
-    {
-        return parent::getLocation();
-    }
-
     public function teleport(float $x, float $y, float $z, ?float $yaw = null, ?float $pitch = null): void
     {
         $this->setPosition($x, $y, $z);
@@ -127,14 +119,13 @@ final class Player extends Entity
         $this->session->setPosition($x, $y, $z);
     }
 
-    public function sendMessage(string $message, int $type = Text::TYPE_RAW): bool
+    public function sendMessage(string $message, int $type = Text::TYPE_RAW): void
     {
         $socket = $this->session->getSocket();
         if ($socket === null || !$this->session->isPlaying()) {
-            return false;
+            return;
         }
         Text::send($this->session, $socket, $message, $type);
-        return true;
     }
 
     public function kick(string $reason = "Disconnected"): bool
@@ -174,6 +165,11 @@ final class Player extends Entity
         $this->role = $role;
     }
 
+    public function hasPermission(int $role): bool
+    {
+        return $this->role >= $role;
+    }
+
     public function tick(): void
     {
         parent::tick();
@@ -195,5 +191,24 @@ final class Player extends Entity
         if ($socket !== null) {
             MobEffect::remove($this->session, $socket, $effectId);
         }
+    }
+
+    public function damage(float $amount): void
+    {
+        if ($this->gameMode === 1) {
+            return;
+        }
+        parent::damage($amount);
+    }
+
+    public function onDeath(): void
+    {
+        parent::onDeath();
+        $this->sendMessage("§cYou have died!");
+        $socket = $this->session->getSocket();
+        if ($socket !== null) {
+            Respawn::send($this->session, $socket, $this->x, $this->y, $this->z, Respawn::READY_TO_SPAWN, $this->runtimeId);
+        }
+        $this->health = $this->maxHealth;
     }
 }

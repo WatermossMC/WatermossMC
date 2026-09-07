@@ -45,17 +45,39 @@ abstract class LivingEntity extends Entity
 
     public function setHealth(float $health): void
     {
+        $oldHealth = $this->health;
         $this->health = max(0, min($this->maxHealth, $health));
+        if ($oldHealth > 0 && $this->health <= 0) {
+            $this->onDeath();
+        }
+    }
+
+    public function isAlive(): bool
+    {
+        return $this->health > 0;
+    }
+
+    public function kill(): void
+    {
+        $this->setHealth(0);
+    }
+
+    public function onDeath(): void
+    {
+        // Default death logic
     }
 
     public function damage(float $amount): void
     {
+        if (!$this->isAlive()) {
+            return;
+        }
         $this->setHealth($this->health - $amount);
     }
 
     public function tick(): void
     {
         parent::tick();
-        // Additional living entity logic (e.g., health regeneration) can go here
+        // TODO: Additional living entity logic (e.g., health regeneration) can go here
     }
 }

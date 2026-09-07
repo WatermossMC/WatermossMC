@@ -18,21 +18,24 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\command\impl;
 
 use watermossmc\command\Command;
+use watermossmc\command\CommandSender;
+use watermossmc\player\Player;
 use watermossmc\Server;
+use watermossmc\util\Permission;
 
 final class HelpCommand extends Command
 {
     public function __construct()
     {
-        parent::__construct('help', 'Lists all available commands', '/help [command]', \watermossmc\util\Permission::ROLE_VISITOR);
+        parent::__construct('help', 'Lists all available commands', '/help [command]', Permission::ROLE_VISITOR);
     }
 
-    public function execute(mixed $sender, array $args): void
+    public function execute(CommandSender $sender, array $args): void
     {
         if (count($args) > 0) {
             $commandName = strtolower($args[0]);
@@ -58,7 +61,7 @@ final class HelpCommand extends Command
         $this->sendMessage($sender, "--- Available Commands ---");
         foreach ($commands as $cmd) {
             // Only show commands the sender has permission to use
-            $senderRole = $sender instanceof \watermossmc\player\Player ? $sender->getRole() : \watermossmc\util\Permission::ROLE_OPERATOR;
+            $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
             if ($senderRole >= $cmd->requiredRole) {
                 $this->sendMessage($sender, "/{$cmd->name} - {$cmd->description}");
             }

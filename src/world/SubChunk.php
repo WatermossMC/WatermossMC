@@ -18,78 +18,133 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\world;
 
 use RuntimeException;
+use SplFixedArray;
 use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
+use watermossmc\block\BlockRegistry;
+use watermossmc\block\BlockRuntimeIdConverter;
 
 final class SubChunk
 {
     public const SIZE = 4096;
+    public const EDGE_LENGTH = 16;
+    public const COORD_BIT_SIZE = 4;
+    public const COORD_MASK = 0x0F;
 
-    /** @var int[] */
-    private array $blocks = [];
+    /** @var SplFixedArray<int> */
+    private SplFixedArray $blocks;
 
-    public function __construct()
+    private int $emptyBlockId;
+
+    public function __construct(int $emptyBlockId = 0)
     {
-        $this->blocks = array_fill(0, self::SIZE, 0);
+        $this->emptyBlockId = $emptyBlockId;
+        $this->blocks = new SplFixedArray(self::SIZE);
+        for ($i = 0; $i < self::SIZE; $i++) {
+            $this->blocks[$i] = $emptyBlockId;
+        }
+    }
+
+    public function getEmptyBlockId(): int
+    {
+        return $this->emptyBlockId;
     }
 
     public function setBlock(int $x, int $y, int $z, int $id): void
     {
-        $index = $y << 8 | $z << 4 | $x;
+        $index = ($x & 0x0f) << 8 | ($z & 0x0f) << 4 | ($y & 0x0f);
         $this->blocks[$index] = $id;
     }
 
     public function getBlock(int $x, int $y, int $z): int
     {
-        $index = $y << 8 | $z << 4 | $x;
-        return $this->blocks[$index] ?? 0;
+        $index = ($x & 0x0f) << 8 | ($z & 0x0f) << 4 | ($y & 0x0f);
+        return $this->blocks[$index] ?? $this->emptyBlockId;
     }
 
-    public function encode(): string
+    public function isEmptyFast(): bool
     {
-        $out = Binary::writeByte(8);
-        $palette = array_values(array_unique($this->blocks));
-        $bits = max(1, (int) ceil(log(\count($palette), 2)));
-        $out .= Binary::writeByte($bits);
-        $out .= $this->encodeBlocks($palette, $bits);
-        $out .= Binary::writeVarInt(\count($palette));
-        foreach ($palette as $id) {
-            $out .= Binary::writeVarInt($id);
-        }
-        return $out;
-    }
-
-    /**
-     * @param array<int, int> $palette
-     */
-    private function encodeBlocks(array $palette, int $bits): string
-    {
-        $indexes = array_flip($palette);
-        $buffer = '';
-        $value = 0;
-        $bitPos = 0;
         foreach ($this->blocks as $block) {
-            $value |= $indexes[$block] << $bitPos;
-            $bitPos += $bits;
-            if ($bitPos >= 32) {
-                $buffer .= Binary::writeInt($value);
-                $value = 0;
-                $bitPos = 0;
+            if ($block !== $this->emptyBlockId) {
+                return false;
             }
         }
-        if ($bitPos > 0) {
-            $buffer .= Binary::writeInt($value);
+        return true;
+    }
+
+    public function isEmptyAuthoritative(): bool
+    {
+        return $this->isEmptyFast();
+    }
+
+    public function encode(BlockRuntimeIdConverter $converter): string
+    {
+        $palette = [];
+        $runtimeIdMap = [];
+        $indexes = new SplFixedArray(self::SIZE);
+
+        $defaultBlock = BlockRegistry::get($this->emptyBlockId);
+        $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
+        
+        $palette[] = $defaultRuntimeId;
+        $runtimeIdMap[$defaultRuntimeId] = 0;
+
+        foreach ($this->blocks as $i => $blockStateId) {
+            $block = BlockRegistry::get((int) $blockStateId);
+            $runtimeId = $block !== null ? $converter->toRuntimeId($block) : $defaultRuntimeId;
+            
+            if (!isset($runtimeIdMap[$runtimeId])) {
+                $runtimeIdMap[$runtimeId] = count($palette);
+                $palette[] = $runtimeId;
+            }
+            $indexes[$i] = $runtimeIdMap[$runtimeId];
         }
-        return $buffer;
+
+        $paletteCount = count($palette);
+        $bits = 1;
+        foreach ([1, 2, 3, 4, 5, 6, 8, 16] as $b) {
+            if ((1 << $b) >= $paletteCount) {
+                $bits = $b;
+                break;
+            }
+        }
+        $out = '';
+        $out .= Binary::writeByte(8); // version 8
+        $out .= Binary::writeByte(1); // storage count (1 layer)
+        $out .= Binary::writeByte($bits << 1);
+
+        $words = (int) ceil((self::SIZE * $bits) / 32);
+        $wordArray = array_fill(0, $words, 0);
+
+        for ($i = 0; $i < self::SIZE; $i++) {
+            $val = $indexes[$i];
+            $bitOffset = $i * $bits;
+            $wordIndex = $bitOffset >> 5;
+            $bitInWord = $bitOffset & 31;
+
+            $wordArray[$wordIndex] |= ($val << $bitInWord);
+        }
+
+        foreach ($wordArray as $word) {
+            $out .= Binary::writeInt($word);
+        }
+
+        $out .= McpeBinary::writeUnsignedVarInt($paletteCount);
+        foreach ($palette as $runtimeId) {
+            $out .= McpeBinary::writeUnsignedVarInt($runtimeId);
+        }
+
+        return $out;
     }
 
     public function exportBinary(): string
     {
-        return pack('v*', ...$this->blocks);
+        return pack('v*', ...$this->blocks->toArray());
     }
 
     public static function fromBinary(string $data): self
@@ -102,7 +157,15 @@ final class SubChunk
             throw new RuntimeException('Failed to decode subchunk binary');
         }
         $subChunk = new self();
-        $subChunk->blocks = array_values($values);
+        $subChunk->blocks = SplFixedArray::fromArray(array_values($values), false);
         return $subChunk;
+    }
+
+    /**
+     * @return SplFixedArray<int>
+     */
+    public function getBlocks(): SplFixedArray
+    {
+        return $this->blocks;
     }
 }

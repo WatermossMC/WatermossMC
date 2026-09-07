@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\block\types;
 
@@ -30,7 +30,7 @@ final class AirBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(0, 'Air');
+        parent::__construct(Block::AIR, 'minecraft:air');
     }
 
     public function onInteract(int $x, int $y, int $z, Player $player): void

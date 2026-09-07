@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\block\types;
 
@@ -28,6 +28,6 @@ final class StoneBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(1, 'Stone');
+        parent::__construct(Block::STONE, 'minecraft:stone');
     }
 }

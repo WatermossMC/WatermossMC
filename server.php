@@ -20,12 +20,13 @@
 
 declare(strict_types=1);
 
-use watermossmc\mcpe\network\RakNet;
-use watermossmc\mcpe\network\TickLoop;
-use watermossmc\mcpe\PacketHandler;
+use watermossmc\network\mcpe\PacketDispatcher;
+use watermossmc\network\raknet\RakNet;
+use watermossmc\network\TickLoop;
 use watermossmc\Server;
 use watermossmc\util\Config;
 use watermossmc\util\Logger;
+use watermossmc\VersionInfo;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -43,21 +44,11 @@ $config = [
 $shutdown = false;
 
 set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
-    Logger::error($e::class . ": " . $e->getMessage());
-
-    foreach ($e->getTrace() as $i => $t) {
-        $file = $t['file'] ?? 'unknown';
-        $line = $t['line'] ?? 0;
-        $func = $t['function'] ?? 'unknown';
-
-        Logger::debug("#$i $file:$line ($func)");
-    }
+    Logger::exception($e);
+    $shutdown = true;
 });
 
-<<<<<<< HEAD
 // Signal handlers for graceful shutdown (guarded if pcntl is available)
-=======
->>>>>>> 866a1c0 (...)
 if (\function_exists('pcntl_signal')) {
     pcntl_signal(SIGTERM, function () use (&$shutdown): void {
         Logger::info("Received SIGTERM, shutting down gracefully...");
@@ -70,12 +61,14 @@ if (\function_exists('pcntl_signal')) {
     });
 }
 
-Logger::info("Starting WatermossMC server on {$config['bind_ip']}:{$config['bind_port']}");
+Logger::info('========================================');
+Logger::success(VersionInfo::NAME . ' ' . VersionInfo::VERSION . ' (' . VersionInfo::CHANNEL . ')');
+Logger::info('Minecraft Bedrock ' . VersionInfo::MINECRAFT_VERSION . ' | Plugin API ' . VersionInfo::getApiVersion());
+Logger::info('Repository: ' . VersionInfo::REPOSITORY);
+Logger::info('Starting server on ' . $config['bind_ip'] . ':' . $config['bind_port'], ['maxPlayers' => $config['max_players']]);
+Logger::info('========================================');
 
-<<<<<<< HEAD
 // Create UDP socket
-=======
->>>>>>> 866a1c0 (...)
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     $error = socket_strerror(socket_last_error());
@@ -99,12 +92,14 @@ Logger::info("RakNet initialized");
 // Initialize server API and tick loop
 $tickLoop = new TickLoop();
 $server = new Server(__DIR__, $tickLoop);
-PacketHandler::setServer($server);
+PacketDispatcher::setServer($server);
 
 $tickLoop->add(static function () use ($server): void {
     $server->tick();
 
     if ($server->getCurrentTick() % 20 === 0) {
+        RakNet::tick();
+
         Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }
 });
@@ -123,10 +118,7 @@ $tickInterval = 1_000_000_000 / 20; // 20 TPS
 Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
-<<<<<<< HEAD
     // Handle signals (if available)
-=======
->>>>>>> 866a1c0 (...)
     if (\function_exists('pcntl_signal_dispatch')) {
         pcntl_signal_dispatch();
     }

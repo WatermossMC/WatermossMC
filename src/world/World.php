@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\world;
 
@@ -352,7 +352,7 @@ final class World
                 $chunk->setBlock($cx, 0, $cz, Block::BEDROCK);
                 for ($y = 1; $y <= $surfaceY; $y++) {
                     $blockId = match (true) {
-                        $y === $surfaceY => Block::GRASS,
+                        $y === $surfaceY => Block::GRASS_BLOCK,
                         $y >= $surfaceY - 3 => Block::DIRT,
                         default => Block::STONE,
                     };
@@ -472,6 +472,6 @@ final class World
 
     public function getChunkViewDistance(): int
     {
-        return Config::getInt("chunk-view-radius", 19);
+        return Config::getInt("chunk-view-radius", 6);
     }
 }

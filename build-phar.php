@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-$pharFile = __DIR__ . '/watermossmc.phar';
+$pharFile = __DIR__ . '/WatermossMC.phar';
 
 if (file_exists($pharFile)) {
     unlink($pharFile);
@@ -38,13 +38,13 @@ try {
     $phar->setStub(
         <<<'STUB'
             <?php
-            Phar::mapPhar('watermossmc.phar');
-            require 'phar://watermossmc.phar/server.php';
+            Phar::mapPhar('WatermossMC.phar');
+            require 'phar://WatermossMC.phar/server.php';
             __HALT_COMPILER();
             STUB
     );
     $phar->stopBuffering();
-    echo "Created watermossmc.phar\n";
+    echo "WatermossMC.phar\n";
 } catch (Throwable $e) {
     fwrite(\STDERR, "Failed to build PHAR: " . $e->getMessage() . "\n");
     exit(1);

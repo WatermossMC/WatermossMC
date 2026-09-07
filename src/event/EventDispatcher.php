@@ -18,25 +18,49 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\event;
 
+use InvalidArgumentException;
 use Throwable;
 use watermossmc\util\Logger;
 
 final class EventDispatcher
 {
-    /** @var array<class-string<Event>, list<callable(Event): void>> */
+    /** @var array<class-string<Event>, array<int, callable(Event): void>> */
     private array $listeners = [];
+
+    private int $nextListenerId = 1;
 
     /**
      * @param class-string<Event> $eventClass
      * @param callable(Event): void $listener
      */
-    public function listen(string $eventClass, callable $listener): void
+    public function listen(string $eventClass, callable $listener): int
     {
-        $this->listeners[$eventClass][] = $listener;
+        if (!is_a($eventClass, Event::class, true)) {
+            throw new InvalidArgumentException("Event listener class must extend " . Event::class);
+        }
+
+        $listenerId = $this->nextListenerId++;
+        $this->listeners[$eventClass][$listenerId] = $listener;
+        return $listenerId;
+    }
+
+    public function unlisten(int $listenerId): void
+    {
+        foreach ($this->listeners as $eventClass => $listeners) {
+            if (!isset($listeners[$listenerId])) {
+                continue;
+            }
+
+            unset($this->listeners[$eventClass][$listenerId]);
+            if ($this->listeners[$eventClass] === []) {
+                unset($this->listeners[$eventClass]);
+            }
+            return;
+        }
     }
 
     public function dispatch(Event $event): Event

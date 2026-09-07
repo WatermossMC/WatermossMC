@@ -2,7 +2,7 @@
 vendor/*
 world/*
 plugins/*
-<<<<<<< HEAD
-=======
+logs/
 *ref/*
->>>>>>> 866a1c0 (...)
+ops.txt
+WatermossMC.phar

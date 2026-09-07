@@ -18,7 +18,7 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\block\types;
 
@@ -28,6 +28,6 @@ final class GrassBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(2, 'Grass');
+        parent::__construct(Block::GRASS_BLOCK, 'minecraft:grass_block');
     }
 }

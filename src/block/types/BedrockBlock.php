@@ -18,17 +18,28 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\block\types;
 
 use watermossmc\block\Block;
+use watermossmc\block\BlockState;
 
 final class BedrockBlock extends Block
 {
     public function __construct()
     {
-        parent::__construct(7, 'Bedrock');
+        parent::__construct(Block::BEDROCK, 'minecraft:bedrock');
+    }
+
+    public function getState(): BlockState
+    {
+        return new BlockState(
+            'minecraft:bedrock',
+            [
+                'infiniburn_bit' => 0,
+            ]
+        );
     }
 
     public function onBreak(int $x, int $y, int $z): void

@@ -18,29 +18,43 @@
  * @link https://github.com/watermossmc/WatermossMC
  */
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace watermossmc\command;
 
-use watermossmc\player\Player;
 use watermossmc\util\Permission;
 
 abstract class Command
 {
-    public function __construct(public readonly string $name, public readonly string $description, public readonly string $usage, public readonly int $requiredRole = Permission::ROLE_MEMBER) {}
+    /** @var list<string> */
+    public readonly array $aliases;
 
     /**
-     * @param Player|null $sender Null if the command was executed from console.
+     * @param list<string> $aliases Alternate names that execute this command.
+     */
+    public function __construct(
+        public readonly string $name,
+        public readonly string $description,
+        public readonly string $usage,
+        public readonly int $requiredRole = Permission::ROLE_MEMBER,
+        array $aliases = [],
+    ) {
+        $this->aliases = array_values(array_unique(array_map(static fn (string $alias): string => strtolower(trim($alias)), $aliases)));
+    }
+
+    /** @return list<string> */
+    public function getAliases(): array
+    {
+        return $this->aliases;
+    }
+
+    /**
      * @param array<string> $args
      */
-    public function execute(mixed $sender, array $args): void {}
+    abstract public function execute(CommandSender $sender, array $args): void;
 
-    protected function sendMessage(mixed $sender, string $message): void
+    protected function sendMessage(CommandSender $sender, string $message): void
     {
-        if ($sender instanceof Player) {
-            $sender->sendMessage($message);
-        } else {
-            echo "[{$sender}] {$message}\n";
-        }
+        $sender->sendMessage($message);
     }
 }

@@ -26,51 +26,87 @@ use OutOfBoundsException;
 use watermossmc\player\Player;
 
 /**
- * Manages the inventory of a player.
+ * Manages the inventory of a player with robust slot handling.
  */
 final class PlayerInventory
 {
+    public const MAX_SIZE = 41;
+    public const SLOT_INVENTORY_OFFSET = 9;
+    public const SLOT_HOTBAR_OFFSET = 36;
+
     /** @var array<int, ItemStack|null> */
     private array $slots = [];
 
+    private int $selectedSlot = 0;
+
     public function __construct()
     {
-        // Initialize inventory with nulls (empty slots)
-        // 0-35: General inventory
-        // 36-39: Armor
-        // 40: Offhand
-        $this->slots = array_fill(0, 41, null);
+        $this->slots = array_fill(0, self::MAX_SIZE, null);
     }
 
     public function setItem(int $slot, ?ItemStack $item): void
     {
-        if ($slot < 0 || $slot >= 41) {
-            throw new OutOfBoundsException("Inventory slot out of bounds");
+        if ($slot < 0 || $slot >= self::MAX_SIZE) {
+            throw new OutOfBoundsException("Inventory slot out of bounds: {$slot}");
         }
         $this->slots[$slot] = $item;
     }
 
     public function getItem(int $slot): ?ItemStack
     {
+        if ($slot < 0 || $slot >= self::MAX_SIZE) {
+            return null;
+        }
         return $this->slots[$slot] ?? null;
     }
 
+    public function addItem(ItemStack $item): bool
+    {
+        // Try stacking first
+        for ($i = 0; $i < 36; $i++) {
+            $existing = $this->slots[$i];
+            if ($existing !== null && $existing->getNumericId() === $item->getNumericId() && $existing->damage === $item->damage) {
+                $existing->count += $item->count;
+                return true;
+            }
+        }
+        // Find empty slot
+        for ($i = 0; $i < 36; $i++) {
+            if ($this->slots[$i] === null) {
+                $this->slots[$i] = clone $item;
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Returns items for a specific window.
      * @return array<int, ItemStack|null>
      */
     public function getWindowItems(int $windowId): array
     {
         return match ($windowId) {
-            0 => \array_slice($this->slots, 0, 36), // General
+            0 => \array_slice($this->slots, 0, 36), // General inventory + hotbar
             6 => \array_slice($this->slots, 36, 4),  // Armor
-            119 => [$this->slots[40]],            // Offhand
+            119 => [$this->slots[40] ?? null],      // Offhand
             default => [],
         };
     }
 
+    public function setSelectedSlot(int $slot): void
+    {
+        if ($slot >= 0 && $slot < 9) {
+            $this->selectedSlot = $slot;
+        }
+    }
+
     public function getSelectedSlot(): int
     {
-        return 0; // Simplified for now
+        return $this->selectedSlot;
+    }
+
+    public function getHolder(): mixed
+    {
+        return null;
     }
 }
