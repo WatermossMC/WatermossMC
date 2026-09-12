@@ -24,6 +24,7 @@ namespace watermossmc\network\mcpe\protocol\clientbound;
 
 use Socket;
 use watermossmc\binary\Binary;
+use watermossmc\binary\McpeBinary;
 use watermossmc\entity\Entity;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
@@ -36,14 +37,13 @@ final class MoveActorAbsolute
         $pos = $entity->getPosition();
         $rot = $entity->getRotation();
 
-        $p = Binary::writeByte(ProtocolInfo::MOVE_ACTOR_ABSOLUTE_PACKET);
-        $p .= Binary::writeVarLong($entity->getRuntimeId());
-        $p .= Binary::writeFloat($pos['x']);
-        $p .= Binary::writeFloat($pos['y']);
-        $p .= Binary::writeFloat($pos['z']);
-        $p .= Binary::writeFloat($rot['pitch']);
-        $p .= Binary::writeFloat($rot['yaw']);
-        $p .= Binary::writeFloat($rot['yaw']);
+        $p = Binary::writeVarLong($entity->getRuntimeId());
+        $p .= McpeBinary::writeFloat($pos['x']);
+        $p .= McpeBinary::writeFloat($pos['y']);
+        $p .= McpeBinary::writeFloat($pos['z']);
+        $p .= McpeBinary::writeFloat($rot['pitch']);
+        $p .= McpeBinary::writeFloat($rot['yaw']);
+        $p .= McpeBinary::writeFloat($rot['yaw']);
 
         Packet::sendBatch(ProtocolInfo::MOVE_ACTOR_ABSOLUTE_PACKET, $p, $s, $sock);
     }

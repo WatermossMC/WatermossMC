@@ -28,39 +28,25 @@ use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\Session;
 
-final class Disconnect extends Packet
+final class UpdateBlock
 {
     public static function send(
         Session $session,
         Socket $socket,
-        int $reason,
-        ?string $message = null,
-        ?string $filteredMessage = null
+        int $x,
+        int $y,
+        int $z,
+        int $blockRuntimeId,
+        int $flags,
+        int $dataLayerId,
     ): void {
-        $skipMessage = $message === null
-            && $filteredMessage === null;
+        $payload = McpeBinary::writeSignedVarInt($x);
+        $payload .= McpeBinary::writeSignedVarInt($y);
+        $payload .= McpeBinary::writeSignedVarInt($z);
+        $payload .= McpeBinary::writeUnsignedVarInt($blockRuntimeId);
+        $payload .= McpeBinary::writeUnsignedVarInt($flags);
+        $payload .= McpeBinary::writeUnsignedVarInt($dataLayerId);
 
-        $payload = McpeBinary::writeSignedVarInt($reason);
-
-        $payload .= McpeBinary::writeUnsignedVarInt(
-            $skipMessage ? 1 : 0
-        );
-
-        if (!$skipMessage) {
-            $payload .= McpeBinary::writeString(
-                $message ?? ''
-            );
-
-            $payload .= McpeBinary::writeString(
-                $filteredMessage ?? ''
-            );
-        }
-
-        self::sendBatch(
-            ProtocolInfo::DISCONNECT_PACKET,
-            $payload,
-            $session,
-            $socket
-        );
+        Packet::sendBatch(ProtocolInfo::UPDATE_BLOCK_PACKET, $payload, $session, $socket);
     }
 }

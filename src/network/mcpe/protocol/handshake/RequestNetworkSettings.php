@@ -28,6 +28,7 @@ use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\clientbound\PlayStatus;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\mcpe\protocol\types\DisconnectReason;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\Session;
 use watermossmc\util\Logger;
@@ -40,7 +41,7 @@ final class RequestNetworkSettings extends Packet
         if ($protocol !== ProtocolInfo::CURRENT_PROTOCOL) {
             Logger::error("[RequestNetworkSettings] Protocol mismatch. Client: {$protocol}, Server: " . ProtocolInfo::CURRENT_PROTOCOL);
             PlayStatus::sendFailedClient($s, $sock);
-            $msg = $protocol < ProtocolInfo::CURRENT_PROTOCOL ? "Outdated client" : "Outdated server";
+            $msg = $protocol < ProtocolInfo::CURRENT_PROTOCOL ? DisconnectReason::OUTDATED_CLIENT : DisconnectReason::OUTDATED_SERVER;
             Disconnect::send($s, $sock, $msg);
             RakNet::flush($s, $sock);
             return false;

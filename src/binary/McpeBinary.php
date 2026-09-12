@@ -27,6 +27,23 @@ use RuntimeException;
 
 final class McpeBinary
 {
+    private static function requireBytes(
+        string $buffer,
+        int $offset,
+        int $length
+    ): void {
+        if ($length < 0 || $offset < 0 || $offset + $length > strlen($buffer)) {
+            throw new RuntimeException(
+                "Unexpected end of buffer: need {$length} byte(s)"
+            );
+        }
+    }
+
+    public static function writeBytes(string $value): string
+    {
+        return $value;
+    }
+
     public static function writeByte(int $value): string
     {
         return chr($value & 0xFF);
@@ -35,6 +52,13 @@ final class McpeBinary
     public static function writeBool(bool $value): string
     {
         return self::writeByte($value ? 1 : 0);
+    }
+
+    public static function writeOptional(?string $binary): string
+    {
+        return $binary !== null
+            ? self::writeBool(true) . $binary
+            : self::writeBool(false);
     }
 
     public static function writeShort(int $value): string
@@ -47,12 +71,42 @@ final class McpeBinary
         return pack('v', $value & 0xFFFF);
     }
 
+    public static function writeTriad(int $value): string
+    {
+        return pack('N', $value & 0xFFFFFF);
+    }
+
+    public static function writeLTriad(int $value): string
+    {
+        return pack('V', $value & 0xFFFFFF);
+    }
+
     public static function writeInt(int $value): string
     {
         return pack('N', $value & 0xFFFFFFFF);
     }
 
+    public static function writeUnsignedInt(int $value): string
+    {
+        return pack('N', $value & 0xFFFFFFFF);
+    }
+
+    public static function writeSignedInt(int $value): string
+    {
+        return pack('N', $value & 0xFFFFFFFF);
+    }
+
     public static function writeLInt(int $value): string
+    {
+        return pack('V', $value & 0xFFFFFFFF);
+    }
+
+    public static function writeUnsignedLInt(int $value): string
+    {
+        return pack('V', $value & 0xFFFFFFFF);
+    }
+
+    public static function writeSignedLInt(int $value): string
     {
         return pack('V', $value & 0xFFFFFFFF);
     }
@@ -87,16 +141,6 @@ final class McpeBinary
         return pack('E', $value);
     }
 
-    public static function writeString(string $value): string
-    {
-        return self::writeVarInt(strlen($value)) . $value;
-    }
-
-    public static function writeStringInt(string $value): string
-    {
-        return self::writeLInt(strlen($value)) . $value;
-    }
-
     public static function writeVarInt(int $value): string
     {
         $value &= 0xFFFFFFFF;
@@ -119,7 +163,6 @@ final class McpeBinary
 
     public static function writeUnsignedVarInt(int $value): string
     {
-
         return self::writeVarInt($value);
     }
 
@@ -159,6 +202,16 @@ final class McpeBinary
         return self::writeUnsignedVarLong($encoded);
     }
 
+    public static function writeString(string $value): string
+    {
+        return self::writeVarInt(strlen($value)) . $value;
+    }
+
+    public static function writeStringInt(string $value): string
+    {
+        return self::writeLInt(strlen($value)) . $value;
+    }
+
     public static function writeUUID(string $uuid): string
     {
         $bytes = Uuid::fromString($uuid)->getBytes();
@@ -167,16 +220,17 @@ final class McpeBinary
             . strrev(substr($bytes, 8, 8));
     }
 
-    private static function requireBytes(
+    public static function readBytes(
         string $buffer,
-        int $offset,
+        int &$offset,
         int $length
-    ): void {
-        if ($length < 0 || $offset < 0 || $offset + $length > strlen($buffer)) {
-            throw new RuntimeException(
-                "Unexpected end of buffer: need {$length} byte(s)"
-            );
-        }
+    ): string {
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
+        return $value;
     }
 
     public static function readByte(string $buffer, int &$offset): int
@@ -186,82 +240,213 @@ final class McpeBinary
         return ord($buffer[$offset++]);
     }
 
+    /**
+     * @phpstan-return int<0, 255>
+     */
+    public static function readUnsignedByte(string $buffer, int &$offset): int
+    {
+        return self::readByte($buffer, $offset);
+    }
+
+    /**
+     * @phpstan-return int<-128, 127>
+     */
+    public static function readSignedByte(string $buffer, int &$offset): int
+    {
+        $val = self::readByte($buffer, $offset);
+
+        return $val >= 0x80 ? $val - 256 : $val;
+    }
+
     public static function readBool(string $buffer, int &$offset): bool
     {
         return self::readByte($buffer, $offset) !== 0;
     }
 
+    /**
+     * @template T
+     * @param callable(string, int&): T $reader
+     * @return T|null
+     */
+    public static function readOptional(string $buffer, int &$offset, callable $reader): mixed
+    {
+        return self::readBool($buffer, $offset) ? $reader($buffer, $offset) : null;
+    }
+
     public static function readShort(string $buffer, int &$offset): int
+    {
+        return self::readSignedShort($buffer, $offset);
+    }
+
+    /**
+     * @phpstan-return int<0, 65535>
+     */
+    public static function readUnsignedShort(string $buffer, int &$offset): int
     {
         self::requireBytes($buffer, $offset, 2);
 
+        /** @var array{1: int} $result */
         $result = unpack('n', substr($buffer, $offset, 2));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack short');
-        }
 
         $offset += 2;
 
         return $result[1];
+    }
+
+    /**
+     * @phpstan-return int<-32768, 32767>
+     */
+    public static function readSignedShort(string $buffer, int &$offset): int
+    {
+        $val = self::readUnsignedShort($buffer, $offset);
+
+        return $val >= 0x8000 ? $val - 65536 : $val;
     }
 
     public static function readLShort(string $buffer, int &$offset): int
     {
+        return self::readSignedLShort($buffer, $offset);
+    }
+
+    /**
+     * @phpstan-return int<0, 65535>
+     */
+    public static function readUnsignedLShort(string $buffer, int &$offset): int
+    {
         self::requireBytes($buffer, $offset, 2);
 
+        /** @var array{1: int} $result */
         $result = unpack('v', substr($buffer, $offset, 2));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack little-endian short');
-        }
 
         $offset += 2;
 
         return $result[1];
     }
 
+    /**
+     * @phpstan-return int<-32768, 32767>
+     */
+    public static function readSignedLShort(string $buffer, int &$offset): int
+    {
+        $val = self::readUnsignedLShort($buffer, $offset);
+
+        return $val >= 0x8000 ? $val - 65536 : $val;
+    }
+
+    public static function readTriad(string $buffer, int &$offset): int
+    {
+        return self::readSignedTriad($buffer, $offset);
+    }
+
+    /**
+     * @phpstan-return int<0, 16777215>
+     */
+    public static function readUnsignedTriad(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 3);
+
+        $bytes = substr($buffer, $offset, 3);
+        $offset += 3;
+
+        return (ord($bytes[0]) << 16) | (ord($bytes[1]) << 8) | ord($bytes[2]);
+    }
+
+    /**
+     * @phpstan-return int<-8388608, 8388607>
+     */
+    public static function readSignedTriad(string $buffer, int &$offset): int
+    {
+        $val = self::readUnsignedTriad($buffer, $offset);
+
+        return $val >= 0x800000 ? $val - 16777216 : $val;
+    }
+
+    public static function readLTriad(string $buffer, int &$offset): int
+    {
+        return self::readSignedLTriad($buffer, $offset);
+    }
+
+    /**
+     * @phpstan-return int<0, 16777215>
+     */
+    public static function readUnsignedLTriad(string $buffer, int &$offset): int
+    {
+        self::requireBytes($buffer, $offset, 3);
+
+        $bytes = substr($buffer, $offset, 3);
+        $offset += 3;
+
+        return ord($bytes[0]) | (ord($bytes[1]) << 8) | (ord($bytes[2]) << 16);
+    }
+
+    /**
+     * @phpstan-return int<-8388608, 8388607>
+     */
+    public static function readSignedLTriad(string $buffer, int &$offset): int
+    {
+        $val = self::readUnsignedLTriad($buffer, $offset);
+
+        return $val >= 0x800000 ? $val - 16777216 : $val;
+    }
+
     public static function readInt(string $buffer, int &$offset): int
+    {
+        return self::readSignedInt($buffer, $offset);
+    }
+
+    public static function readUnsignedInt(string $buffer, int &$offset): int
     {
         self::requireBytes($buffer, $offset, 4);
 
+        /** @var array{1: int} $result */
         $result = unpack('N', substr($buffer, $offset, 4));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack int');
-        }
 
         $offset += 4;
 
         return $result[1];
     }
 
+    public static function readSignedInt(string $buffer, int &$offset): int
+    {
+        $value = self::readUnsignedInt($buffer, $offset);
+
+        return $value >= 0x80000000
+            ? $value - 0x100000000
+            : $value;
+    }
+
     public static function readLInt(string $buffer, int &$offset): int
+    {
+        return self::readSignedLInt($buffer, $offset);
+    }
+
+    public static function readUnsignedLInt(string $buffer, int &$offset): int
     {
         self::requireBytes($buffer, $offset, 4);
 
+        /** @var array{1: int} $result */
         $result = unpack('V', substr($buffer, $offset, 4));
-
-        if ($result === false) {
-            throw new RuntimeException(
-                'Failed to unpack little-endian int'
-            );
-        }
 
         $offset += 4;
 
         return $result[1];
+    }
+
+    public static function readSignedLInt(string $buffer, int &$offset): int
+    {
+        $value = self::readUnsignedLInt($buffer, $offset);
+
+        return $value >= 0x80000000
+            ? $value - 0x100000000
+            : $value;
     }
 
     public static function readLong(string $buffer, int &$offset): int
     {
         self::requireBytes($buffer, $offset, 8);
 
+        /** @var array{1: int} $result */
         $result = unpack('J', substr($buffer, $offset, 8));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack long');
-        }
 
         $offset += 8;
 
@@ -272,13 +457,8 @@ final class McpeBinary
     {
         self::requireBytes($buffer, $offset, 8);
 
+        /** @var array{1: int} $result */
         $result = unpack('q', substr($buffer, $offset, 8));
-
-        if ($result === false) {
-            throw new RuntimeException(
-                'Failed to unpack little-endian long'
-            );
-        }
 
         $offset += 8;
 
@@ -289,11 +469,8 @@ final class McpeBinary
     {
         self::requireBytes($buffer, $offset, 4);
 
+        /** @var array{1: float} $result */
         $result = unpack('g', substr($buffer, $offset, 4));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack float');
-        }
 
         $offset += 4;
 
@@ -304,13 +481,8 @@ final class McpeBinary
     {
         self::requireBytes($buffer, $offset, 4);
 
+        /** @var array{1: float} $result */
         $result = unpack('G', substr($buffer, $offset, 4));
-
-        if ($result === false) {
-            throw new RuntimeException(
-                'Failed to unpack big-endian float'
-            );
-        }
 
         $offset += 4;
 
@@ -321,11 +493,8 @@ final class McpeBinary
     {
         self::requireBytes($buffer, $offset, 8);
 
+        /** @var array{1: float} $result */
         $result = unpack('e', substr($buffer, $offset, 8));
-
-        if ($result === false) {
-            throw new RuntimeException('Failed to unpack double');
-        }
 
         $offset += 8;
 
@@ -336,51 +505,12 @@ final class McpeBinary
     {
         self::requireBytes($buffer, $offset, 8);
 
+        /** @var array{1: float} $result */
         $result = unpack('E', substr($buffer, $offset, 8));
-
-        if ($result === false) {
-            throw new RuntimeException(
-                'Failed to unpack big-endian double'
-            );
-        }
 
         $offset += 8;
 
         return $result[1];
-    }
-
-    public static function readString(string $buffer, int &$offset): string
-    {
-        $length = self::readVarInt($buffer, $offset);
-
-        if ($length < 0) {
-            throw new RuntimeException('Negative string length');
-        }
-
-        self::requireBytes($buffer, $offset, $length);
-
-        $value = substr($buffer, $offset, $length);
-        $offset += $length;
-
-        return $value;
-    }
-
-    public static function readStringInt(
-        string $buffer,
-        int &$offset
-    ): string {
-        $length = self::readLInt($buffer, $offset);
-
-        if ($length < 0) {
-            throw new RuntimeException('Negative string length');
-        }
-
-        self::requireBytes($buffer, $offset, $length);
-
-        $value = substr($buffer, $offset, $length);
-        $offset += $length;
-
-        return $value;
     }
 
     public static function readVarInt(string $buffer, int &$offset): int
@@ -448,6 +578,40 @@ final class McpeBinary
         return ($value >> 1) ^ -($value & 1);
     }
 
+    public static function readString(string $buffer, int &$offset): string
+    {
+        $length = self::readVarInt($buffer, $offset);
+
+        if ($length < 0) {
+            throw new RuntimeException('Negative string length');
+        }
+
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
+        return $value;
+    }
+
+    public static function readStringInt(
+        string $buffer,
+        int &$offset
+    ): string {
+        $length = self::readLInt($buffer, $offset);
+
+        if ($length < 0) {
+            throw new RuntimeException('Negative string length');
+        }
+
+        self::requireBytes($buffer, $offset, $length);
+
+        $value = substr($buffer, $offset, $length);
+        $offset += $length;
+
+        return $value;
+    }
+
     public static function readUUID(
         string $buffer,
         int &$offset
@@ -461,24 +625,6 @@ final class McpeBinary
 
         return Uuid::fromBytes($first . $second)
             ->toString();
-    }
-
-    public static function writeBytes(string $value): string
-    {
-        return $value;
-    }
-
-    public static function readBytes(
-        string $buffer,
-        int &$offset,
-        int $length
-    ): string {
-        self::requireBytes($buffer, $offset, $length);
-
-        $value = substr($buffer, $offset, $length);
-        $offset += $length;
-
-        return $value;
     }
 
     public static function remaining(
