@@ -20,32 +20,22 @@
 
 declare(strict_types=1);
 
-namespace watermossmc\network\mcpe\protocol\types;
+namespace watermossmc\network\mcpe\protocol\clientbound;
 
+use Socket;
 use watermossmc\binary\McpeBinary;
+use watermossmc\network\mcpe\protocol\Packet;
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 
-final class ChunkPosition
+final class RecordStarted extends Packet
 {
-    public function __construct(
-        private int $x,
-        private int $z,
-    ) {}
-
-    public function getX(): int
+    public static function send(Session $s, Socket $sock, int $x, int $y, int $z, int $serverSoundHandle): void
     {
-        return $this->x;
-    }
-
-    public function getZ(): int
-    {
-        return $this->z;
-    }
-
-    public function write(): string
-    {
-        $p = McpeBinary::writeSignedVarInt($this->x);
-        $p .= McpeBinary::writeSignedVarInt($this->z);
-
-        return $p;
+        $payload = McpeBinary::writeSignedVarInt((int) ($x));
+        $payload .= McpeBinary::writeSignedVarInt((int) ($y));
+        $payload .= McpeBinary::writeSignedVarInt((int) ($z));
+        $payload .= McpeBinary::writeLong($serverSoundHandle);
+        self::sendBatch(ProtocolInfo::RECORD_STARTED_PACKET, $payload, $s, $sock);
     }
 }

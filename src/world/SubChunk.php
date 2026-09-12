@@ -90,14 +90,14 @@ final class SubChunk
 
         $defaultBlock = BlockRegistry::get($this->emptyBlockId);
         $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
-        
+
         $palette[] = $defaultRuntimeId;
         $runtimeIdMap[$defaultRuntimeId] = 0;
 
         foreach ($this->blocks as $i => $blockStateId) {
             $block = BlockRegistry::get((int) $blockStateId);
             $runtimeId = $block !== null ? $converter->toRuntimeId($block) : $defaultRuntimeId;
-            
+
             if (!isset($runtimeIdMap[$runtimeId])) {
                 $runtimeIdMap[$runtimeId] = count($palette);
                 $palette[] = $runtimeId;

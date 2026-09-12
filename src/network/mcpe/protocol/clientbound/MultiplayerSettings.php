@@ -20,32 +20,23 @@
 
 declare(strict_types=1);
 
-namespace watermossmc\network\mcpe\protocol\types;
+namespace watermossmc\network\mcpe\protocol\clientbound;
 
+use Socket;
 use watermossmc\binary\McpeBinary;
+use watermossmc\network\mcpe\protocol\Packet;
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\Session;
 
-final class ChunkPosition
+final class StopSound extends Packet
 {
-    public function __construct(
-        private int $x,
-        private int $z,
-    ) {}
+    public const ACTION_ENABLE_MULTIPLAYER = 0;
+    public const ACTION_DISABLE_MULTIPLAYER = 1;
+    public const ACTION_REFRESH_JOIN_CODE = 2;
 
-    public function getX(): int
+    public static function send(Session $s, Socket $sock, int $action): void
     {
-        return $this->x;
-    }
-
-    public function getZ(): int
-    {
-        return $this->z;
-    }
-
-    public function write(): string
-    {
-        $p = McpeBinary::writeSignedVarInt($this->x);
-        $p .= McpeBinary::writeSignedVarInt($this->z);
-
-        return $p;
+        $p = McpeBinary::writeSignedVarInt($action);
+        self::sendBatch(ProtocolInfo::STOP_SOUND_PACKET, $p, $s, $sock);
     }
 }

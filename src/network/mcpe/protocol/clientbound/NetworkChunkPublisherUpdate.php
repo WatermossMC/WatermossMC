@@ -26,41 +26,44 @@ use Socket;
 use watermossmc\binary\McpeBinary;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\mcpe\protocol\types\ChunkPosition;
 use watermossmc\network\Session;
 
-final class Disconnect extends Packet
+final class NetworkChunkPublisherUpdate
 {
     public static function send(
         Session $session,
         Socket $socket,
-        int $reason,
-        ?string $message = null,
-        ?string $filteredMessage = null
+        int $x,
+        int $y,
+        int $z,
+        int $radius,
+        array $savedChunks = [],
     ): void {
-        $skipMessage = $message === null
-            && $filteredMessage === null;
+        $payload = McpeBinary::writeSignedVarInt($x);
+        $payload .= McpeBinary::writeSignedVarInt($y);
+        $payload .= McpeBinary::writeSignedVarInt($z);
 
-        $payload = McpeBinary::writeSignedVarInt($reason);
+        $payload .= McpeBinary::writeUnsignedVarInt($radius);
 
-        $payload .= McpeBinary::writeUnsignedVarInt(
-            $skipMessage ? 1 : 0
-        );
+        $payload .= McpeBinary::writeLInt(count($savedChunks));
 
-        if (!$skipMessage) {
-            $payload .= McpeBinary::writeString(
-                $message ?? ''
-            );
-
-            $payload .= McpeBinary::writeString(
-                $filteredMessage ?? ''
-            );
+        foreach ($savedChunks as $chunk) {
+            if ($chunk instanceof ChunkPosition) {
+                $payload .= $chunk->write();
+            } else {
+                $payload .= (new ChunkPosition(
+                    $chunk[0],
+                    $chunk[1],
+                ))->write();
+            }
         }
 
-        self::sendBatch(
-            ProtocolInfo::DISCONNECT_PACKET,
+        Packet::sendBatch(
+            ProtocolInfo::NETWORK_CHUNK_PUBLISHER_UPDATE_PACKET,
             $payload,
             $session,
-            $socket
+            $socket,
         );
     }
 }

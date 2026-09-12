@@ -22,7 +22,8 @@ declare(strict_types=1);
 
 namespace watermossmc\network\mcpe\protocol\serverbound;
 
-use watermossmc\binary\Binary;
+use RuntimeException;
+use watermossmc\binary\McpeBinary;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\types\PlayerAuthInputFlags;
 use watermossmc\network\Session;
@@ -34,60 +35,94 @@ final class PlayerAuthInput extends Packet
     {
         $o = 1;
 
-        $pitch = Binary::readFloat($p, $o);
-        $o += 4;
-        $yaw = Binary::readFloat($p, $o);
-        $o += 4;
+        $pitch = McpeBinary::readFloat($p, $o);
+        $yaw = McpeBinary::readFloat($p, $o);
 
-        $x = Binary::readFloat($p, $o);
-        $o += 4;
-        $y = Binary::readFloat($p, $o);
-        $o += 4;
-        $z = Binary::readFloat($p, $o);
-        $o += 4;
+        $x = McpeBinary::readFloat($p, $o);
+        $y = McpeBinary::readFloat($p, $o);
+        $z = McpeBinary::readFloat($p, $o);
 
-        $moveX = Binary::readFloat($p, $o);
-        $o += 4;
-        $moveZ = Binary::readFloat($p, $o);
-        $o += 4;
+        $moveX = McpeBinary::readFloat($p, $o);
+        $moveZ = McpeBinary::readFloat($p, $o);
 
-        $headYaw = Binary::readFloat($p, $o);
-        $o += 4;
+        $headYaw = McpeBinary::readFloat($p, $o);
 
+        $flags = array_fill(
+            0,
+            PlayerAuthInputFlags::NUMBER_OF_FLAGS,
+            false
+        );
 
-        $flags = Binary::readBitSet($p, $o, 65);
+        $flagCount = McpeBinary::readUnsignedVarInt($p, $o);
 
-        Binary::readVarInt($p, $o);
-        Binary::readVarInt($p, $o);
-        Binary::readVarInt($p, $o);
+        for ($i = 0; $i < $flagCount; ++$i) {
+            $flag = McpeBinary::readSignedVarInt($p, $o);
 
-        Binary::readVector2($p, $o);
-        $tick = Binary::readVarLong($p, $o);
+            if (
+                $flag < 0 ||
+                $flag >= PlayerAuthInputFlags::NUMBER_OF_FLAGS
+            ) {
+                throw new RuntimeException(
+                    "Unknown input flag {$flag}"
+                );
+            }
 
-        Binary::readVector3($p, $o);
+            $flags[$flag] = true;
+        }
 
-        if ($flags[PlayerAuthInputFlags::PERFORM_ITEM_INTERACTION]) {
+        $inputMode = McpeBinary::readUnsignedVarInt($p, $o);
+        $playMode = McpeBinary::readUnsignedVarInt($p, $o);
+        $interactionMode = McpeBinary::readSignedVarInt($p, $o);
+
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
+
+        $tick = McpeBinary::readUnsignedVarLong($p, $o);
+
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
+
+        if (
+            $flags[PlayerAuthInputFlags::PERFORM_ITEM_INTERACTION]
+            ?? false
+        ) {
             Binary::skipItemInteractionData($p, $o);
         }
-        if ($flags[PlayerAuthInputFlags::PERFORM_ITEM_STACK_REQUEST]) {
+
+        if (
+            $flags[PlayerAuthInputFlags::PERFORM_ITEM_STACK_REQUEST]
+            ?? false
+        ) {
             Binary::skipItemStackRequest($p, $o);
         }
-        if ($flags[PlayerAuthInputFlags::PERFORM_BLOCK_ACTIONS]) {
+
+        if (
+            $flags[PlayerAuthInputFlags::PERFORM_BLOCK_ACTIONS]
+            ?? false
+        ) {
             Binary::skipBlockActions($p, $o);
         }
-        if ($flags[PlayerAuthInputFlags::IN_CLIENT_PREDICTED_VEHICLE]) {
+
+        if (
+            $flags[PlayerAuthInputFlags::IN_CLIENT_PREDICTED_VEHICLE]
+            ?? false
+        ) {
             Binary::skipVehicleInfo($p, $o);
         }
 
-        $analogX = Binary::readFloat($p, $o);
-        $o += 4;
-        $analogZ = Binary::readFloat($p, $o);
-        $o += 4;
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
 
-        Binary::readVector3($p, $o);
-        Binary::readVector2($p, $o);
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
+
+        McpeBinary::readFloat($p, $o);
+        McpeBinary::readFloat($p, $o);
 
         $player = PlayerManager::get($s);
+
         if ($player === null) {
             return;
         }
