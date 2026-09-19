@@ -55,13 +55,13 @@ final class LoginPacketHandler implements PacketHandler
             $loginData = Login::read($packet, $offset);
         } catch (Throwable $e) {
             Logger::error("[0x01] Login::read() failed: {$e->getMessage()}");
-            Disconnect::send($session, $socket, "Login parsing failed");
+            Disconnect::send($session, $socket, 0, "Login parsing failed", "Login parsing failed");
             return true;
         }
         $clientIdentityKey = $loginData['ecdhPublicKey'] ?? $loginData['identityPublicKey'];
         if (empty($clientIdentityKey)) {
             Logger::error("[0x01] Login failed: Missing identity key.");
-            Disconnect::send($session, $socket, "Invalid login payload");
+            Disconnect::send($session, $socket, 0, "Invalid login payload", "Invalid login payload");
             return true;
         }
         $name = $loginData['displayName'] ?? 'unknown';
@@ -90,7 +90,7 @@ final class LoginPacketHandler implements PacketHandler
             Logger::debug("[0x03] State -> MC_LOGIN");
         } catch (Throwable $e) {
             Logger::error("[0x01] Crypto/handshake processing failed: {$e->getMessage()}");
-            Disconnect::send($session, $socket, "Server handshake failed");
+            Disconnect::send($session, $socket, 0, "Server handshake failed", "Server handshake failed");
             RakNet::flush($session, $socket);
         }
         return true;

@@ -23,12 +23,13 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\types;
 
 use watermossmc\binary\McpeBinary;
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
 
 final class LevelSettings
 {
     public static function write(): string
     {
-        $payload .= McpeBinary::writeSignedVarInt(0); // editorWorldType = NON_EDITOR
+        $payload = McpeBinary::writeSignedVarInt(0); // editorWorldType = NON_EDITOR
         $payload .= McpeBinary::writeBool(false); // createdInEditorMode
         $payload .= McpeBinary::writeBool(false); // exportedFromEditorMode
         $payload .= McpeBinary::writeSignedVarInt(-1); // time

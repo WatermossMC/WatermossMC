@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\serverbound;
 
 use RuntimeException;
+use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\types\PlayerAuthInputFlags;

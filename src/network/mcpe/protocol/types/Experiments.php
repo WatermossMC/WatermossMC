@@ -24,28 +24,10 @@ namespace watermossmc\network\mcpe\protocol\types;
 
 use watermossmc\binary\McpeBinary;
 
-final class ChunkPosition
+final class Experiments
 {
-    public function __construct(
-        private int $x,
-        private int $z,
-    ) {}
-
-    public function getX(): int
+    public static function writeEmpty(): string
     {
-        return $this->x;
-    }
-
-    public function getZ(): int
-    {
-        return $this->z;
-    }
-
-    public function write(): string
-    {
-        $p = McpeBinary::writeSignedVarInt($this->x);
-        $p .= McpeBinary::writeSignedVarInt($this->z);
-
-        return $p;
+        return McpeBinary::writeLInt(0) . McpeBinary::writeBool(false);
     }
 }
