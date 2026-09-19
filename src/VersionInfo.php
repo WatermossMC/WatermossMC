@@ -22,13 +22,15 @@ declare(strict_types=1);
 
 namespace watermossmc;
 
+use watermossmc\network\mcpe\protocol\ProtocolInfo;
+
 /** Single source of truth for WatermossMC release information. */
 final class VersionInfo
 {
     public const NAME = 'WatermossMC';
-    public const VERSION = '0.1.0-unreleased';
+    public const VERSION = '0.1.0';
     public const CHANNEL = 'development';
-    public const MINECRAFT_VERSION = '1.26.40';
+    public const MINECRAFT_VERSION = ProtocolInfo::MINECRAFT_VERSION;
     public const REPOSITORY = 'https://github.com/watermossmc/WatermossMC';
 
     private function __construct() {}
