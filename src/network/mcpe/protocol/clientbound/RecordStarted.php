@@ -28,39 +28,14 @@ use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\Session;
 
-final class Disconnect extends Packet
+final class RecordStarted extends Packet
 {
-    public static function send(
-        Session $session,
-        Socket $socket,
-        int $reason,
-        ?string $message = null,
-        ?string $filteredMessage = null
-    ): void {
-        $skipMessage = $message === null
-            && $filteredMessage === null;
-
-        $payload = McpeBinary::writeSignedVarInt($reason);
-
-        $payload .= McpeBinary::writeUnsignedVarInt(
-            $skipMessage ? 1 : 0
-        );
-
-        if (!$skipMessage) {
-            $payload .= McpeBinary::writeString(
-                $message ?? ''
-            );
-
-            $payload .= McpeBinary::writeString(
-                $filteredMessage ?? ''
-            );
-        }
-
-        self::sendBatch(
-            ProtocolInfo::DISCONNECT_PACKET,
-            $payload,
-            $session,
-            $socket
-        );
+    public static function send(Session $s, Socket $sock, int $x, int $y, int $z, int $serverSoundHandle): void
+    {
+        $payload = McpeBinary::writeSignedVarInt((int) ($x));
+        $payload .= McpeBinary::writeSignedVarInt((int) ($y));
+        $payload .= McpeBinary::writeSignedVarInt((int) ($z));
+        $payload .= McpeBinary::writeLong($serverSoundHandle);
+        self::sendBatch(ProtocolInfo::RECORD_STARTED_PACKET, $payload, $s, $sock);
     }
 }

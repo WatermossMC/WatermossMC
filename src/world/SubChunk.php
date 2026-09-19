@@ -69,8 +69,8 @@ final class SubChunk
 
     public function isEmptyFast(): bool
     {
-        foreach ($this->blocks as $block) {
-            if ($block !== $this->emptyBlockId) {
+        for ($i = 0; $i < self::SIZE; $i++) {
+            if ($this->blocks[$i] !== $this->emptyBlockId) {
                 return false;
             }
         }
@@ -90,19 +90,23 @@ final class SubChunk
 
         $defaultBlock = BlockRegistry::get($this->emptyBlockId);
         $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
-        
+
         $palette[] = $defaultRuntimeId;
         $runtimeIdMap[$defaultRuntimeId] = 0;
 
-        foreach ($this->blocks as $i => $blockStateId) {
-            $block = BlockRegistry::get((int) $blockStateId);
+        $blocks = $this->blocks;
+        for ($i = 0; $i < self::SIZE; $i++) {
+            $blockStateId = (int) $blocks[$i];
+            $block = BlockRegistry::get($blockStateId);
             $runtimeId = $block !== null ? $converter->toRuntimeId($block) : $defaultRuntimeId;
-            
-            if (!isset($runtimeIdMap[$runtimeId])) {
-                $runtimeIdMap[$runtimeId] = count($palette);
+
+            $paletteIndex = $runtimeIdMap[$runtimeId] ?? null;
+            if ($paletteIndex === null) {
+                $paletteIndex = count($palette);
+                $runtimeIdMap[$runtimeId] = $paletteIndex;
                 $palette[] = $runtimeId;
             }
-            $indexes[$i] = $runtimeIdMap[$runtimeId];
+            $indexes[$i] = $paletteIndex;
         }
 
         $paletteCount = count($palette);
@@ -113,10 +117,7 @@ final class SubChunk
                 break;
             }
         }
-        $out = '';
-        $out .= Binary::writeByte(8); // version 8
-        $out .= Binary::writeByte(1); // storage count (1 layer)
-        $out .= Binary::writeByte($bits << 1);
+        $out = "\x08\x01" . chr($bits << 1);
 
         $words = (int) ceil((self::SIZE * $bits) / 32);
         $wordArray = array_fill(0, $words, 0);
@@ -130,14 +131,18 @@ final class SubChunk
             $wordArray[$wordIndex] |= ($val << $bitInWord);
         }
 
+        $wordBin = '';
         foreach ($wordArray as $word) {
-            $out .= Binary::writeInt($word);
+            $wordBin .= pack('N', $word);
         }
+        $out .= $wordBin;
 
         $out .= McpeBinary::writeUnsignedVarInt($paletteCount);
+        $paletteBin = '';
         foreach ($palette as $runtimeId) {
-            $out .= McpeBinary::writeUnsignedVarInt($runtimeId);
+            $paletteBin .= McpeBinary::writeUnsignedVarInt($runtimeId);
         }
+        $out .= $paletteBin;
 
         return $out;
     }

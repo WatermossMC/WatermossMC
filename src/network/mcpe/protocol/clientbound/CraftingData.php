@@ -35,7 +35,7 @@ final class CraftingData extends Packet
     {
         $payload = '';
 
-        // Recipes (Shapeless, Shaped, Furnace, etc.)
+        // Recipes
         // 1. shapeless recipe count (0)
         $payload .= McpeBinary::writeUnsignedVarInt(0);
 

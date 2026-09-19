@@ -28,39 +28,15 @@ use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\Session;
 
-final class Disconnect extends Packet
+final class StopSound extends Packet
 {
-    public static function send(
-        Session $session,
-        Socket $socket,
-        int $reason,
-        ?string $message = null,
-        ?string $filteredMessage = null
-    ): void {
-        $skipMessage = $message === null
-            && $filteredMessage === null;
+    public const ACTION_ENABLE_MULTIPLAYER = 0;
+    public const ACTION_DISABLE_MULTIPLAYER = 1;
+    public const ACTION_REFRESH_JOIN_CODE = 2;
 
-        $payload = McpeBinary::writeSignedVarInt($reason);
-
-        $payload .= McpeBinary::writeUnsignedVarInt(
-            $skipMessage ? 1 : 0
-        );
-
-        if (!$skipMessage) {
-            $payload .= McpeBinary::writeString(
-                $message ?? ''
-            );
-
-            $payload .= McpeBinary::writeString(
-                $filteredMessage ?? ''
-            );
-        }
-
-        self::sendBatch(
-            ProtocolInfo::DISCONNECT_PACKET,
-            $payload,
-            $session,
-            $socket
-        );
+    public static function send(Session $s, Socket $sock, int $action): void
+    {
+        $p = McpeBinary::writeSignedVarInt($action);
+        self::sendBatch(ProtocolInfo::STOP_SOUND_PACKET, $p, $s, $sock);
     }
 }

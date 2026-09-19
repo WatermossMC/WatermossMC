@@ -28,39 +28,27 @@ use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
 use watermossmc\network\Session;
 
-final class Disconnect extends Packet
+final class Emote extends Packet
 {
+    public const FLAG_SERVER = 1 << 0;
+    public const FLAG_MUTE_ANNOUNCEMENT = 1 << 1;
+
     public static function send(
-        Session $session,
-        Socket $socket,
-        int $reason,
-        ?string $message = null,
-        ?string $filteredMessage = null
+        Session $s,
+        Socket $sock,
+        int $actorRuntimeId,
+        string $emoteId,
+        int $emoteLengthTicks,
+        string $xboxUserId,
+        string $platformChatId,
+        int $flags
     ): void {
-        $skipMessage = $message === null
-            && $filteredMessage === null;
-
-        $payload = McpeBinary::writeSignedVarInt($reason);
-
-        $payload .= McpeBinary::writeUnsignedVarInt(
-            $skipMessage ? 1 : 0
-        );
-
-        if (!$skipMessage) {
-            $payload .= McpeBinary::writeString(
-                $message ?? ''
-            );
-
-            $payload .= McpeBinary::writeString(
-                $filteredMessage ?? ''
-            );
-        }
-
-        self::sendBatch(
-            ProtocolInfo::DISCONNECT_PACKET,
-            $payload,
-            $session,
-            $socket
-        );
+        $payload = McpeBinary::writeUnsignedVarInt($actorRuntimeId);
+        $payload .= McpeBinary::writeString($emoteId);
+        $payload .= McpeBinary::writeUnsignedVarInt($emoteLengthTicks);
+        $payload .= McpeBinary::writeString($xboxUserId);
+        $payload .= McpeBinary::writeString($platformChatId);
+        $payload .= McpeBinary::writeByte($flags);
+        self::sendBatch(ProtocolInfo::EMOTE_PACKET, $payload, $s, $sock);
     }
 }

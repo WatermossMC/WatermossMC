@@ -97,6 +97,11 @@ final class Player extends Entity implements CommandSender
         $this->getEntityData()->setString(EntityMetadataProperties::NAMETAG, $username);
     }
 
+    public function getInventory(): PlayerInventory
+    {
+        return $this->inventory;
+    }
+
     public function getName(): string
     {
         return $this->username;
@@ -128,16 +133,22 @@ final class Player extends Entity implements CommandSender
         Text::send($this->session, $socket, $message, $type);
     }
 
-    public function kick(string $reason = "Disconnected"): bool
+    public function kick(string $reasonMessage = "Disconnected"): bool
     {
         $socket = $this->session->getSocket();
         if ($socket === null) {
             $this->session->close(false);
             return false;
         }
-        Disconnect::send($this->session, $socket, $reason);
+        Disconnect::send($this->session, $socket, 0, $reasonMessage, $reasonMessage);
         $this->session->close(false);
         return true;
+    }
+
+    public function kill(): void
+    {
+        $this->setHealth(0.0);
+        $this->onDeath();
     }
 
     public function getUsername(): string
@@ -207,8 +218,19 @@ final class Player extends Entity implements CommandSender
         $this->sendMessage("§cYou have died!");
         $socket = $this->session->getSocket();
         if ($socket !== null) {
+            Respawn::send($this->session, $socket, $this->x, $this->y, $this->z, Respawn::SEARCHING_FOR_SPAWN, $this->runtimeId);
             Respawn::send($this->session, $socket, $this->x, $this->y, $this->z, Respawn::READY_TO_SPAWN, $this->runtimeId);
         }
         $this->health = $this->maxHealth;
+    }
+
+    public function respawn(float $x, float $y, float $z): void
+    {
+        $this->teleport($x, $y, $z);
+        $this->health = $this->maxHealth;
+        $socket = $this->session->getSocket();
+        if ($socket !== null) {
+            Respawn::send($this->session, $socket, $x, $y, $z, Respawn::READY_TO_SPAWN, $this->runtimeId);
+        }
     }
 }

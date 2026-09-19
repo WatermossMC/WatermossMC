@@ -52,6 +52,10 @@ abstract class Entity
 
     protected float $velocityY = 0.0;
 
+    protected float $health = 20.0;
+
+    protected float $maxHealth = 20.0;
+
     public function __construct(int $runtimeId, string $uuid, World $world)
     {
         $this->runtimeId = $runtimeId;
@@ -169,6 +173,53 @@ abstract class Entity
     public function getEffects(): array
     {
         return $this->effects;
+    }
+
+    public function getHealth(): float
+    {
+        return $this->health;
+    }
+
+    public function setHealth(float $health): void
+    {
+        $this->health = max(0.0, min($this->maxHealth, $health));
+        if ($this->health <= 0) {
+            $this->onDeath();
+        }
+    }
+
+    public function getMaxHealth(): float
+    {
+        return $this->maxHealth;
+    }
+
+    public function setMaxHealth(float $maxHealth): void
+    {
+        $this->maxHealth = max(1.0, $maxHealth);
+        if ($this->health > $this->maxHealth) {
+            $this->health = $this->maxHealth;
+        }
+    }
+
+    public function heal(float $amount): void
+    {
+        if ($this->health <= 0) {
+            return;
+        }
+        $this->setHealth($this->health + $amount);
+    }
+
+    public function damage(float $amount): void
+    {
+        if ($this->health <= 0) {
+            return;
+        }
+        $this->setHealth($this->health - $amount);
+    }
+
+    public function onDeath(): void
+    {
+        // Default entity death handler
     }
 
     protected function isOnGround(): bool

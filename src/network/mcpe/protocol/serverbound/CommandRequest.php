@@ -20,7 +20,15 @@
 
 declare(strict_types=1);
 
+<<<<<<<< HEAD:src/mcpe/protocol/serverbound/CommandRequest.php
+<<<<<<<< HEAD:src/network/mcpe/protocol/serverbound/CommandRequest.php
 namespace watermossmc\network\mcpe\protocol\serverbound;
+========
+namespace watermossmc\mcpe\protocol\serverbound;
+>>>>>>>> 8b12078 (...):src/mcpe/protocol/serverbound/CommandRequest.php
+========
+namespace watermossmc\network\mcpe\protocol\serverbound;
+>>>>>>>> 5e0d6e4 (Pending changes exported from your codespace):src/network/mcpe/protocol/serverbound/CommandRequest.php
 
 use watermossmc\binary\Binary;
 

@@ -163,7 +163,7 @@ final class PacketDispatcher
         } catch (Throwable $e) {
             Logger::error("Packet handling error [PID: 0x{$pidHex}]: {$e->getMessage()}");
             Logger::debug($e->getTraceAsString());
-            Disconnect::send($session, $socket, "Internal Server Error");
+            Disconnect::send($session, $socket, 0, "Internal Server Error", "Internal Server Error");
             RakNet::flush($session, $socket);
         }
     }
