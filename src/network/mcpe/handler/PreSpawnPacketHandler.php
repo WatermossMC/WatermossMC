@@ -134,13 +134,23 @@ final class PreSpawnPacketHandler implements PacketHandler
         ItemRegistry::send($s, $sock);
         CraftingData::send($s, $sock);
         CreativeContent::sendEmpty($s, $sock);
-        AvailableCommands::send($s, $sock);
+        $commandData = [];
+        foreach ($this->server->getCommandMap()->getCommands() as $cmd) {
+            $commandData[$cmd->name] = [
+                'description' => $cmd->description,
+                'aliases' => $cmd->getAliases(),
+                'overloads' => []
+            ];
+        }
+        AvailableCommands::send($s, $sock, $commandData);
         PlayerList::sendAdd($s, $sock, [$player]);
         SetSpawnPosition::send($s, $sock, $world->getSpawnPosition()['x'], $world->getSpawnPosition()['y'], $world->getSpawnPosition()['z']);
         SetTime::send($s, $sock, 0);
         UpdateAbilities::send($s, $sock);
         UpdateAdventureSettings::send($s, $sock, false, false, false, true, true);
-        InventoryContent::sendEmpty($s, $sock, InventoryContent::WINDOW_INVENTORY);
+        InventoryContent::send($s, $sock, InventoryContent::WINDOW_INVENTORY, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_INVENTORY));
+        InventoryContent::send($s, $sock, InventoryContent::WINDOW_ARMOR, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_ARMOR));
+        InventoryContent::send($s, $sock, InventoryContent::WINDOW_OFFHAND, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_OFFHAND));
         PlayerHotbar::send($s, $sock);
         SetActorData::sendSelf($s, $sock, $player);
         UpdateAttributes::sendSelf($s, $sock, $player);
