@@ -114,6 +114,11 @@ abstract class Entity
         return ['pitch' => $this->pitch, 'yaw' => $this->yaw];
     }
 
+    public function getWorld(): World
+    {
+        return $this->world;
+    }
+
     public function getLocation(): Location
     {
         return new Location($this->world, $this->x, $this->y, $this->z, $this->yaw, $this->pitch);
@@ -121,7 +126,12 @@ abstract class Entity
 
     public function tick(): void
     {
-        // Basic Gravity Physics
+        $this->tickPhysics();
+        $this->tickEffects();
+    }
+
+    protected function tickPhysics(): void
+    {
         if (!$this->isOnGround()) {
             $this->velocityY -= 0.08; // Gravity constant
         } else {
@@ -132,7 +142,6 @@ abstract class Entity
 
         $this->y += $this->velocityY;
 
-        // Ground collision
         $surfaceY = $this->world->getSurfaceY(
             (int)round($this->x),
             (int)round($this->z)
@@ -142,8 +151,10 @@ abstract class Entity
             $this->y = (float)$surfaceY;
             $this->velocityY = 0;
         }
+    }
 
-        // Update MobEffects duration
+    protected function tickEffects(): void
+    {
         foreach ($this->effects as $id => $effect) {
             if ($effect['duration'] > 0) {
                 $this->effects[$id]['duration']--;
@@ -217,10 +228,7 @@ abstract class Entity
         $this->setHealth($this->health - $amount);
     }
 
-    public function onDeath(): void
-    {
-        // Default entity death handler
-    }
+    public function onDeath(): void {}
 
     protected function isOnGround(): bool
     {

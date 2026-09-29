@@ -43,7 +43,6 @@ abstract class Packet
 
         $packet = $s->encodeOutbound($batch);
 
-        // Consistent TX logging for all packets
         $pidHex = strtoupper(dechex($packetId));
         Logger::debug("[TX] Packet 0x{$pidHex} | Size: " . \strlen($packet) . " bytes | Session: {$s->getRuntimeId()}");
 

@@ -60,7 +60,6 @@ final class HelpCommand extends Command
         $commands = $server->getCommandMap()->getCommands();
         $this->sendMessage($sender, "--- Available Commands ---");
         foreach ($commands as $cmd) {
-            // Only show commands the sender has permission to use
             $senderRole = $sender instanceof Player ? $sender->getRole() : Permission::ROLE_OPERATOR;
             if ($senderRole >= $cmd->requiredRole) {
                 $this->sendMessage($sender, "/{$cmd->name} - {$cmd->description}");

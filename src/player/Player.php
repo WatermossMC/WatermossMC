@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace watermossmc\player;
 
+use watermossmc\block\BlockBreakState;
 use watermossmc\command\CommandSender;
 use watermossmc\entity\AttributeFactory;
 use watermossmc\entity\Entity;
@@ -43,8 +44,6 @@ final class Player extends Entity implements CommandSender
 
     public string $username;
 
-    public int $runtimeId;
-
     public float $x = 0;
 
     public float $y = 64;
@@ -65,6 +64,8 @@ final class Player extends Entity implements CommandSender
     public ?array $pendingMove = null;
 
     public PlayerInventory $inventory;
+
+    private ?BlockBreakState $breakState = null;
 
     private int $gameMode = 0;
 
@@ -91,9 +92,7 @@ final class Player extends Entity implements CommandSender
         $map->add($factory->mustGet('minecraft:player.exhaustion'));
         $map->add($factory->mustGet('minecraft:player.level'));
         $map->add($factory->mustGet('minecraft:player.experience'));
-        // Load role from OperatorManager
         $this->role = OperatorManager::getPermissionLevel($username);
-        // Initialize default player properties
         $this->getEntityData()->setString(EntityMetadataProperties::NAMETAG, $username);
     }
 
@@ -110,11 +109,6 @@ final class Player extends Entity implements CommandSender
     public function getUniqueId(): string
     {
         return $this->uuid;
-    }
-
-    public function getRuntimeId(): int
-    {
-        return $this->runtimeId;
     }
 
     public function teleport(float $x, float $y, float $z, ?float $yaw = null, ?float $pitch = null): void
@@ -156,6 +150,16 @@ final class Player extends Entity implements CommandSender
         return $this->username;
     }
 
+    public function getBreakState(): ?BlockBreakState
+    {
+        return $this->breakState;
+    }
+
+    public function setBreakState(?BlockBreakState $state): void
+    {
+        $this->breakState = $state;
+    }
+
     public function getGameMode(): int
     {
         return $this->gameMode;
@@ -183,7 +187,7 @@ final class Player extends Entity implements CommandSender
 
     public function tick(): void
     {
-        parent::tick();
+        $this->tickEffects();
     }
 
     public function applyEffect(int $effectId, int $amplifier = 0, bool $particles = true, int $duration = 0, bool $ambient = true): void

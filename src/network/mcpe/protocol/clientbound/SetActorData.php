@@ -31,15 +31,12 @@ use watermossmc\network\Session;
 
 final class SetActorData extends Packet
 {
-    // Metadata keys
     public const DATA_FLAGS = 0;
     public const DATA_NAMETAG = 4;
     public const DATA_AIR = 7;
     public const DATA_MAX_AIR = 42;
     public const DATA_BOUNDING_BOX_WIDTH = 54;
     public const DATA_BOUNDING_BOX_HEIGHT = 55;
-
-    // Metadata types
     public const TYPE_BYTE = 0;
     public const TYPE_SHORT = 1;
     public const TYPE_INT = 2;
@@ -70,12 +67,9 @@ final class SetActorData extends Packet
     {
         $payload = '';
         $payload .= Binary::writeUnsignedVarLong($entity->getRuntimeId());
-        // actorRuntimeId
         $payload .= $entity->getEntityData()->encodeMetadata();
-        // PropertySyncData
         $payload .= Binary::writeVarInt(0);
         $payload .= Binary::writeVarInt(0);
-        // tick
         $payload .= Binary::writeVarLong($tick);
         self::sendBatch(ProtocolInfo::SET_ACTOR_DATA_PACKET, $payload, $s, $sock);
     }

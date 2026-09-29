@@ -36,11 +36,8 @@ final class PlayerHotbar extends Packet
     {
         $payload = '';
         $payload .= Binary::writeVarInt($selectedSlot);
-        // selectedHotbarSlot (varuint)
         $payload .= Binary::writeUInt8($windowId);
-        // windowId (unsigned byte)
         $payload .= Binary::writeBool($selectHotbarSlot);
-        // selectHotbarSlot
         self::sendBatch(ProtocolInfo::PLAYER_HOTBAR_PACKET, $payload, $s, $sock);
     }
 }

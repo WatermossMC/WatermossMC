@@ -36,7 +36,6 @@ final class NPC extends LivingEntity
     {
         parent::tick();
 
-        // Simple AI: Randomly rotate a bit to look "alive"
         $this->yaw += (random_int(-100, 100) / 1000.0);
     }
 }

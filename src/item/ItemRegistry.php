@@ -27,14 +27,25 @@ final class ItemRegistry
     /** @var array<int, Item> */
     private static array $items = [];
 
+    /** @var array<string, Item> */
+    private static array $itemsByIdentifier = [];
+
     public static function register(Item $item): void
     {
         self::$items[$item->id] = $item;
+        if ($item->identifier !== '') {
+            self::$itemsByIdentifier[$item->identifier] = $item;
+        }
     }
 
     public static function get(int $id): ?Item
     {
         return self::$items[$id] ?? null;
+    }
+
+    public static function getByIdentifier(string $identifier): ?Item
+    {
+        return self::$itemsByIdentifier[$identifier] ?? null;
     }
 
     /**

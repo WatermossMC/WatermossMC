@@ -49,21 +49,13 @@ final class MobEffect extends Packet
     {
         $payload = '';
         $payload .= Binary::writeVarLong($s->getRuntimeId());
-        // actorRuntimeId
         $payload .= Binary::writeUInt8($eventId);
-        // eventId (unsigned byte)
         $payload .= McpeBinary::writeSignedVarInt($effectId);
-        // effectId
         $payload .= McpeBinary::writeSignedVarInt($amplifier);
-        // amplifier
         $payload .= Binary::writeBool($particles);
-        // particles
         $payload .= McpeBinary::writeSignedVarInt($duration);
-        // duration
         $payload .= Binary::writeVarLong(0);
-        // tick (unsigned varint64)
         $payload .= Binary::writeBool($ambient);
-        // ambient
         self::sendBatch(ProtocolInfo::MOB_EFFECT_PACKET, $payload, $s, $sock);
     }
 }

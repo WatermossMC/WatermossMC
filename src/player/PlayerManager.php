@@ -22,8 +22,11 @@ declare(strict_types=1);
 
 namespace watermossmc\player;
 
+use Throwable;
+use watermossmc\event\PlayerQuitEvent;
 use watermossmc\network\Session;
 use watermossmc\Server;
+use watermossmc\util\Logger;
 
 final class PlayerManager
 {
@@ -58,7 +61,18 @@ final class PlayerManager
     public static function remove(Session $s): void
     {
         $uuid = $s->getUuid();
-        if (isset(self::$players[$uuid])) {
+        $player = self::$players[$uuid] ?? null;
+        if ($player === null) {
+            return;
+        }
+
+        try {
+            PlayerNetwork::onQuit($player);
+            Server::getInstance()?->dispatch(new PlayerQuitEvent($player));
+            Server::getInstance()?->getWorld()->getEntityManager()->removeEntity($player->getRuntimeId());
+        } catch (Throwable $e) {
+            Logger::error("[PlayerManager] Error while removing {$player->getUsername()}: {$e->getMessage()}");
+        } finally {
             unset(self::$players[$uuid]);
         }
     }

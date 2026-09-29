@@ -30,4 +30,9 @@ final class DirtBlock extends Block
     {
         parent::__construct(Block::DIRT, 'minecraft:dirt');
     }
+
+    public function getHardness(): float
+    {
+        return 0.5;
+    }
 }

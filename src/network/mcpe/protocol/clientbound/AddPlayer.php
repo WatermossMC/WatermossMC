@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\clientbound;
 
 use Socket;
-use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
@@ -32,43 +31,65 @@ use watermossmc\player\Player;
 
 final class AddPlayer extends Packet
 {
+    private const PERMISSION_MEMBER = 1;
+    private const COMMAND_PERMISSION_NORMAL = 0;
+    private const LAYER_BASE = 1;
+    private const DEVICE_OS_UNKNOWN = -1;
+
     public static function send(Session $s, Socket $sock, Player $target): void
     {
         $pos = $target->getPosition();
         $rot = $target->getRotation();
 
-        $p = Binary::writeByte(0x0c);
-        $p .= Binary::writeUUID($target->getUuid());
+        $p = McpeBinary::writeUUID($target->getUuid());
         $p .= McpeBinary::writeString($target->getUsername());
-        $p .= Binary::writeVarLong($target->getRuntimeId());
-        $p .= McpeBinary::writeString("");
+        $p .= McpeBinary::writeUnsignedVarLong($target->getRuntimeId());
+        $p .= McpeBinary::writeString('');
 
-        $p .= Binary::writeFloat($pos['x']);
-        $p .= Binary::writeFloat($pos['y']);
-        $p .= Binary::writeFloat($pos['z']);
+        $p .= McpeBinary::writeFloat($pos['x']);
+        $p .= McpeBinary::writeFloat($pos['y']);
+        $p .= McpeBinary::writeFloat($pos['z']);
 
-        $p .= Binary::writeFloat(0.0);
-        $p .= Binary::writeFloat(0.0);
-        $p .= Binary::writeFloat(0.0);
+        $p .= McpeBinary::writeFloat(0.0);
+        $p .= McpeBinary::writeFloat(0.0);
+        $p .= McpeBinary::writeFloat(0.0);
 
-        $p .= Binary::writeFloat($rot['pitch']);
-        $p .= Binary::writeFloat($rot['yaw']);
-        $p .= Binary::writeFloat($rot['yaw']);
+        $p .= McpeBinary::writeFloat($rot['pitch']);
+        $p .= McpeBinary::writeFloat($rot['yaw']);
+        $p .= McpeBinary::writeFloat($target->headYaw);
 
-        $p .= Binary::writeVarInt(0); // air item stack wrapper
+        $p .= self::writeEmptyItem();
         $p .= McpeBinary::writeSignedVarInt($target->getGameMode());
 
-        $p .= Binary::writeVarInt(0); // metadata count
-        $p .= Binary::writeVarInt(0); // synced int properties
-        $p .= Binary::writeVarInt(0); // synced float properties
+        $p .= McpeBinary::writeUnsignedVarInt(0);
+        $p .= McpeBinary::writeUnsignedVarInt(0);
+        $p .= McpeBinary::writeUnsignedVarInt(0);
 
-        $p .= Binary::writeLong(0); // target actor unique id for abilities
-        $p .= Binary::writeByte(1); // player permission
-        $p .= Binary::writeByte(0); // command permission
-        $p .= Binary::writeByte(0); // ability layer count
-        $p .= Binary::writeVarInt(0); // link count
-        $p .= McpeBinary::writeString(""); // device id
-        $p .= Binary::writeLInt(0); // build platform
+        $p .= self::writeAbilities($target);
+
+        $p .= McpeBinary::writeUnsignedVarInt(0);
+        $p .= McpeBinary::writeString('');
+        $p .= McpeBinary::writeLInt(self::DEVICE_OS_UNKNOWN);
+
         self::sendBatch(ProtocolInfo::ADD_PLAYER_PACKET, $p, $s, $sock);
+    }
+
+    private static function writeEmptyItem(): string
+    {
+        return McpeBinary::writeLShort(0)
+            . McpeBinary::writeLShort(0)
+            . McpeBinary::writeUnsignedVarInt(0)
+            . McpeBinary::writeBool(false)
+            . McpeBinary::writeUnsignedVarInt(0)
+            . McpeBinary::writeString('');
+    }
+
+    private static function writeAbilities(Player $target): string
+    {
+        $a = McpeBinary::writeLLong($target->getRuntimeId());
+        $a .= McpeBinary::writeByte(self::PERMISSION_MEMBER);
+        $a .= McpeBinary::writeByte(self::COMMAND_PERMISSION_NORMAL);
+        $a .= McpeBinary::writeByte(0);
+        return $a;
     }
 }

@@ -26,15 +26,30 @@ use watermossmc\player\Player;
 
 abstract class Item
 {
-    public function __construct(public readonly int $id, public readonly string $name, public readonly string $type = 'generic') {}
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly string $type = 'generic',
+        public readonly string $identifier = ''
+    ) {}
 
-    public function onUse(Player $player): void
+    /**
+     * The largest stack size allowed for this item, matching vanilla (64 for most items, 1 for tools/armor/weapons).
+     */
+    public function getMaxStackSize(): int
     {
-        // Default: do nothing
+        return 64;
     }
 
-    public function onInteract(int $x, int $y, int $z, Player $player): void
+    /**
+     * The block this item places when used on a block face, or null if it can't be placed.
+     */
+    public function getBlockId(): ?int
     {
-        // Default: do nothing
+        return null;
     }
+
+    public function onUse(Player $player): void {}
+
+    public function onInteract(int $x, int $y, int $z, Player $player): void {}
 }

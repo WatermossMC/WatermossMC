@@ -48,7 +48,6 @@ set_exception_handler(function (\Throwable $e) use (&$shutdown): void {
     $shutdown = true;
 });
 
-// Signal handlers for graceful shutdown (guarded if pcntl is available)
 if (\function_exists('pcntl_signal')) {
     pcntl_signal(SIGTERM, function () use (&$shutdown): void {
         Logger::info("Received SIGTERM, shutting down gracefully...");
@@ -68,7 +67,6 @@ Logger::info('Repository: ' . VersionInfo::REPOSITORY);
 Logger::info('Starting server on ' . $config['bind_ip'] . ':' . $config['bind_port'], ['maxPlayers' => $config['max_players']]);
 Logger::info('========================================');
 
-// Create UDP socket
 $socket = socket_create(\AF_INET, \SOCK_DGRAM, \SOL_UDP);
 if ($socket === false) {
     $error = socket_strerror(socket_last_error());
@@ -89,7 +87,6 @@ if (!socket_bind($socket, $config['bind_ip'], $config['bind_port'])) {
 RakNet::init();
 Logger::info("RakNet initialized");
 
-// Initialize server API and tick loop
 $tickLoop = new TickLoop();
 $server = new Server(__DIR__, $tickLoop);
 PacketDispatcher::setServer($server);
@@ -118,7 +115,6 @@ $tickInterval = 1_000_000_000 / 20; // 20 TPS
 Logger::info("Entering main server loop...");
 
 while (!$shutdown) {
-    // Handle signals (if available)
     if (\function_exists('pcntl_signal_dispatch')) {
         pcntl_signal_dispatch();
     }
@@ -134,7 +130,6 @@ while (!$shutdown) {
                     continue;
                 }
 
-                // Remove leading slash if present
                 if ($line[0] === '/') {
                     $line = substr($line, 1);
                 }
@@ -144,7 +139,6 @@ while (!$shutdown) {
         }
     }
 
-    // Process incoming packets
     while (!$shutdown && @socket_recvfrom(
         $socket,
         $buffer,
@@ -174,7 +168,6 @@ while (!$shutdown) {
     usleep(1000);
 }
 
-// Cleanup
 Logger::info("Shutting down server...");
 $server->shutdown();
 socket_close($socket);

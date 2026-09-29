@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace watermossmc\network\mcpe\protocol\clientbound;
 
 use Socket;
-use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\entity\Entity;
 use watermossmc\network\mcpe\protocol\Packet;
@@ -32,19 +31,29 @@ use watermossmc\network\Session;
 
 final class MoveActorAbsolute
 {
-    public static function send(Session $s, Socket $sock, Entity $entity): void
+    public const FLAG_GROUND = 0x01;
+    public const FLAG_TELEPORT = 0x02;
+    public const FLAG_FORCE_MOVE_LOCAL_ENTITY = 0x04;
+
+    public static function send(Session $s, Socket $sock, Entity $entity, int $flags = 0, ?float $headYaw = null): void
     {
         $pos = $entity->getPosition();
         $rot = $entity->getRotation();
 
-        $p = Binary::writeVarLong($entity->getRuntimeId());
+        $p = McpeBinary::writeUnsignedVarLong($entity->getRuntimeId());
+        $p .= McpeBinary::writeByte($flags);
         $p .= McpeBinary::writeFloat($pos['x']);
         $p .= McpeBinary::writeFloat($pos['y']);
         $p .= McpeBinary::writeFloat($pos['z']);
-        $p .= McpeBinary::writeFloat($rot['pitch']);
-        $p .= McpeBinary::writeFloat($rot['yaw']);
-        $p .= McpeBinary::writeFloat($rot['yaw']);
+        $p .= McpeBinary::writeByte(self::rotationToByte($rot['pitch']));
+        $p .= McpeBinary::writeByte(self::rotationToByte($rot['yaw']));
+        $p .= McpeBinary::writeByte(self::rotationToByte($headYaw ?? $rot['yaw']));
 
         Packet::sendBatch(ProtocolInfo::MOVE_ACTOR_ABSOLUTE_PACKET, $p, $s, $sock);
+    }
+
+    public static function rotationToByte(float $degrees): int
+    {
+        return ((int) floor($degrees / (360 / 256))) & 0xff;
     }
 }

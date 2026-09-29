@@ -23,8 +23,20 @@ declare(strict_types=1);
 namespace watermossmc\item;
 
 use watermossmc\item\types\Apple;
+use watermossmc\item\types\Coal;
 use watermossmc\item\types\CobblestoneItem;
+use watermossmc\item\types\CobblestoneSlab;
+use watermossmc\item\types\CobblestoneWall;
+use watermossmc\item\types\CraftingTableItem;
+use watermossmc\item\types\Diamond;
+use watermossmc\item\types\DiamondBlockItem;
+use watermossmc\item\types\DiamondOreItem;
 use watermossmc\item\types\DiamondSword;
+use watermossmc\item\types\Ladder;
+use watermossmc\item\types\Lever;
+use watermossmc\item\types\Stick;
+use watermossmc\item\types\StoneStairs;
+use watermossmc\item\types\Torch;
 
 final class ItemInitializer
 {
@@ -33,6 +45,17 @@ final class ItemInitializer
         ItemRegistry::register(new DiamondSword());
         ItemRegistry::register(new Apple());
         ItemRegistry::register(new CobblestoneItem());
-        // Add more items here
+        ItemRegistry::register(new Stick());
+        ItemRegistry::register(new Coal());
+        ItemRegistry::register(new CobblestoneWall());
+        ItemRegistry::register(new Ladder());
+        ItemRegistry::register(new Lever());
+        ItemRegistry::register(new CobblestoneSlab());
+        ItemRegistry::register(new StoneStairs());
+        ItemRegistry::register(new Torch());
+        ItemRegistry::register(new Diamond());
+        ItemRegistry::register(new DiamondOreItem());
+        ItemRegistry::register(new DiamondBlockItem());
+        ItemRegistry::register(new CraftingTableItem());
     }
 }

@@ -24,7 +24,6 @@ namespace watermossmc\world;
 
 use RuntimeException;
 use SplFixedArray;
-use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\block\BlockRegistry;
 use watermossmc\block\BlockRuntimeIdConverter;

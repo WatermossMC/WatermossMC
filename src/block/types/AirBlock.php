@@ -33,6 +33,11 @@ final class AirBlock extends Block
         parent::__construct(Block::AIR, 'minecraft:air');
     }
 
+    public function getDrops(): array
+    {
+        return [];
+    }
+
     public function onInteract(int $x, int $y, int $z, Player $player): void
     {
         Logger::debug("Player {$player->username} interacted with Air at {$x}, {$y}, {$z}");

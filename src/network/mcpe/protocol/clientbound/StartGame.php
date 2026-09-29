@@ -35,72 +35,110 @@ use watermossmc\world\World;
 
 final class StartGame extends Packet
 {
-    public static function send(Session $s, Socket $sock, World $world, Player $player): void
-    {
-        $worldName = Config::getString("motd", "WatermossMC Server");
-        $seed = $world->seed;
+    public static function send(
+        Session $s,
+        Socket $sock,
+        World $world,
+        Player $player
+    ): void {
+        $worldName = Config::getString(
+            'motd',
+            'WatermossMC Server'
+        );
+
+        $seed = (int) $world->seed;
         $spawn = $world->getSpawnPosition();
         $position = $player->getPosition();
         $rotation = $player->getRotation();
+        $gameMode = $player->getGameMode();
 
         $payload = '';
 
         $xuid = $player->session->getXuid() ?? '0';
-        $payload .= McpeBinary::writeSignedVarLong((int) $xuid); // actorUniqueId
-        $payload .= McpeBinary::writeUnsignedVarLong($player->session->getRuntimeId()); // actorRuntimeId
-        $payload .= McpeBinary::writeSignedVarInt($player->getGameMode()); // playerGamemode
 
-        // --- Player Position & Rotation ---
-        $payload .= McpeBinary::writeFloat($position['x']);
-        $payload .= McpeBinary::writeFloat($position['y']);
-        $payload .= McpeBinary::writeFloat($position['z']);
-        $payload .= McpeBinary::writeFloat($rotation['pitch']);
-        $payload .= McpeBinary::writeFloat($rotation['yaw']);
+        $payload .= McpeBinary::writeSignedVarLong(
+            (int) $xuid
+        );
 
-        LevelSettings::write();
+        $payload .= McpeBinary::writeUnsignedVarLong(
+            $player->session->getRuntimeId()
+        );
 
-        $payload .= McpeBinary::writeString(""); // levelId
-        $payload .= McpeBinary::writeString($worldName); // worldName
-        $payload .= McpeBinary::writeString(""); // premiumWorldTemplateId
-        $payload .= McpeBinary::writeBool(false); // isTrial
+        $payload .= McpeBinary::writeSignedVarInt(
+            $gameMode
+        );
 
-        // PlayerMovementSettings
-        $payload .= McpeBinary::writeSignedVarInt(0); // rewindHistorySize
-        $payload .= McpeBinary::writeBool(true); // serverAuthoritativeBlockBreaking
+        $payload .= McpeBinary::writeFloat(
+            (float) $position['x']
+        );
 
-        $payload .= McpeBinary::writeLLong(0); // currentTick
-        $payload .= McpeBinary::writeSignedVarInt(0); // enchantmentSeed
+        $payload .= McpeBinary::writeFloat(
+            (float) $position['y']
+        );
 
-        // Block Palette
-        $payload .= McpeBinary::writeUnsignedVarInt(0); // blockPalette Count
+        $payload .= McpeBinary::writeFloat(
+            (float) $position['z']
+        );
 
-        // Server Info
-        $payload .= McpeBinary::writeString(""); // multiplayerCorrelationId
-        $payload .= McpeBinary::writeBool(true); // enableNewInventorySystem
-        $payload .= McpeBinary::writeString("WatermossMC"); // serverSoftwareVersion
+        $payload .= McpeBinary::writeFloat(
+            (float) $rotation['pitch']
+        );
 
-        // Player Actor Properties
-        $payload .= "\x0a\x00\x00";
+        $payload .= McpeBinary::writeFloat(
+            (float) $rotation['yaw']
+        );
 
-        $payload .= McpeBinary::writeLLong(0); // blockPaletteChecksum
-        $payload .= McpeBinary::writeUUID("00000000-0000-0000-0000-000000000000"); // worldTemplateId
-        $payload .= McpeBinary::writeBool(false); // enableClientSideChunkGeneration
-        $payload .= McpeBinary::writeBool(false); // blockNetworkIdsAreHashes
+        $payload .= LevelSettings::write(
+            $seed,
+            $spawn,
+            $gameMode
+        );
 
-        // NetworkPermissions
-        $payload .= McpeBinary::writeBool(false); // serverAuthSounds
-
-        // ServerJoinInformation
+        $payload .= McpeBinary::writeString('');
+        $payload .= McpeBinary::writeString($worldName);
+        $payload .= McpeBinary::writeString('');
         $payload .= McpeBinary::writeBool(false);
 
-        // ServerTelemetryData
-        $payload .= McpeBinary::writeString(""); // serverId
-        $payload .= McpeBinary::writeString(""); // scenarioId
-        $payload .= McpeBinary::writeString(""); // worldId
-        $payload .= McpeBinary::writeString(""); // ownerId
+        $payload .= McpeBinary::writeSignedVarInt(0);
+        $payload .= McpeBinary::writeBool(true);
 
-        Logger::debug(bin2hex($payload));
+        $payload .= McpeBinary::writeLLong(0);
+        $payload .= McpeBinary::writeSignedVarInt(0);
 
-        self::sendBatch(ProtocolInfo::START_GAME_PACKET, $payload, $s, $sock);
+        $payload .= McpeBinary::writeUnsignedVarInt(0);
+
+        $payload .= McpeBinary::writeString('');
+        $payload .= McpeBinary::writeBool(true);
+        $payload .= McpeBinary::writeString('WatermossMC');
+
+        $payload .= "\x0A\x00\x00\x00";
+
+        $payload .= McpeBinary::writeLLong(0);
+
+        $payload .= McpeBinary::writeUUID(
+            '00000000-0000-0000-0000-000000000000'
+        );
+
+        $payload .= McpeBinary::writeBool(false);
+        $payload .= McpeBinary::writeBool(false);
+        $payload .= McpeBinary::writeBool(false);
+
+        $payload .= McpeBinary::writeBool(false);
+
+        $payload .= McpeBinary::writeString('');
+        $payload .= McpeBinary::writeString('');
+        $payload .= McpeBinary::writeString('');
+        $payload .= McpeBinary::writeString('');
+
+        Logger::debug(
+            'StartGame payload: ' . bin2hex($payload)
+        );
+
+        self::sendBatch(
+            ProtocolInfo::START_GAME_PACKET,
+            $payload,
+            $s,
+            $sock
+        );
     }
 }

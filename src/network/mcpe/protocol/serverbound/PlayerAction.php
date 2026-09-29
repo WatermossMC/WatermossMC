@@ -58,17 +58,28 @@ final class PlayerAction extends Packet
     public const ACTION_START_ITEM_USE_ON = 28;
     public const ACTION_STOP_ITEM_USE_ON = 29;
     public const ACTION_HANDLED_TELEPORT = 30;
+    public const ACTION_MISSED_SWING = 31;
+    public const ACTION_START_CRAWLING = 32;
+    public const ACTION_STOP_CRAWLING = 33;
+    public const ACTION_START_FLYING = 34;
+    public const ACTION_STOP_FLYING = 35;
+    public const ACTION_START_USING_ITEM = 37;
+    public const ACTION_CREATIVE_PLAYER_DESTROY_BLOCK = 13;
+    public const ACTION_CRACK_BLOCK = 18;
 
     /**
-     * @return array{actorRuntimeId: int, action: int, blockX: int, blockY: int, blockZ: int, face: int}
+     * @return array{actorRuntimeId: int, action: int, blockX: int, blockY: int, blockZ: int, resultX: int, resultY: int, resultZ: int, face: int}
      */
     public static function read(string $p, int &$o): array
     {
-        $actorRuntimeId = McpeBinary::readSignedVarLong($p, $o);
+        $actorRuntimeId = McpeBinary::readUnsignedVarLong($p, $o);
         $action = McpeBinary::readSignedVarInt($p, $o);
-        $blockX = McpeBinary::readVarInt($p, $o);
-        $blockY = McpeBinary::readUnsignedVarInt($p, $o);
-        $blockZ = McpeBinary::readVarInt($p, $o);
+        $blockX = McpeBinary::readSignedVarInt($p, $o);
+        $blockY = McpeBinary::readSignedVarInt($p, $o);
+        $blockZ = McpeBinary::readSignedVarInt($p, $o);
+        $resultX = McpeBinary::readSignedVarInt($p, $o);
+        $resultY = McpeBinary::readSignedVarInt($p, $o);
+        $resultZ = McpeBinary::readSignedVarInt($p, $o);
         $face = McpeBinary::readSignedVarInt($p, $o);
 
         return [
@@ -77,6 +88,9 @@ final class PlayerAction extends Packet
             'blockX' => $blockX,
             'blockY' => $blockY,
             'blockZ' => $blockZ,
+            'resultX' => $resultX,
+            'resultY' => $resultY,
+            'resultZ' => $resultZ,
             'face' => $face,
         ];
     }

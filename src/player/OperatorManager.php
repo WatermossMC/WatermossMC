@@ -46,7 +46,6 @@ final class OperatorManager
             $parts = explode(',', trim($line));
             if (count($parts) >= 1) {
                 $name = trim($parts[0]);
-                // Default to OPERATOR if no role is specified
                 $role = isset($parts[1]) ? (int) trim($parts[1]) : Permission::ROLE_OPERATOR;
                 self::$ops[$name] = $role;
             }

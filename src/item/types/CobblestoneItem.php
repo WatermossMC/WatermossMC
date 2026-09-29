@@ -28,6 +28,6 @@ final class CobblestoneItem extends Item
 {
     public function __construct()
     {
-        parent::__construct(1, 'Cobblestone', 'block');
+        parent::__construct(4, 'Cobblestone', 'block', 'minecraft:cobblestone');
     }
 }

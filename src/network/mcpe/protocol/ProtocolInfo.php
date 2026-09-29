@@ -25,8 +25,8 @@ namespace watermossmc\network\mcpe\protocol;
 final class ProtocolInfo
 {
     public const CURRENT_PROTOCOL = 2193;
-    public const MINECRAFT_VERSION = 'v26.50';
-    public const MINECRAFT_VERSION_NETWORK = '1.26.50';
+    public const MINECRAFT_VERSION = 'v26.51';
+    public const MINECRAFT_VERSION_NETWORK = '1.26.51';
     public const LOGIN_PACKET = 0x1;
     public const PLAY_STATUS_PACKET = 0x2;
     public const SERVER_TO_CLIENT_HANDSHAKE_PACKET = 0x3;

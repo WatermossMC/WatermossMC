@@ -28,7 +28,6 @@ use Throwable;
 use watermossmc\block\BlockRuntimeData;
 use watermossmc\event\PlayerJoinEvent;
 use watermossmc\network\mcpe\PacketHandler;
-use watermossmc\network\mcpe\protocol\clientbound\AddPlayer;
 use watermossmc\network\mcpe\protocol\clientbound\AvailableActorIdentifiers;
 use watermossmc\network\mcpe\protocol\clientbound\AvailableCommands;
 use watermossmc\network\mcpe\protocol\clientbound\BiomeDefinitionList;
@@ -55,6 +54,7 @@ use watermossmc\network\mcpe\protocol\serverbound\RequestChunkRadius;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\Session;
 use watermossmc\player\PlayerManager;
+use watermossmc\player\PlayerNetwork;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;
@@ -92,6 +92,10 @@ final class PreSpawnPacketHandler implements PacketHandler
                 PlayStatus::sendSpawn($session, $socket);
                 $session->enterPlay();
                 RakNet::flush($session, $socket);
+                $joined = PlayerManager::get($session);
+                if ($joined !== null) {
+                    PlayerNetwork::announceJoin($joined);
+                }
                 return true;
             case ProtocolInfo::PLAYER_AUTH_INPUT_PACKET:
                 if ($session->getMcpeState() !== Session::MC_PRESPAWN && $session->getMcpeState() !== Session::MC_PLAY) {
@@ -102,6 +106,10 @@ final class PreSpawnPacketHandler implements PacketHandler
                     if ($session->getMcpeState() === Session::MC_PRESPAWN) {
                         $session->enterPlay();
                         Logger::debug("[0x94] PlayerAuthInput received in MC_PRESPAWN -> transitioned session to MC_PLAY.");
+                        $joined = PlayerManager::get($session);
+                        if ($joined !== null) {
+                            PlayerNetwork::announceJoin($joined);
+                        }
                     }
                     return true;
                 } catch (Throwable $e) {
@@ -139,7 +147,7 @@ final class PreSpawnPacketHandler implements PacketHandler
             $commandData[$cmd->name] = [
                 'description' => $cmd->description,
                 'aliases' => $cmd->getAliases(),
-                'overloads' => []
+                'overloads' => [],
             ];
         }
         AvailableCommands::send($s, $sock, $commandData);
@@ -148,13 +156,12 @@ final class PreSpawnPacketHandler implements PacketHandler
         SetTime::send($s, $sock, 0);
         UpdateAbilities::send($s, $sock);
         UpdateAdventureSettings::send($s, $sock, false, false, false, true, true);
-        InventoryContent::send($s, $sock, InventoryContent::WINDOW_INVENTORY, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_INVENTORY));
-        InventoryContent::send($s, $sock, InventoryContent::WINDOW_ARMOR, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_ARMOR));
-        InventoryContent::send($s, $sock, InventoryContent::WINDOW_OFFHAND, $player->getInventory()->getWindowItems(InventoryContent::WINDOW_OFFHAND));
+        InventoryContent::sendForInventory($s, $sock, InventoryContent::WINDOW_INVENTORY, $player->getInventory());
+        InventoryContent::sendForInventory($s, $sock, InventoryContent::WINDOW_ARMOR, $player->getInventory());
+        InventoryContent::sendForInventory($s, $sock, InventoryContent::WINDOW_OFFHAND, $player->getInventory());
         PlayerHotbar::send($s, $sock);
         SetActorData::sendSelf($s, $sock, $player);
         UpdateAttributes::sendSelf($s, $sock, $player);
-        AddPlayer::send($s, $sock, $player);
         MobEffect::add($s, $sock, 1);
         RakNet::flush($s, $sock);
     }

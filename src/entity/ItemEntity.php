@@ -22,31 +22,54 @@ declare(strict_types=1);
 
 namespace watermossmc\entity;
 
+use watermossmc\inventory\ItemStack;
 use watermossmc\world\World;
 
 final class ItemEntity extends Entity
 {
-    private string $itemTypeId;
+    public const PICKUP_DELAY_TICKS = 10;
+    public const LIFETIME_TICKS = 6000;
+    public const PICKUP_RADIUS = 1.5;
 
-    private int $count = 1;
+    private int $age = 0;
 
-    public function __construct(int $runtimeId, string $uuid, World $world, string $itemTypeId, int $count = 1)
-    {
+    public function __construct(
+        int $runtimeId,
+        string $uuid,
+        World $world,
+        private ItemStack $stack,
+        private readonly int $pickupDelay = self::PICKUP_DELAY_TICKS
+    ) {
         parent::__construct($runtimeId, $uuid, $world);
-        $this->itemTypeId = $itemTypeId;
-        $this->count = $count;
-
-        // Item entities usually have a specific visual look in EntityData
-        $this->getEntityData()->set(1, EntityData::TYPE_INT, 0); // Example: Item visual state
     }
 
-    public function getItemTypeId(): string
+    public function getItemStack(): ItemStack
     {
-        return $this->itemTypeId;
+        return $this->stack;
     }
 
-    public function getCount(): int
+    public function canBePickedUp(): bool
     {
-        return $this->count;
+        return $this->age >= $this->pickupDelay;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->age >= self::LIFETIME_TICKS;
+    }
+
+    public function isNear(float $x, float $y, float $z): bool
+    {
+        $dx = $this->x - $x;
+        $dy = $this->y - $y;
+        $dz = $this->z - $z;
+
+        return ($dx * $dx + $dy * $dy + $dz * $dz) <= self::PICKUP_RADIUS * self::PICKUP_RADIUS;
+    }
+
+    public function tick(): void
+    {
+        $this->age++;
+        $this->tickPhysics();
     }
 }

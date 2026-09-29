@@ -31,6 +31,9 @@ abstract class Block
     public const GRASS_BLOCK = 2;
     public const DIRT = 3;
     public const BEDROCK = 4;
+    public const DIAMOND_ORE = 56;
+    public const DIAMOND_BLOCK = 57;
+    public const CRAFTING_TABLE = 58;
 
     public function __construct(public readonly int $id, public readonly string $name) {}
 
@@ -39,18 +42,34 @@ abstract class Block
         return new BlockState($this->name);
     }
 
-    public function onPlace(int $x, int $y, int $z): void
+    public function getHardness(): float
     {
-        // Default: do nothing
+        return 0.0;
     }
 
-    public function onBreak(int $x, int $y, int $z): void
+    public function isUnbreakable(): bool
     {
-        // Default: do nothing
+        return $this->getHardness() < 0.0;
     }
 
-    public function onInteract(int $x, int $y, int $z, Player $player): void
+    public function getContainerWindowType(): ?int
     {
-        // Default: do nothing
+        return null;
     }
+
+    /**
+     * Item identifiers and counts dropped when this block is broken.
+     *
+     * @return list<array{identifier: string, count: int}>
+     */
+    public function getDrops(): array
+    {
+        return [['identifier' => $this->name, 'count' => 1]];
+    }
+
+    public function onPlace(int $x, int $y, int $z): void {}
+
+    public function onBreak(int $x, int $y, int $z): void {}
+
+    public function onInteract(int $x, int $y, int $z, Player $player): void {}
 }

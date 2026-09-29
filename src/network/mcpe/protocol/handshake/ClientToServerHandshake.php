@@ -34,11 +34,6 @@ final class ClientToServerHandshake extends Packet
         if ($length <= 0) {
             return;
         }
-        // Consume any remaining handshake payload without failing the connection.
-        // The packet format may vary between protocol versions, so read any remaining bytes safely.
-        $remaining = \strlen($buf) - $o;
-        if ($remaining > 0) {
-            $o += $remaining;
-        }
+        $o += $length; // the payload carries nothing we need
     }
 }

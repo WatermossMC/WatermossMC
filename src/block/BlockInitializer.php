@@ -24,6 +24,9 @@ namespace watermossmc\block;
 
 use watermossmc\block\types\AirBlock;
 use watermossmc\block\types\BedrockBlock;
+use watermossmc\block\types\CraftingTableBlock;
+use watermossmc\block\types\DiamondBlock;
+use watermossmc\block\types\DiamondOreBlock;
 use watermossmc\block\types\DirtBlock;
 use watermossmc\block\types\GrassBlock;
 use watermossmc\block\types\StoneBlock;
@@ -37,5 +40,8 @@ final class BlockInitializer
         BlockRegistry::register(new GrassBlock());
         BlockRegistry::register(new DirtBlock());
         BlockRegistry::register(new BedrockBlock());
+        BlockRegistry::register(new DiamondOreBlock());
+        BlockRegistry::register(new DiamondBlock());
+        BlockRegistry::register(new CraftingTableBlock());
     }
 }

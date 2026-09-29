@@ -36,6 +36,6 @@ final class ConsoleCommandSender implements CommandSender
 
     public function hasPermission(int $role): bool
     {
-        return true; // Console has full permissions
+        return true;
     }
 }

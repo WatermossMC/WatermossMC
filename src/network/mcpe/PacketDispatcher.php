@@ -35,6 +35,8 @@ use watermossmc\network\mcpe\protocol\clientbound\Disconnect;
 use watermossmc\network\mcpe\protocol\InboundPacketRegistry;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\Session;
+use watermossmc\player\PlayerManager;
+use watermossmc\player\PlayerNetwork;
 use watermossmc\Server;
 use watermossmc\util\Logger;
 use watermossmc\world\World;
@@ -101,7 +103,10 @@ final class PacketDispatcher
 
     public static function syncPlayers(): void
     {
-        // Placeholder for player sync if called from Server.php
+        foreach (PlayerManager::all() as $player) {
+            PlayerNetwork::applyPendingMove($player);
+        }
+        PlayerNetwork::syncMovement();
     }
 
     public static function handleBatch(string $data, Session $session, Socket $socket): void

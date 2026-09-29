@@ -30,4 +30,14 @@ final class GrassBlock extends Block
     {
         parent::__construct(Block::GRASS_BLOCK, 'minecraft:grass_block');
     }
+
+    public function getHardness(): float
+    {
+        return 0.6;
+    }
+
+    public function getDrops(): array
+    {
+        return [['identifier' => 'minecraft:dirt', 'count' => 1]];
+    }
 }

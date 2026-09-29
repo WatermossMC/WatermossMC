@@ -42,6 +42,16 @@ final class BedrockBlock extends Block
         );
     }
 
+    public function getHardness(): float
+    {
+        return -1.0; // unbreakable
+    }
+
+    public function getDrops(): array
+    {
+        return [];
+    }
+
     public function onBreak(int $x, int $y, int $z): void
     {
         // Bedrock cannot be broken in survival

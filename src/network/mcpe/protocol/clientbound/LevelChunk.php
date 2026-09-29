@@ -45,10 +45,8 @@ final class LevelChunk extends Packet
         $p = McpeBinary::writeSignedVarInt($chunkX);
         $p .= McpeBinary::writeSignedVarInt($chunkZ);
 
-        // Dimension ID
         $p .= McpeBinary::writeSignedVarInt($dimensionId);
 
-        // SubChunk count
         $p .= McpeBinary::writeUnsignedVarInt($subChunkCount);
 
         $clientRequestSubChunkLimit = null;
@@ -59,16 +57,13 @@ final class LevelChunk extends Packet
             $p .= McpeBinary::writeSignedVarInt($clientRequestSubChunkLimit);
         }
 
-        // Cache enabled
         $cacheEnabled = $s->isCacheEnabled();
         $p .= Binary::writeBool($cacheEnabled);
 
-        // Used blob hashes
         $usedBlobHashes = [];
 
         $p .= McpeBinary::writeUnsignedVarInt(0);
 
-        // Extra payload
         $p .= McpeBinary::writeString($chunkData);
 
         self::sendBatch(

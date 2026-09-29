@@ -35,10 +35,8 @@ final class MovePlayer extends Packet
      */
     public static function read(string $p, int &$o): array
     {
-        $o++;
-        // skip PID
-        Binary::readLong($p, $o);
-        // skip runtimeId
+        $o++; // skip packet id
+        Binary::readLong($p, $o); // skip runtime id
         $x = Binary::readFloat($p, $o);
         $y = Binary::readFloat($p, $o);
         $z = Binary::readFloat($p, $o);
@@ -48,13 +46,11 @@ final class MovePlayer extends Packet
         $mode = Binary::readByte($p, $o);
         $onGround = Binary::readBool($p, $o);
         Binary::readLong($p, $o);
-        // skip something
         if ($mode === MovePlayerMode::TELEPORT) {
             Binary::readInt($p, $o);
             Binary::readInt($p, $o);
         }
         Binary::readVarLong($p, $o);
-        // skip something
         return ['x' => $x, 'y' => $y, 'z' => $z, 'pitch' => $pitch, 'yaw' => $yaw, 'headYaw' => $headYaw, 'onGround' => $onGround];
     }
 

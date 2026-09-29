@@ -76,7 +76,6 @@ final class UpdateAbilities extends Packet
         $payload .= Binary::writeLLong($s->getRuntimeId());
         $payload .= Binary::writeByte($playerPermission);
         $payload .= Binary::writeByte($commandPermission);
-        // Layer count
         $payload .= Binary::writeByte(1);
         $setAbilities = 0;
         $setAbilityValues = 0;
@@ -91,17 +90,11 @@ final class UpdateAbilities extends Packet
         $setAbilities |= 1 << self::ABILITY_FLY_SPEED;
         $setAbilities |= 1 << self::ABILITY_WALK_SPEED;
         $payload .= Binary::writeLShort(self::LAYER_BASE);
-        // layerId
         $payload .= Binary::writeLInt($setAbilities);
-        // setAbilities
         $payload .= Binary::writeLInt($setAbilityValues);
-        // setAbilityValues
         $payload .= McpeBinary::writeFloat($flySpeed);
-        // flySpeed
         $payload .= McpeBinary::writeFloat($verticalFlySpeed);
-        // verticalFlySpeed
         $payload .= McpeBinary::writeFloat($walkSpeed);
-        // walkSpeed
         self::sendBatch(ProtocolInfo::UPDATE_ABILITIES_PACKET, $payload, $s, $sock);
     }
 }

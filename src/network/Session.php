@@ -413,8 +413,7 @@ final class Session
 
     public function decodeInbound(string $data): string
     {
-        // Attempt decryption only when inbound encryption context exists
-        // and the payload does not start with a valid compression ID (0x00 or 0xFF).
+        // Inbound packets are encrypted once the handshake has set up the inbound context.
         if ($this->inEncryption !== null && $data !== '') {
             $first = \ord($data[0]);
             try {
@@ -423,7 +422,6 @@ final class Session
                 $data = $this->decrypt($data);
                 Logger::debug("Inbound decrypt succeeded, payload head=0x" . dechex(\ord($data[0] ?? "\x00")) . " len=" . \strlen($data));
             } catch (RuntimeException $e) {
-                // Decryption failed: abort processing so caller can handle failure.
                 Logger::debug("Inbound decrypt attempt failed: " . $e->getMessage());
                 throw $e;
             }
@@ -441,8 +439,7 @@ final class Session
                 }
                 $data = $decoded;
             } elseif ($compressionId === 0xff) {
-                $data = $compressedPayload;
-                // No compression
+                $data = $compressedPayload; // 0xff: sent uncompressed
             } else {
                 throw new RuntimeException("Unknown compression ID: 0x" . dechex($compressionId));
             }

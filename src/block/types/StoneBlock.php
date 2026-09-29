@@ -30,4 +30,14 @@ final class StoneBlock extends Block
     {
         parent::__construct(Block::STONE, 'minecraft:stone');
     }
+
+    public function getHardness(): float
+    {
+        return 1.5;
+    }
+
+    public function getDrops(): array
+    {
+        return [['identifier' => 'minecraft:cobblestone', 'count' => 1]];
+    }
 }

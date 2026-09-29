@@ -61,9 +61,4 @@ final class Attribute
     {
         return $this->default;
     }
-
-    public function __clone()
-    {
-        // Ensure that we are cloning the values
-    }
 }

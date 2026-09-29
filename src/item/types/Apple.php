@@ -28,6 +28,6 @@ final class Apple extends Item
 {
     public function __construct()
     {
-        parent::__construct(280, 'Apple', 'food');
+        parent::__construct(285, 'Apple', 'food', 'minecraft:apple');
     }
 }

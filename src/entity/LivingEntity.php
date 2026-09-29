@@ -34,7 +34,6 @@ abstract class LivingEntity extends Entity
     {
         parent::__construct($runtimeId, $uuid, $world);
 
-        // Living entities usually have a name tag
         $this->getEntityData()->set(19, EntityData::TYPE_STRING, "Living Entity");
     }
 
@@ -62,10 +61,7 @@ abstract class LivingEntity extends Entity
         $this->setHealth(0);
     }
 
-    public function onDeath(): void
-    {
-        // Default death logic
-    }
+    public function onDeath(): void {}
 
     public function damage(float $amount): void
     {
@@ -78,6 +74,5 @@ abstract class LivingEntity extends Entity
     public function tick(): void
     {
         parent::tick();
-        // TODO: Additional living entity logic (e.g., health regeneration) can go here
     }
 }

@@ -22,76 +22,62 @@ declare(strict_types=1);
 
 namespace watermossmc\network\mcpe\protocol\clientbound;
 
-use function count;
-
 use Socket;
-use watermossmc\binary\Binary;
 use watermossmc\binary\McpeBinary;
 use watermossmc\inventory\ItemStack;
+use watermossmc\inventory\PlayerInventory;
 use watermossmc\network\mcpe\protocol\Packet;
 use watermossmc\network\mcpe\protocol\ProtocolInfo;
+use watermossmc\network\mcpe\protocol\types\ContainerIds;
+use watermossmc\network\mcpe\protocol\types\inventory\FullContainerName;
+use watermossmc\network\mcpe\protocol\types\ItemStackDescriptor;
 use watermossmc\network\Session;
 
 final class InventoryContent extends Packet
 {
-    // Window IDs
-    public const WINDOW_INVENTORY = 0;
-    public const WINDOW_ARMOR = 6;
-    public const WINDOW_OFFHAND = 119;
+    public const WINDOW_INVENTORY = ContainerIds::INVENTORY;
+    public const WINDOW_ARMOR = ContainerIds::ARMOR;
+    public const WINDOW_OFFHAND = ContainerIds::OFFHAND;
 
     public static function sendEmpty(Session $s, Socket $sock, int $windowId): void
     {
-        // Create a null-filled array based on the window size
         $size = match ($windowId) {
             self::WINDOW_INVENTORY => 36,
             self::WINDOW_ARMOR => 4,
             self::WINDOW_OFFHAND => 1,
             default => 0,
         };
-        self::send($s, $sock, $windowId, array_fill(0, $size, null));
+        self::send($s, $sock, $windowId, array_fill(0, $size, null), array_fill(0, $size, 0));
     }
 
     /**
      * @param array<int, ItemStack|null> $items
+     * @param array<int, int> $stackIds parallel to $items; the network stack id of each slot (0 = none)
      */
-    public static function send(Session $s, Socket $sock, int $windowId, array $items): void
+    public static function send(Session $s, Socket $sock, int $windowId, array $items, array $stackIds = []): void
     {
-        $payload = '';
-        $payload .= Binary::writeVarInt($windowId);
-        // windowId
-        // Bedrock expects the full window size for the count
-        $payload .= Binary::writeVarInt(\count($items));
-        foreach ($items as $slot => $itemStack) {
-            if ($itemStack === null) {
-                // Air / empty slot
-                $payload .= McpeBinary::writeSignedVarInt(0);
-            } else {
-                $payload .= self::writeItemStackWrapper($itemStack);
-            }
+        $payload = McpeBinary::writeUnsignedVarInt($windowId);
+        $payload .= McpeBinary::writeUnsignedVarInt(\count($items));
+        $i = 0;
+        foreach ($items as $itemStack) {
+            $descriptor = $itemStack === null
+                ? ItemStackDescriptor::air()
+                : $itemStack->toDescriptor($stackIds[$i] ?? 0);
+            $payload .= $descriptor->write();
+            $i++;
         }
-        // FullContainerName: containerId (varuint) + dynamicContainerId (optional LE uint32)
-        $payload .= Binary::writeVarInt($windowId);
-        // containerId
-        $payload .= Binary::writeBool(false);
-        // dynamicContainerId absent
-        // storage item (empty)
-        $payload .= McpeBinary::writeSignedVarInt(0);
+        $payload .= (new FullContainerName($windowId))->write();
+        $payload .= ItemStackDescriptor::air()->write(); // storage item, unused outside dynamic containers
         self::sendBatch(ProtocolInfo::INVENTORY_CONTENT_PACKET, $payload, $s, $sock);
     }
 
-    private static function writeItemStackWrapper(ItemStack $itemStack): string
+    public static function sendForInventory(Session $s, Socket $sock, int $windowId, PlayerInventory $inventory): void
     {
-        $data = '';
-        $data .= McpeBinary::writeSignedVarInt($itemStack->getNumericId());
-        $data .= Binary::writeLShort($itemStack->count);
-        $data .= Binary::writeLShort($itemStack->damage);
-        // has NBT tag
-        $data .= Binary::writeLShort(0);
-        // canPlace count, canBreak count
-        $data .= McpeBinary::writeSignedVarInt(0);
-        $data .= McpeBinary::writeSignedVarInt(0);
-        // blocking tick (for shields)
-        $data .= Binary::writeLong(0);
-        return $data;
+        $items = $inventory->getWindowItems($windowId);
+        $stackIds = [];
+        foreach (array_keys($items) as $slot) {
+            $stackIds[] = $inventory->getOrAllocateStackId($windowId, $slot);
+        }
+        self::send($s, $sock, $windowId, $items, $stackIds);
     }
 }

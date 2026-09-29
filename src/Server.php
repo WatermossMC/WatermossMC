@@ -28,6 +28,7 @@ use watermossmc\command\CommandMap;
 use watermossmc\command\CommandRegistry;
 use watermossmc\command\CommandSender;
 use watermossmc\command\impl\SaveCommand;
+use watermossmc\crafting\CraftingManager;
 use watermossmc\event\Event;
 use watermossmc\event\EventDispatcher;
 use watermossmc\event\ServerStartEvent;
@@ -80,6 +81,7 @@ final class Server
         BlockInitializer::init();
         BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
         ItemInitializer::init();
+        CraftingManager::init(__DIR__ . "/../resources/crafting/crafting_table.json");
         foreach (CommandRegistry::getCommands() as $commandClass) {
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();
@@ -201,7 +203,6 @@ final class Server
     }
 
     /**
-     * Executes a command and returns whether it completed successfully.
      * @param CommandSender|mixed $sender
      */
     public function dispatchCommand(mixed $sender, string $commandLine): bool
@@ -347,7 +348,14 @@ final class Server
      */
     public function getStatus(): array
     {
-        return ["name" => $this->getName(), "motd" => $this->getMotd(), "onlinePlayers" => $this->getOnlinePlayerCount(), "maxPlayers" => $this->getMaxPlayers(), "tick" => $this->currentTick, "running" => $this->running];
+        return [
+        "name" => $this->getName(),
+        "motd" => $this->getMotd(),
+        "onlinePlayers" => $this->getOnlinePlayerCount(),
+        "maxPlayers" => $this->getMaxPlayers(),
+        "tick" => $this->currentTick,
+        "running" => $this->running,
+    ];
     }
 
     public function isRunning(): bool

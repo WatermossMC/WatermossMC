@@ -25,7 +25,6 @@ namespace watermossmc\command;
 use InvalidArgumentException;
 use Throwable;
 use watermossmc\util\Logger;
-use watermossmc\util\Permission;
 
 final class CommandMap
 {
@@ -105,7 +104,6 @@ final class CommandMap
             $sender->sendMessage("Unknown command. Type /help for help.");
             return false;
         }
-        // Permission Check
         if (!$sender->hasPermission($command->requiredRole)) {
             $sender->sendMessage("You do not have permission to execute this command.");
             return false;

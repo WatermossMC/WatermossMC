@@ -32,13 +32,9 @@ use watermossmc\util\Logger;
 
 final class Login extends Packet
 {
-    // AuthenticationType values
     private const AUTH_TYPE_XBOX = 0;
-
-    // Modern OpenID single-token format
     private const AUTH_TYPE_LEGACY = 1;
 
-    // Legacy chain format
     /**
      * @param bool|null $requireXboxAuth
      * @return array{
@@ -147,7 +143,6 @@ final class Login extends Packet
         if (!\is_array($payload)) {
             $payload = [];
         }
-        // Map claims to normalized payload
         $payload['displayName'] = $claims['xname'] ?? 'unknown';
         $payload['XUID'] = $claims['xid'] ?? '0';
         $payload['identity'] = $claims['mid'] ?? '0';
@@ -189,7 +184,6 @@ final class Login extends Packet
                 }
             }
         }
-        // Ensure normalized fields exist for legacy
         $payload['displayName'] ??= 'unknown';
         $payload['XUID'] ??= '0';
         $payload['identity'] ??= '0';

@@ -45,15 +45,10 @@ final class ItemRegistry extends Packet
         $payload .= Binary::writeVarInt(\count($items));
         foreach ($items as $item) {
             $payload .= McpeBinary::writeString($item['stringId']);
-            // string id
-            $payload .= Binary::writeLShort($item['numericId']);
-            // numeric id (LE signed short)
+            $payload .= Binary::writeLShort($item['numericId']); // little-endian signed short
             $payload .= Binary::writeBool($item['componentBased']);
-            // is component based
             $payload .= McpeBinary::writeSignedVarInt($item['version']);
-            // version
             $payload .= NBT::compound([]);
-            // component NBT (empty compound)
         }
         $hex = bin2hex($payload);
         Logger::debug("ItemRegistry payload hex: " . $hex);

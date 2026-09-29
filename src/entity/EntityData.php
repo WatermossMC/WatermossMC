@@ -36,7 +36,6 @@ final class EntityData
     /** @var array<int, array{type: int, value: mixed}> */
     private array $properties = [];
 
-    // Bedrock Metadata Types
     public const TYPE_BYTE = 0;
     public const TYPE_SHORT = 1;
     public const TYPE_INT = 2;

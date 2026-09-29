@@ -460,7 +460,7 @@ final class RakNet
 
     public static function flush(Session $session, Socket $sock): void
     {
-        if (!isset($session->sendQueue) || empty($session->sendQueue)) {
+        if (empty($session->sendQueue)) {
             return;
         }
         foreach ($session->sendQueue as $buffer) {
