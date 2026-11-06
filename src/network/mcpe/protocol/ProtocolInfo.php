@@ -24,9 +24,9 @@ namespace watermossmc\network\mcpe\protocol;
 
 final class ProtocolInfo
 {
-    public const CURRENT_PROTOCOL = 2193;
-    public const MINECRAFT_VERSION = 'v26.51';
-    public const MINECRAFT_VERSION_NETWORK = '1.26.51';
+    public const CURRENT_PROTOCOL = 2225;
+    public const MINECRAFT_VERSION = 'v26.60';
+    public const MINECRAFT_VERSION_NETWORK = '1.26.60';
     public const LOGIN_PACKET = 0x1;
     public const PLAY_STATUS_PACKET = 0x2;
     public const SERVER_TO_CLIENT_HANDSHAKE_PACKET = 0x3;
@@ -247,4 +247,12 @@ final class ProtocolInfo
     public const CAMERA_AIM_ASSIST_ACTOR_PRIORITY_PACKET = 0x153;
     public const SET_PLAYER_FURNACE_OPTIONS_PACKET = 0x15f;
     public const RECORD_STARTED_PACKET = 0x160;
+    public const CLIENTBOUND_MATCHMAKING_STATE = 0x161;
+    public const SERVERBOUND_STONECUTTER_SET_RECIPE = 0x162;
+    public const CLIENTBOUND_STONECUTTER_SET_RECIPE = 0x163;
+    public const SERVERBOUND_MATCHMAKING_CANCEL = 0x164;
+    public const SET_PASSENGER_OF_BLOCK = 0x165;
+    public const SERVERBOUND_CURSOR_ITEM_DRAG = 0x166;
+    public const CLIENTBOUND_PLAY_AUDIO_CONTENT = 0x167;
+    public const SERVERBOUND_REGISTER_AUDIO_CONTENT = 0x168;
 }

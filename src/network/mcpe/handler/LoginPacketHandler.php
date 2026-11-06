@@ -82,9 +82,11 @@ final class LoginPacketHandler implements PacketHandler
             ServerToClientHandshake::send($session, $socket, $jwt);
             RakNet::flush($session, $socket);
             usleep(50000);
-            $key = Crypto::deriveAes($sharedSecret, $serverSalt);
-            $session->setPendingEncryption($key);
-            $session->enablePendingEncryption();
+            if (!$session->hasTransport()) {
+                $key = Crypto::deriveAes($sharedSecret, $serverSalt);
+                $session->setPendingEncryption($key);
+                $session->enablePendingEncryption();
+            }
             $session->setWaitingHandshakeAck(true);
             $session->setMcpeState(Session::MC_LOGIN);
             Logger::debug("[0x03] State -> MC_LOGIN");

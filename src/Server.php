@@ -79,9 +79,9 @@ final class Server
     public function boot(): void
     {
         BlockInitializer::init();
-        BlockRuntimeData::init(__DIR__ . "/../resources/canonical_block_states.nbt");
+        BlockRuntimeData::init(__DIR__ . "/../resources/data/canonical_block_states.nbt");
         ItemInitializer::init();
-        CraftingManager::init(__DIR__ . "/../resources/crafting/crafting_table.json");
+        CraftingManager::init(__DIR__ . "/../resources/data/recipes");
         foreach (CommandRegistry::getCommands() as $commandClass) {
             /** @var \watermossmc\command\Command $command */
             $command = new $commandClass();

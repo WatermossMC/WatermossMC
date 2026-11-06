@@ -1,23 +1,5 @@
 <?php
 
-/*
- * __        __    _                                    __  __  ____
- * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
- *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
- *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
- *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
- *
- * WatermossMC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @author WatermossMC Team
- * @link https://github.com/watermossmc/WatermossMC
- */
-
 declare(strict_types=1);
 
 namespace watermossmc\world;
@@ -35,17 +17,26 @@ final class SubChunk
     public const COORD_BIT_SIZE = 4;
     public const COORD_MASK = 0x0F;
 
-    /** @var SplFixedArray<int> */
-    private SplFixedArray $blocks;
+    /** @var SplFixedArray<int>|null */
+    private ?SplFixedArray $blocks = null;
 
     private int $emptyBlockId;
 
     public function __construct(int $emptyBlockId = 0)
     {
         $this->emptyBlockId = $emptyBlockId;
+    }
+
+    private function allocateBlocks(): void
+    {
+        if ($this->blocks !== null) {
+            return;
+        }
+
         $this->blocks = new SplFixedArray(self::SIZE);
+
         for ($i = 0; $i < self::SIZE; $i++) {
-            $this->blocks[$i] = $emptyBlockId;
+            $this->blocks[$i] = $this->emptyBlockId;
         }
     }
 
@@ -56,23 +47,44 @@ final class SubChunk
 
     public function setBlock(int $x, int $y, int $z, int $id): void
     {
-        $index = ($x & 0x0f) << 8 | ($z & 0x0f) << 4 | ($y & 0x0f);
+        if ($this->blocks === null && $id === $this->emptyBlockId) {
+            return;
+        }
+
+        $this->allocateBlocks();
+
+        $index = (($x & 0x0F) << 8)
+            | (($z & 0x0F) << 4)
+            | ($y & 0x0F);
+
         $this->blocks[$index] = $id;
     }
 
     public function getBlock(int $x, int $y, int $z): int
     {
-        $index = ($x & 0x0f) << 8 | ($z & 0x0f) << 4 | ($y & 0x0f);
+        if ($this->blocks === null) {
+            return $this->emptyBlockId;
+        }
+
+        $index = (($x & 0x0F) << 8)
+            | (($z & 0x0F) << 4)
+            | ($y & 0x0F);
+
         return $this->blocks[$index] ?? $this->emptyBlockId;
     }
 
     public function isEmptyFast(): bool
     {
+        if ($this->blocks === null) {
+            return true;
+        }
+
         for ($i = 0; $i < self::SIZE; $i++) {
             if ($this->blocks[$i] !== $this->emptyBlockId) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -81,41 +93,71 @@ final class SubChunk
         return $this->isEmptyFast();
     }
 
+    public static function encodeEmpty(
+        BlockRuntimeIdConverter $converter,
+        int $emptyBlockId = 0
+    ): string {
+        $defaultBlock = BlockRegistry::get($emptyBlockId);
+
+        $runtimeId = $defaultBlock !== null
+            ? $converter->toRuntimeId($defaultBlock)
+            : 0;
+
+        return "\x08\x01"
+            . "\x02"
+            . str_repeat("\x00", 512)
+            . McpeBinary::writeUnsignedVarInt(1)
+            . McpeBinary::writeUnsignedVarInt($runtimeId);
+    }
+
     public function encode(BlockRuntimeIdConverter $converter): string
     {
+        if ($this->blocks === null || $this->isEmptyFast()) {
+            return self::encodeEmpty($converter, $this->emptyBlockId);
+        }
+
         $palette = [];
         $runtimeIdMap = [];
         $indexes = new SplFixedArray(self::SIZE);
 
         $defaultBlock = BlockRegistry::get($this->emptyBlockId);
-        $defaultRuntimeId = $defaultBlock !== null ? $converter->toRuntimeId($defaultBlock) : 0;
+
+        $defaultRuntimeId = $defaultBlock !== null
+            ? $converter->toRuntimeId($defaultBlock)
+            : 0;
 
         $palette[] = $defaultRuntimeId;
         $runtimeIdMap[$defaultRuntimeId] = 0;
 
-        $blocks = $this->blocks;
         for ($i = 0; $i < self::SIZE; $i++) {
-            $blockStateId = (int) $blocks[$i];
+            $blockStateId = (int) $this->blocks[$i];
             $block = BlockRegistry::get($blockStateId);
-            $runtimeId = $block !== null ? $converter->toRuntimeId($block) : $defaultRuntimeId;
+
+            $runtimeId = $block !== null
+                ? $converter->toRuntimeId($block)
+                : $defaultRuntimeId;
 
             $paletteIndex = $runtimeIdMap[$runtimeId] ?? null;
+
             if ($paletteIndex === null) {
                 $paletteIndex = count($palette);
                 $runtimeIdMap[$runtimeId] = $paletteIndex;
                 $palette[] = $runtimeId;
             }
+
             $indexes[$i] = $paletteIndex;
         }
 
         $paletteCount = count($palette);
         $bits = 1;
+
         foreach ([1, 2, 3, 4, 5, 6, 8, 16] as $b) {
             if ((1 << $b) >= $paletteCount) {
                 $bits = $b;
                 break;
             }
         }
+
         $out = "\x08\x01" . chr($bits << 1);
 
         $words = (int) ceil((self::SIZE * $bits) / 32);
@@ -130,38 +172,49 @@ final class SubChunk
             $wordArray[$wordIndex] |= ($val << $bitInWord);
         }
 
-        $wordBin = '';
         foreach ($wordArray as $word) {
-            $wordBin .= pack('N', $word);
+            $out .= pack('N', $word);
         }
-        $out .= $wordBin;
 
         $out .= McpeBinary::writeUnsignedVarInt($paletteCount);
-        $paletteBin = '';
+
         foreach ($palette as $runtimeId) {
-            $paletteBin .= McpeBinary::writeUnsignedVarInt($runtimeId);
+            $out .= McpeBinary::writeUnsignedVarInt($runtimeId);
         }
-        $out .= $paletteBin;
 
         return $out;
     }
 
     public function exportBinary(): string
     {
-        return pack('v*', ...$this->blocks->toArray());
+        if ($this->blocks === null) {
+            return str_repeat(pack('v', $this->emptyBlockId), self::SIZE);
+        }
+
+        $buffer = '';
+
+        for ($i = 0; $i < self::SIZE; $i++) {
+            $buffer .= pack('v', (int) $this->blocks[$i]);
+        }
+
+        return $buffer;
     }
 
     public static function fromBinary(string $data): self
     {
-        if (\strlen($data) !== self::SIZE * 2) {
+        if (strlen($data) !== self::SIZE * 2) {
             throw new RuntimeException('Invalid subchunk binary size');
         }
+
         $values = unpack('v' . self::SIZE, $data);
+
         if ($values === false) {
             throw new RuntimeException('Failed to decode subchunk binary');
         }
+
         $subChunk = new self();
         $subChunk->blocks = SplFixedArray::fromArray(array_values($values), false);
+
         return $subChunk;
     }
 
@@ -170,6 +223,8 @@ final class SubChunk
      */
     public function getBlocks(): SplFixedArray
     {
+        $this->allocateBlocks();
+
         return $this->blocks;
     }
 }

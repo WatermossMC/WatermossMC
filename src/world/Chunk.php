@@ -1,21 +1,12 @@
 <?php
 
 /*
- * __        __    _                                    __  __  ____
- * \ \      / /_ _| |_ ___ _ __ _ __ ___   ___  ___ ___|  \/  |/ ___|
- *  \ \ /\ / / _` | __/ _ \ '__| '_ ` _ \ / _ \/ __/ __| |\/| | |
- *   \ V  V / (_| | ||  __/ |  | | | | | | (_) \__ \__ \ |  | | |___
- *    \_/\_/ \__,_|\__\___|_|  |_| |_| |_|\___/|___/___/_|  |_|\____|
- *
  * WatermossMC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * @author WatermossMC Team
- * @link https://github.com/watermossmc/WatermossMC
  */
 
 declare(strict_types=1);
@@ -35,7 +26,6 @@ final class Chunk
     public const COORD_MASK = 0x0F;
 
     public int $x;
-
     public int $z;
 
     /** @var array<int, SubChunk> */
@@ -45,9 +35,6 @@ final class Chunk
     {
         $this->x = $x;
         $this->z = $z;
-        for ($y = self::MIN_SUBCHUNK_INDEX; $y <= self::MAX_SUBCHUNK_INDEX; $y++) {
-            $this->subChunks[$y] = new SubChunk();
-        }
     }
 
     public function setBlock(int $x, int $y, int $z, int $id): void
@@ -79,6 +66,7 @@ final class Chunk
         if (!isset($this->subChunks[$y])) {
             $this->subChunks[$y] = new SubChunk();
         }
+
         return $this->subChunks[$y];
     }
 
@@ -95,23 +83,29 @@ final class Chunk
         return $this->subChunks;
     }
 
-    /**
-     * Encode chunk to network payload
-     */
     public function encode(BlockRuntimeIdConverter $converter): string
     {
         $payload = '';
 
-        ksort($this->subChunks);
+        $indexes = array_unique([
+            ...range(self::MIN_SUBCHUNK_INDEX, self::MAX_SUBCHUNK_INDEX),
+            ...array_keys($this->subChunks)
+        ]);
 
-        foreach ($this->subChunks as $subChunk) {
+        sort($indexes, SORT_NUMERIC);
+
+        foreach ($indexes as $y) {
+            $subChunk = $this->subChunks[$y] ?? null;
+
+            if ($subChunk === null) {
+                $payload .= SubChunk::encodeEmpty($converter);
+                continue;
+            }
+
             $payload .= $subChunk->encode($converter);
         }
 
-        // Biome data (256 bytes per column or similar simplistic palette/array)
-        $payload .= str_repeat("\x01\x00\x00\x00", 256); // 256 entries of Biome ID 1 (Plains)
-
-        // Border blocks data count (0)
+        $payload .= str_repeat("\x01\x00\x00\x00", 256);
         $payload .= McpeBinary::writeUnsignedVarInt(0);
 
         return $payload;
@@ -119,19 +113,18 @@ final class Chunk
 
     public function getSubChunkCount(): int
     {
-        $count = 0;
         for ($y = self::MAX_SUBCHUNK_INDEX; $y >= self::MIN_SUBCHUNK_INDEX; --$y) {
             if (isset($this->subChunks[$y]) && !$this->subChunks[$y]->isEmptyFast()) {
-                $count = $y - self::MIN_SUBCHUNK_INDEX + 1;
-                break;
+                return $y - self::MIN_SUBCHUNK_INDEX + 1;
             }
         }
-        return max(1, $count);
+
+        return 1;
     }
 
     public function exportBinary(): string
     {
-        $buffer = Binary::writeLInt(\count($this->subChunks));
+        $buffer = Binary::writeLInt(count($this->subChunks));
 
         foreach ($this->subChunks as $subY => $subChunk) {
             $buffer .= Binary::writeLInt($subY);
@@ -152,6 +145,7 @@ final class Chunk
             $subY = Binary::readLInt($data, $offset);
             $subChunkData = substr($data, $offset, SubChunk::SIZE * 2);
             $offset += SubChunk::SIZE * 2;
+
             $chunk->subChunks[$subY] = SubChunk::fromBinary($subChunkData);
         }
 

@@ -21,6 +21,7 @@
 declare(strict_types=1);
 
 use watermossmc\network\mcpe\PacketDispatcher;
+use watermossmc\network\nethernet\NetherNetServer;
 use watermossmc\network\raknet\RakNet;
 use watermossmc\network\TickLoop;
 use watermossmc\Server;
@@ -96,10 +97,27 @@ $tickLoop->add(static function () use ($server): void {
 
     if ($server->getCurrentTick() % 20 === 0) {
         RakNet::tick();
-
-        Logger::debug('Server heartbeat - Tick: ' . $server->getCurrentTick());
     }
 });
+
+$nethernet = null;
+if (Config::getBool('nethernet-enabled', true)) {
+    try {
+        $nethernet = new NetherNetServer(
+            $server,
+            $config['bind_ip'],
+            Config::getInt('nethernet-port', 19134),
+            Config::getString('nethernet-public-ip', ''),
+            Config::getBool('nethernet-lan-discovery', true)
+        );
+        $tickLoop->add(static function () use ($nethernet): void {
+            $nethernet->tick();
+        });
+    } catch (\Throwable $e) {
+        Logger::error('NetherNet disabled: ' . $e->getMessage());
+        $nethernet = null;
+    }
+}
 
 $server->boot();
 
@@ -155,6 +173,8 @@ while (!$shutdown) {
         $buffer = '';
     }
 
+    $nethernet?->poll();
+
     $now = hrtime(true);
     if ($now >= $nextTick) {
         try {
@@ -169,6 +189,7 @@ while (!$shutdown) {
 }
 
 Logger::info("Shutting down server...");
+$nethernet?->shutdown();
 $server->shutdown();
 socket_close($socket);
 Logger::info("Server shutdown complete.");

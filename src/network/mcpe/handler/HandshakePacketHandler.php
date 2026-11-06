@@ -55,9 +55,11 @@ final class HandshakePacketHandler implements PacketHandler
             return true;
         }
         $session->setWaitingHandshakeAck(false);
-        $session->finalizeEncryption();
-        Logger::debug("[0x04] Encryption finalized");
-        Logger::info("Encryption ENABLED. Handshake connection secure.");
+        if (!$session->hasTransport()) {
+            $session->finalizeEncryption();
+            Logger::debug("[0x04] Encryption finalized");
+            Logger::info("Bedrock encryption ENABLED. Handshake connection secure.");
+        }
         PlayStatus::sendSuccess($session, $socket);
         ResourcePacksInfo::send($session, $socket, [], false);
         RakNet::flush($session, $socket);

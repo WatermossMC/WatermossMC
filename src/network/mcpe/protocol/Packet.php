@@ -50,6 +50,11 @@ abstract class Packet
             Logger::debug("[TX-Detail] Handshake inner hex: " . bin2hex($mcpePacket));
         }
 
+        if ($s->hasTransport()) {
+            $s->getTransport()->send($packet);
+            return $s->nextSendSeq();
+        }
+
         $sendSeq = $s->nextSendSeq();
         $reliableIndex = $s->nextReliableSeq();
         $orderedIndex = $s->nextOrderedIndex();

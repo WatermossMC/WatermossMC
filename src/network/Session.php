@@ -28,6 +28,7 @@ use LogicException;
 use RuntimeException;
 use Socket;
 use watermossmc\crypto\EncryptionContext;
+use watermossmc\network\nethernet\NetherNetTransport;
 use watermossmc\network\mcpe\protocol\handshake\NetworkSettings;
 use watermossmc\util\Logger;
 
@@ -140,6 +141,8 @@ final class Session
     private static int $nextRuntimeId = 1;
 
     private ?Socket $socket = null;
+
+    private ?NetherNetTransport $transport = null;
 
     private bool $hasWaitingRequestChunkRadiusAck = false;
 
@@ -322,6 +325,21 @@ final class Session
         $this->socket = $sock;
     }
 
+    public function attachTransport(NetherNetTransport $transport): void
+    {
+        $this->transport = $transport;
+    }
+
+    public function getTransport(): ?NetherNetTransport
+    {
+        return $this->transport;
+    }
+
+    public function hasTransport(): bool
+    {
+        return $this->transport !== null;
+    }
+
     public function getSocket(): ?Socket
     {
         return $this->socket;
@@ -341,7 +359,9 @@ final class Session
         $this->reliableQueue = [];
         $this->outgoingFrames = [];
         $this->orderedSeq = [];
-        if ($notify && $this->socket !== null) {
+        if ($notify && $this->transport !== null) {
+            $this->transport->close();
+        } elseif ($notify && $this->socket !== null) {
             $pk = "\x15";
             @socket_sendto($this->socket, $pk, 1, 0, $this->address, $this->port);
         }
@@ -413,8 +433,7 @@ final class Session
 
     public function decodeInbound(string $data): string
     {
-        // Inbound packets are encrypted once the handshake has set up the inbound context.
-        if ($this->inEncryption !== null && $data !== '') {
+        if ($this->hasTransport() && $this->inEncryption !== null && $data !== '') {
             $first = \ord($data[0]);
             try {
                 Logger::debug("Inbound decrypt attempt: raw first=0x" . dechex($first) . " len=" . \strlen($data));
@@ -456,8 +475,11 @@ final class Session
             }
             $data = "\x00" . $compressed;
         }
-        if ($this->isEncryptionEnabled()) {
+        if (!$this->hasTransport() && $this->isEncryptionEnabled()) {
             $data = $this->encrypt($data);
+        }
+        if ($this->hasTransport()) {
+            return $data;
         }
         return "\xfe" . $data;
     }

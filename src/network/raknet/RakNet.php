@@ -460,6 +460,10 @@ final class RakNet
 
     public static function flush(Session $session, Socket $sock): void
     {
+        if ($session->hasTransport()) {
+            $session->getTransport()->flush();
+            return;
+        }
         if (empty($session->sendQueue)) {
             return;
         }
